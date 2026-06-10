@@ -796,8 +796,10 @@ export function buildSolarSystem(scene) {
   for (const m of MOONS) bodies.set(m.id, createMoon(scene, m, bodies.get(m.parent)));
   for (const c of COMETS) bodies.set(c.id, createComet(scene, c));
 
-  // Galilean moons cast transit shadows on Jupiter
+  // Galilean moons cast transit shadows on Jupiter; Saturn's big four likewise
   bodies.get('jupiter').shadowMoons = ['io', 'europa', 'ganymede', 'callisto']
+    .map((id) => bodies.get(id));
+  bodies.get('saturn').shadowMoons = ['titan', 'enceladus', 'rhea', 'iapetus']
     .map((id) => bodies.get(id));
 
   // Earth and Moon eclipse each other

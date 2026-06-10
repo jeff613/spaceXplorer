@@ -120,6 +120,7 @@ export const PLANETS = [
   },
   {
     id: 'saturn', name: 'Saturn', type: 'Planet', texture: '2k_saturn.jpg', ring: '2k_saturn_ring_alpha.png', bands: true,
+    moonShadows: true,
     radiusKm: 58232,
     elements: { a: 9.537, e: 0.0542, i: 2.49, Om: 113.72, varpi: 92.43, L0: 49.94, period: 10759 },
     rotationHours: 10.7, tilt: 26.73,

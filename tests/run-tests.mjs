@@ -201,13 +201,18 @@ try {
   const transits = await page.evaluate(async () => {
     const sx = window.__sx;
     await sx.frame();
-    const sh = sx.bodies.get('jupiter').mesh.material.userData.shader;
-    if (!sh?.uniforms.uMoonPos) return null;
-    return sh.uniforms.uMoonPos.value.map((v) => v.length());
+    return ['jupiter', 'saturn'].map((id) => {
+      const sh = sx.bodies.get(id).mesh.material.userData.shader;
+      if (!sh?.uniforms.uMoonPos) return null;
+      return sh.uniforms.uMoonPos.value.map((v) => v.length());
+    });
   });
   check('Galilean transit shadows track all four moons',
-    Array.isArray(transits) && transits.length === 4 && transits.every((d) => d > 100),
-    JSON.stringify(transits));
+    Array.isArray(transits[0]) && transits[0].length === 4 && transits[0].every((d) => d > 100),
+    JSON.stringify(transits[0]));
+  check('Saturn moon shadows track Titan/Enceladus/Rhea/Iapetus',
+    Array.isArray(transits[1]) && transits[1].length === 4 && transits[1].every((d) => d > 100),
+    JSON.stringify(transits[1]));
   const bumps = await page.evaluate(() => {
     const sx = window.__sx;
     return ['earth', 'mars', 'mercury', 'moon'].map((id) => {
