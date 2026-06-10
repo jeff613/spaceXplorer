@@ -167,12 +167,20 @@ try {
       box.getSize(s);
       return +Math.max(s.x, s.y, s.z).toFixed(2);
     };
-    return ['iss', 'roadster', 'perseverance', 'hubble', 'jwst'].map(
+    return ['iss', 'roadster', 'perseverance', 'hubble', 'jwst', 'parker'].map(
       (id) => [id, visibleSize(sx.craft.get(id).mesh)],
     );
   });
   check('no craft renders speck-sized when focused (all ≥ 0.5 units)',
     craftSizes.every(([, s]) => s >= 0.5), JSON.stringify(craftSizes));
+  check('Parker heat shield is matte ceramic, not bloom-white', await page.evaluate(() => {
+    let ok = false;
+    window.__sx.craft.get('parker').mesh.traverse((o) => {
+      if (o.isMesh && o.material?.color?.r > 0.4 && o.material.color.r < 0.85
+          && o.material.roughness > 0.7) ok = true;
+    });
+    return ok;
+  }));
   // L-point craft fly halo orbits — near, but not exactly on, the Sun-Earth line
   const halo = await page.evaluate(() => {
     const sx = window.__sx;

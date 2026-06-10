@@ -149,7 +149,12 @@ function makeJWST() { // gold hex mirror over a silver kite sunshield
 
 function makeParker() { // white heat shield facing a small bus
   const g = new THREE.Group();
-  const shield = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.035, 32), matWhite());
+  // matte ceramic gray, not pure white — a face-on bright disc plus bloom
+  // reads as a glowing orb when focused
+  const tps = new THREE.MeshStandardMaterial({
+    color: 0xc9c4bb, roughness: 0.85, metalness: 0.05, envMapIntensity: 0.4,
+  });
+  const shield = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.035, 32), tps);
   shield.rotation.x = Math.PI / 2;
   shield.position.z = 0.1;
   g.add(shield);
@@ -161,6 +166,7 @@ function makeParker() { // white heat shield facing a small bus
     wing.position.set(x, 0, -0.02);
     g.add(wing);
   }
+  g.rotation.set(-0.35, 0.9, 0.15); // show the 3-D profile, not a face-on disc
   return g;
 }
 
@@ -253,7 +259,13 @@ function craftMesh(data) {
     case 'jwst': return makeJWST();
     case 'gaia': return makeProbe({ dish: 0.14, scale: 0.8 });
     case 'soho': return makeProbe({ dish: 0.1, panels: 2, scale: 0.8 });
-    case 'parker': return makeParker();
+    case 'parker': {
+      // modeled at ~0.34 units — without kit scale the bloom halo around
+      // the white shield reads as a glowing orb when focused
+      const p = makeParker();
+      p.scale.setScalar(5);
+      return p;
+    }
     case 'roadster': {
       // the car is modeled at ~0.3 units; bring it up to kit scale so a
       // focused close-up fills the frame like every other craft
