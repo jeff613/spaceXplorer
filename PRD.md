@@ -2,7 +2,7 @@
 
 **Status:** Living document — the improvement loop works against this.
 **Owner:** Jeff
-**Last updated:** 2026-06-10 (iteration 17)
+**Last updated:** 2026-06-10 (iteration 18)
 
 ## 1. Vision
 
@@ -98,7 +98,7 @@ a date picker alongside NOW.
 - [x] More comets: 67P (iter 11), NEOWISE (iter 16, drove a Kepler solver upgrade to Newton-Raphson for near-parabolic orbits)
 - [x] Uranus rings (ε + faint bands), Neptune rings (Adams, Le Verrier) — shipped iter 6 (arcs approximated as faint full rings)
 - [ ] Jupiter's Great Red Spot orientation; gas giant band motion
-- [ ] Optional true-scale mode (educational toggle)
+- [x] True-scale mode (?scale=true + toggle): linear distances, real radii, real moon orbits; craft become micro-markers — shipped iter 18
 - [ ] Real lunar phase / eclipse shadows (stretch)
 
 **Comprehensiveness**

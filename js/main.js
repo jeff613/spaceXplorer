@@ -4,7 +4,7 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
-import { daysSinceJ2000 } from './data.js';
+import { daysSinceJ2000, TRUE_SCALE } from './data.js';
 import { buildSolarSystem } from './bodies.js';
 import { buildSpacecraft } from './spacecraft.js';
 import { createTour } from './tour.js';
@@ -30,7 +30,7 @@ renderer.toneMappingExposure = 1.15;
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(
-  55, window.innerWidth / window.innerHeight, 0.1, 20000,
+  55, window.innerWidth / window.innerHeight, TRUE_SCALE ? 0.001 : 0.1, 20000,
 );
 camera.position.set(0, 150, 320);
 
@@ -46,7 +46,7 @@ composer.addPass(new OutputPass());
 const controls = new OrbitControls(camera, canvas);
 controls.enableDamping = true;
 controls.dampingFactor = 0.06;
-controls.minDistance = 2;
+controls.minDistance = TRUE_SCALE ? 0.002 : 2;
 controls.maxDistance = 3500;
 
 // ─── World ────────────────────────────────────────────────────────────────
@@ -81,7 +81,7 @@ function select(body, { instant = false } = {}) {
   body.mesh.getWorldPosition(followPos);
   prevFollowPos.copy(followPos);
   if (instant) {
-    const viewDist = Math.max(4, body.displayRadius * 5.5);
+    const viewDist = Math.max(TRUE_SCALE ? 0.01 : 4, body.displayRadius * 5.5);
     const dir = camera.position.clone().sub(followPos).normalize();
     if (dir.lengthSq() < 0.5) dir.set(0.4, 0.35, 1).normalize();
     camera.position.copy(followPos).add(dir.multiplyScalar(viewDist));
@@ -182,7 +182,7 @@ function updateCamera(dt) {
     // fly-to: ease camera toward a viewing spot near the body
     flight.t = Math.min(1, flight.t + dt / 1.4);
     const k = 1 - Math.pow(1 - flight.t, 3); // easeOutCubic
-    const viewDist = Math.max(4, selected.displayRadius * 5.5);
+    const viewDist = Math.max(TRUE_SCALE ? 0.01 : 4, selected.displayRadius * 5.5);
     const dir = flight.fromPos.clone().sub(followPos).normalize();
     if (dir.lengthSq() < 0.5) dir.set(0.4, 0.35, 1).normalize();
     const destPos = followPos.clone().add(dir.multiplyScalar(viewDist));
@@ -219,6 +219,11 @@ setupToggles({
     for (const c of craft.values()) if (c.isCloud) c.mesh.visible = on;
   },
   'toggle-sound': (on) => sound.setEnabled(on),
+  'toggle-truescale': (on) => {
+    const u = new URL(location.href);
+    if (on) u.searchParams.set('scale', 'true'); else u.searchParams.delete('scale');
+    location.href = u.toString(); // scale is baked into geometry — rebuild world
+  },
 });
 
 window.addEventListener('resize', () => {
@@ -255,6 +260,8 @@ function animate() {
 }
 
 animate();
+
+document.getElementById('toggle-truescale').checked = TRUE_SCALE;
 
 // shareable deep link: ?focus=earth jumps straight to a body
 const focusId = new URLSearchParams(location.search).get('focus');

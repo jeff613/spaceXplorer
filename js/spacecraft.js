@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { SPACECRAFT, scaleDistance } from './data.js';
+import { SPACECRAFT, scaleDistance, TRUE_SCALE } from './data.js';
 import { keplerPosition } from './bodies.js';
 
 const DEG = Math.PI / 180;
@@ -275,6 +275,7 @@ export function buildSpacecraft(scene, bodies) {
       const parent = bodies.get(data.parent);
       const orbitR = parent.displayRadius * data.orbitRadii;
       const mesh = craftMesh(data);
+      if (TRUE_SCALE) mesh.scale.multiplyScalar(0.02);
       mesh.add(makeGlint(data.color, 0.3));
       mesh.name = data.id;
       const plane = new THREE.Group();
@@ -295,6 +296,7 @@ export function buildSpacecraft(scene, bodies) {
       // L1/L2 sit on the Sun–Earth line; factor <1 = sunward L1, >1 = L2
       // (display-exaggerated)
       const mesh = craftMesh(data);
+      if (TRUE_SCALE) mesh.scale.multiplyScalar(0.02);
       mesh.add(makeGlint(data.color, 0.35));
       mesh.name = data.id;
       scene.add(mesh);
@@ -310,6 +312,7 @@ export function buildSpacecraft(scene, bodies) {
       // of the spinning mesh so it rides the planet's rotation
       const parent = bodies.get(data.parent);
       const mesh = craftMesh(data);
+      if (TRUE_SCALE) mesh.scale.multiplyScalar(0.02);
       mesh.add(makeGlint(data.color, 0.12));
       mesh.name = data.id;
       const lat = data.lat * DEG;
@@ -325,6 +328,7 @@ export function buildSpacecraft(scene, bodies) {
       craft.set(data.id, { data, mesh, pick, displayRadius: 0.45, update() {} });
     } else if (data.kind === 'helio') {
       const mesh = craftMesh(data);
+      if (TRUE_SCALE) mesh.scale.multiplyScalar(0.02);
       mesh.add(makeGlint(data.color, 0.35));
       mesh.name = data.id;
       scene.add(mesh);
@@ -348,6 +352,7 @@ export function buildSpacecraft(scene, bodies) {
       });
     } else if (data.kind === 'deep') {
       const mesh = craftMesh(data);
+      if (TRUE_SCALE) mesh.scale.multiplyScalar(0.02);
       mesh.add(makeGlint(data.color, 0.4));
       mesh.name = data.id;
       const dir = raDecToDir(data.raDeg, data.decDeg);

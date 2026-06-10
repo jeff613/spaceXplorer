@@ -511,6 +511,32 @@ try {
     await noGl.close();
   }
 
+  console.log('\n— True-scale mode');
+  const ts = await openPage(browser, `${BASE}/?scale=true`, consoleErrors);
+  const tsChecks = await ts.evaluate(() => {
+    const sx = window.__sx;
+    const e = sx.bodies.get('earth');
+    const j = sx.bodies.get('jupiter');
+    return {
+      ratio: j.anchor.position.length() / e.anchor.position.length(),
+      earthR: e.displayRadius,
+      sunR: sx.bodies.get('sun').displayRadius,
+      moonOrbit: (() => {
+        const m = sx.bodies.get('moon');
+        return m.mesh.position.length() / e.displayRadius;
+      })(),
+      toggleChecked: document.getElementById('toggle-truescale').checked,
+    };
+  });
+  check(`true scale: Jupiter/Earth distance ratio ${tsChecks.ratio.toFixed(2)} (≈5.0–5.5)`,
+    tsChecks.ratio > 4.8 && tsChecks.ratio < 5.6);
+  check(`true scale: Earth is a speck (R=${tsChecks.earthR.toFixed(4)} < 0.01)`, tsChecks.earthR < 0.01);
+  check(`true scale: Sun radius ${tsChecks.sunR.toFixed(3)} ≈ 0.288`, approx(tsChecks.sunR, 0.288, 0.01));
+  check(`true scale: Moon at ${tsChecks.moonOrbit.toFixed(0)} Earth radii (58–63)`,
+    tsChecks.moonOrbit > 58 && tsChecks.moonOrbit < 63);
+  check('true scale: toggle reflects mode', tsChecks.toggleChecked);
+  await ts.close();
+
   console.log('\n— Console cleanliness');
   check('zero console/page errors across all tests', consoleErrors.length === 0,
     consoleErrors.slice(0, 3).join(' | '));

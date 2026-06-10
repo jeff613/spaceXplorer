@@ -3,19 +3,25 @@
 // a 1 m Sun), so distances are compressed with a power law and radii with a
 // gentler one. All physics (periods, eccentricity, inclination) stays real.
 
+export const TRUE_SCALE = typeof location !== 'undefined'
+  && new URLSearchParams(location.search).get('scale') === 'true';
+
 export const DIST_EXP = 0.55;
 export const DIST_MUL = 62;
+const KM_PER_AU = 149597870;
 
 export function scaleDistance(au) {
+  if (TRUE_SCALE) return au * DIST_MUL;
   return Math.pow(au, DIST_EXP) * DIST_MUL;
 }
 
 export function scaleRadius(km) {
+  if (TRUE_SCALE) return (km / KM_PER_AU) * DIST_MUL;
   const earthR = km / 6371;
   return Math.max(0.55, Math.pow(earthR, 0.45) * 1.7);
 }
 
-export const SUN_DISPLAY_RADIUS = 11;
+export const SUN_DISPLAY_RADIUS = TRUE_SCALE ? (696340 / KM_PER_AU) * DIST_MUL : 11;
 
 // Days since J2000 epoch (2000-01-01 12:00 UTC) for a JS Date
 export const J2000 = Date.UTC(2000, 0, 1, 12);
@@ -242,7 +248,7 @@ export const MOONS = [
   {
     id: 'moon', name: 'Moon', type: 'Moon of Earth', parent: 'earth', texture: '2k_moon.jpg',
     ecliptic: true,
-    radiusKm: 1737.4, orbitRadii: 3.2, period: 27.32,
+    radiusKm: 1737.4, orbitRadii: 3.2, trueOrbitRadii: 60.3, period: 27.32,
     info: {
       'Radius': '1,737 km', 'Orbital period': '27.3 days',
       'Distance from Earth': '384,400 km', 'Surface temp': '−173 to 127 °C',
@@ -251,91 +257,91 @@ export const MOONS = [
   },
   {
     id: 'phobos', name: 'Phobos', type: 'Moon of Mars', parent: 'mars', color: 0x8d8276,
-    radiusKm: 11.3, orbitRadii: 1.8, period: 0.319,
+    radiusKm: 11.3, orbitRadii: 1.8, trueOrbitRadii: 2.76, period: 0.319,
     info: { 'Radius': '11 km', 'Orbital period': '7.7 hours', 'Fate': 'Crashing into Mars in ~50 Myr' },
     fact: 'Orbits Mars faster than Mars rotates — it rises in the west, sets in the east, and is slowly spiraling inward to its doom.',
   },
   {
     id: 'deimos', name: 'Deimos', type: 'Moon of Mars', parent: 'mars', color: 0x9d9388,
-    radiusKm: 6.2, orbitRadii: 2.8, period: 1.263,
+    radiusKm: 6.2, orbitRadii: 2.8, trueOrbitRadii: 6.92, period: 1.263,
     info: { 'Radius': '6 km', 'Orbital period': '30.3 hours', 'Shape': 'Lumpy captured asteroid' },
     fact: 'So small that from its surface you could reach escape velocity on a bicycle.',
   },
   {
     id: 'io', name: 'Io', type: 'Moon of Jupiter', parent: 'jupiter', color: 0xd8c95a,
-    radiusKm: 1821.6, orbitRadii: 2.0, period: 1.77,
+    radiusKm: 1821.6, orbitRadii: 2.0, trueOrbitRadii: 5.9, period: 1.77,
     info: { 'Radius': '1,822 km', 'Orbital period': '1.8 days', 'Volcanoes': '400+ active' },
     fact: 'The most volcanically active body in the solar system, kneaded by Jupiter\'s tides like a stress ball.',
   },
   {
     id: 'europa', name: 'Europa', type: 'Moon of Jupiter', parent: 'jupiter', color: 0xcfc4ae,
-    radiusKm: 1560.8, orbitRadii: 2.7, period: 3.55,
+    radiusKm: 1560.8, orbitRadii: 2.7, trueOrbitRadii: 9.4, period: 3.55,
     info: { 'Radius': '1,561 km', 'Orbital period': '3.6 days', 'Ocean depth': '~100 km under ice' },
     fact: 'Beneath its cracked ice shell lies a salty ocean with twice the water of all Earth\'s oceans — a prime candidate for life.',
   },
   {
     id: 'ganymede', name: 'Ganymede', type: 'Moon of Jupiter', parent: 'jupiter', color: 0x9b8d7d,
-    radiusKm: 2634.1, orbitRadii: 3.5, period: 7.15,
+    radiusKm: 2634.1, orbitRadii: 3.5, trueOrbitRadii: 15.3, period: 7.15,
     info: { 'Radius': '2,634 km', 'Orbital period': '7.2 days', 'Claim': 'Largest moon in the solar system' },
     fact: 'Bigger than the planet Mercury, and the only moon known to generate its own magnetic field.',
   },
   {
     id: 'callisto', name: 'Callisto', type: 'Moon of Jupiter', parent: 'jupiter', color: 0x6f6a60,
-    radiusKm: 2410.3, orbitRadii: 4.4, period: 16.69,
+    radiusKm: 2410.3, orbitRadii: 4.4, trueOrbitRadii: 26.9, period: 16.69,
     info: { 'Radius': '2,410 km', 'Orbital period': '16.7 days', 'Surface': 'Most cratered in the system' },
     fact: 'Its ancient surface has barely changed in 4 billion years — a fossil record of the early solar system.',
   },
   {
     id: 'titan', name: 'Titan', type: 'Moon of Saturn', parent: 'saturn', color: 0xc9a24b,
-    radiusKm: 2574.7, orbitRadii: 3.6, period: 15.95,
+    radiusKm: 2574.7, orbitRadii: 3.6, trueOrbitRadii: 20.3, period: 15.95,
     info: { 'Radius': '2,575 km', 'Orbital period': '16 days', 'Atmosphere': 'Denser than Earth\'s' },
     fact: 'The only moon with a thick atmosphere, and the only world besides Earth with rivers, lakes and rain — of liquid methane.',
   },
   {
     id: 'enceladus', name: 'Enceladus', type: 'Moon of Saturn', parent: 'saturn', color: 0xeef4f8,
-    radiusKm: 252.1, orbitRadii: 2.5, period: 1.37,
+    radiusKm: 252.1, orbitRadii: 2.5, trueOrbitRadii: 4.09, period: 1.37,
     info: { 'Radius': '252 km', 'Orbital period': '1.4 days', 'Albedo': 'Most reflective body in the system' },
     fact: 'Ice geysers at its south pole jet ocean water into space, feeding Saturn\'s E ring — a free sample of an alien sea.',
   },
   {
     id: 'rhea', name: 'Rhea', type: 'Moon of Saturn', parent: 'saturn', color: 0xb0aca6,
-    radiusKm: 763.8, orbitRadii: 2.95, period: 4.52,
+    radiusKm: 763.8, orbitRadii: 2.95, trueOrbitRadii: 9.05, period: 4.52,
     info: { 'Radius': '764 km', 'Orbital period': '4.5 days', 'Composition': 'Mostly water ice' },
     fact: 'Saturn\'s second-largest moon — a dirty snowball three-quarters ice, possibly with its own faint ring system.',
   },
   {
     id: 'iapetus', name: 'Iapetus', type: 'Moon of Saturn', parent: 'saturn', color: 0x7a6f5e,
-    radiusKm: 734.5, orbitRadii: 5.0, period: 79.3,
+    radiusKm: 734.5, orbitRadii: 5.0, trueOrbitRadii: 61.1, period: 79.3,
     info: { 'Radius': '735 km', 'Orbital period': '79 days', 'Feature': '20 km equatorial ridge' },
     fact: 'The yin-yang moon: one hemisphere is coal-black, the other snow-white, with a mysterious mountain ridge wrapping its equator.',
   },
   {
     id: 'miranda', name: 'Miranda', type: 'Moon of Uranus', parent: 'uranus', color: 0xa8b0b8,
-    radiusKm: 235.8, orbitRadii: 2.2, period: 1.41,
+    radiusKm: 235.8, orbitRadii: 2.2, trueOrbitRadii: 5.12, period: 1.41,
     info: { 'Radius': '236 km', 'Orbital period': '1.4 days', 'Feature': 'Verona Rupes, 20 km cliff' },
     fact: 'A patchwork world that looks reassembled from spare parts. Its Verona Rupes cliff is the tallest known — a 20 km sheer drop.',
   },
   {
     id: 'titania', name: 'Titania', type: 'Moon of Uranus', parent: 'uranus', color: 0x9aa0a8,
-    radiusKm: 788.4, orbitRadii: 3.0, period: 8.71,
+    radiusKm: 788.4, orbitRadii: 3.0, trueOrbitRadii: 17.2, period: 8.71,
     info: { 'Radius': '788 km', 'Orbital period': '8.7 days', 'Claim': 'Largest moon of Uranus' },
     fact: 'Like all of Uranus\'s moons it is named from Shakespeare — and orbits sideways along with its rolled-over planet.',
   },
   {
     id: 'oberon', name: 'Oberon', type: 'Moon of Uranus', parent: 'uranus', color: 0x8e949c,
-    radiusKm: 761.4, orbitRadii: 3.8, period: 13.46,
+    radiusKm: 761.4, orbitRadii: 3.8, trueOrbitRadii: 23.0, period: 13.46,
     info: { 'Radius': '761 km', 'Orbital period': '13.5 days', 'Surface': 'Ancient, heavily cratered' },
     fact: 'The outermost large moon of Uranus, scarred by craters with mysterious dark floors.',
   },
   {
     id: 'triton', name: 'Triton', type: 'Moon of Neptune', parent: 'neptune', color: 0xb8c4c9,
-    radiusKm: 1353.4, orbitRadii: 3.0, period: -5.88,
+    radiusKm: 1353.4, orbitRadii: 3.0, trueOrbitRadii: 14.4, period: -5.88,
     info: { 'Radius': '1,353 km', 'Orbital period': '5.9 days (retrograde)', 'Origin': 'Captured Kuiper Belt object' },
     fact: 'Orbits backwards — a captured Kuiper Belt world. Nitrogen geysers erupt from its −235 °C surface.',
   },
   {
     id: 'charon', name: 'Charon', type: 'Moon of Pluto', parent: 'pluto', color: 0x8d8b90,
-    radiusKm: 606, orbitRadii: 2.6, period: 6.39,
+    radiusKm: 606, orbitRadii: 2.6, trueOrbitRadii: 16.5, period: 6.39,
     info: { 'Radius': '606 km', 'Orbital period': '6.4 days', 'Feature': 'Mordor Macula (dark red pole)' },
     fact: 'Half Pluto\'s size — the pair orbit a point in empty space between them, making Pluto–Charon the solar system\'s only true binary world.',
   },

@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { Lensflare, LensflareElement } from 'three/addons/objects/Lensflare.js';
 import {
-  PLANETS, SUN, MOONS, COMETS, scaleDistance, scaleRadius, SUN_DISPLAY_RADIUS,
+  PLANETS, SUN, MOONS, COMETS, scaleDistance, scaleRadius, SUN_DISPLAY_RADIUS, TRUE_SCALE,
 } from './data.js';
 
 const texLoader = new THREE.TextureLoader();
@@ -350,8 +350,9 @@ export function createPlanet(scene, data) {
 }
 
 export function createMoon(scene, data, parentBody) {
-  const displayRadius = Math.max(0.3, scaleRadius(data.radiusKm) * 0.55);
-  const orbitR = parentBody.displayRadius * data.orbitRadii + displayRadius;
+  const displayRadius = TRUE_SCALE ? scaleRadius(data.radiusKm) : Math.max(0.3, scaleRadius(data.radiusKm) * 0.55);
+  const radiiMult = TRUE_SCALE ? (data.trueOrbitRadii ?? data.orbitRadii) : data.orbitRadii;
+  const orbitR = parentBody.displayRadius * radiiMult + displayRadius;
 
   const geo = new THREE.SphereGeometry(displayRadius, 32, 16);
   const mat = data.texture
