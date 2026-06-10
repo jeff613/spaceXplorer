@@ -1,10 +1,17 @@
 import * as THREE from 'three';
 import { Lensflare, LensflareElement } from 'three/addons/objects/Lensflare.js';
 import {
-  PLANETS, SUN, MOONS, COMETS, scaleDistance, scaleRadius, SUN_DISPLAY_RADIUS, TRUE_SCALE,
+  PLANETS, SUN, MOONS, COMETS, scaleDistance, scaleRadius, SUN_DISPLAY_RADIUS, TRUE_SCALE, mulberry32,
 } from './data.js';
 
 const texLoader = new THREE.TextureLoader();
+const rand = mulberry32(20260610);
+function randDir(target) {
+  const u = rand() * 2 - 1;
+  const t = rand() * Math.PI * 2;
+  const sxy = Math.sqrt(1 - u * u);
+  return target.set(sxy * Math.cos(t), u, sxy * Math.sin(t));
+}
 const DEG = Math.PI / 180;
 
 function loadTex(file) {
@@ -378,11 +385,16 @@ export function createMoon(scene, data, parentBody) {
   orbitLine.userData.isOrbit = true;
   orbitGroup.add(orbitLine);
 
-  const phase = Math.random() * Math.PI * 2;
+  let seed = 0;
+  for (const ch of data.id) seed = (seed * 31 + ch.charCodeAt(0)) >>> 0;
+  const phase = (seed % 360) * DEG;
   return {
     data, mesh, orbitLine, displayRadius, parent: parentBody,
     update(days) {
-      const a = phase + (days / data.period) * Math.PI * 2;
+      // ecliptic longitude maps to scene angle as a = -lambda (z = -y_ecl)
+      const a = data.meanLongitude0 !== undefined
+        ? -(data.meanLongitude0 + (360 / data.period) * days) * DEG
+        : phase + (days / data.period) * Math.PI * 2;
       mesh.position.set(Math.cos(a) * orbitR, 0, Math.sin(a) * orbitR);
       mesh.rotation.y = -a; // tidally locked
     },
@@ -416,7 +428,7 @@ export function createComet(scene, data) {
   const N = 240;
   const positions = new Float32Array(N * 3);
   const jitter = [];
-  for (let i = 0; i < N; i++) jitter.push(new THREE.Vector3().randomDirection());
+  for (let i = 0; i < N; i++) jitter.push(randDir(new THREE.Vector3()));
   const tailGeo = new THREE.BufferGeometry();
   tailGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
   const tail = new THREE.Points(tailGeo, new THREE.PointsMaterial({
@@ -456,11 +468,11 @@ export function createAsteroidBelt(scene) {
   const COUNT = 2200;
   const positions = new Float32Array(COUNT * 3);
   for (let i = 0; i < COUNT; i++) {
-    const au = 2.1 + Math.random() * 1.2 + (Math.random() - 0.5) * 0.15;
+    const au = 2.1 + rand() * 1.2 + (rand() - 0.5) * 0.15;
     const r = scaleDistance(au);
-    const a = Math.random() * Math.PI * 2;
+    const a = rand() * Math.PI * 2;
     positions[i * 3] = Math.cos(a) * r;
-    positions[i * 3 + 1] = (Math.random() - 0.5) * 3.5;
+    positions[i * 3 + 1] = (rand() - 0.5) * 3.5;
     positions[i * 3 + 2] = Math.sin(a) * r;
   }
   const geo = new THREE.BufferGeometry();
@@ -484,11 +496,11 @@ function createKuiperBelt(scene) {
   const COUNT = 3000;
   const positions = new Float32Array(COUNT * 3);
   for (let i = 0; i < COUNT; i++) {
-    const au = 30 + Math.random() * 20;
+    const au = 30 + rand() * 20;
     const r = scaleDistance(au);
-    const a = Math.random() * Math.PI * 2;
+    const a = rand() * Math.PI * 2;
     positions[i * 3] = Math.cos(a) * r;
-    positions[i * 3 + 1] = (Math.random() - 0.5) * r * 0.12; // thicker, scattered disc
+    positions[i * 3 + 1] = (rand() - 0.5) * r * 0.12; // thicker, scattered disc
     positions[i * 3 + 2] = Math.sin(a) * r;
   }
   const geo = new THREE.BufferGeometry();
@@ -537,15 +549,15 @@ export function createStarfield(scene) {
     v.randomDirection().multiplyScalar(4200);
     positions.set([v.x, v.y, v.z], i * 3);
 
-    const t = Math.random();
+    const t = rand();
     const tint = TINTS.find(([p]) => t <= p)[1];
-    const j = 0.92 + Math.random() * 0.08; // slight per-star tint jitter
+    const j = 0.92 + rand() * 0.08; // slight per-star tint jitter
     colors.set([tint[0] * j, tint[1] * j, tint[2] * j], i * 3);
 
     // power-law magnitudes: lots of faint stars, a handful of bright ones
-    sizes[i] = 0.9 + 5.5 * Math.pow(Math.random(), 7);
-    phases[i] = Math.random() * Math.PI * 2;
-    speeds[i] = 0.6 + Math.random() * 2.2;
+    sizes[i] = 0.9 + 5.5 * Math.pow(rand(), 7);
+    phases[i] = rand() * Math.PI * 2;
+    speeds[i] = 0.6 + rand() * 2.2;
   }
 
   const geo = new THREE.BufferGeometry();

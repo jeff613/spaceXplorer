@@ -1,8 +1,9 @@
 import * as THREE from 'three';
-import { SPACECRAFT, scaleDistance, TRUE_SCALE } from './data.js';
+import { SPACECRAFT, scaleDistance, TRUE_SCALE, mulberry32 } from './data.js';
 import { keplerPosition } from './bodies.js';
 
 const DEG = Math.PI / 180;
+const rand = mulberry32(48151623);
 
 // ─── Procedural spacecraft model kit ──────────────────────────────────────
 // Recognizable miniatures built from primitives with PBR materials, so they
@@ -283,7 +284,7 @@ export function buildSpacecraft(scene, bodies) {
       plane.add(mesh);
       parent.anchor.add(plane);
       const pick = addPickProxy(mesh, 1.0);
-      const phase = Math.random() * Math.PI * 2;
+      const phase = rand() * Math.PI * 2;
       craft.set(data.id, {
         data, mesh, pick, displayRadius: 0.6,
         update(days) {
@@ -390,8 +391,8 @@ function buildStarlink(earth, data) {
   const raan = new Float32Array(N);
   const phase = new Float32Array(N);
   for (let i = 0; i < N; i++) {
-    raan[i] = Math.random() * Math.PI * 2;
-    phase[i] = Math.random() * Math.PI * 2;
+    raan[i] = rand() * Math.PI * 2;
+    phase[i] = rand() * Math.PI * 2;
   }
   const positions = new Float32Array(N * 3);
   const geo = new THREE.BufferGeometry();

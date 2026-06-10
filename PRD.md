@@ -2,7 +2,7 @@
 
 **Status:** Living document — the improvement loop works against this.
 **Owner:** Jeff
-**Last updated:** 2026-06-10 (iteration 18)
+**Last updated:** 2026-06-10 (iteration 19)
 
 ## 1. Vision
 
@@ -99,7 +99,7 @@ a date picker alongside NOW.
 - [x] Uranus rings (ε + faint bands), Neptune rings (Adams, Le Verrier) — shipped iter 6 (arcs approximated as faint full rings)
 - [ ] Jupiter's Great Red Spot orientation; gas giant band motion
 - [x] True-scale mode (?scale=true + toggle): linear distances, real radii, real moon orbits; craft become micro-markers — shipped iter 18
-- [ ] Real lunar phase / eclipse shadows (stretch)
+- [x] Real lunar phase: Moon driven by J2000 mean longitude + sidereal month (true phase from sun-lit geometry) — shipped iter 19; eclipse shadows remain (stretch)
 
 **Comprehensiveness**
 - [x] More spacecraft: Juno (iter 4); Pioneers, Cassini memorial (iter 9);
@@ -120,7 +120,7 @@ a date picker alongside NOW.
 
 **Reliability & performance**
 - [x] FPS budget test in suite; perf regression gate — shipped iter 5
-- [ ] Visual regression snapshots for key views
+- [ ] Visual regression snapshots for key views (groundwork done iter 19: fully seeded deterministic universe)
 - [x] Mobile-viewport E2E tests (boot, overflow, nav collapse, touch select) — shipped iter 12
 - [x] Graceful degradation when WebGL is unavailable — shipped iter 13 (tested with a WebGL-disabled browser)
 

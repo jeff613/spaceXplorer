@@ -511,6 +511,41 @@ try {
     await noGl.close();
   }
 
+  console.log('\n— Determinism & lunar phase');
+  const worldFingerprint = `(() => {
+    const sx = window.__sx;
+    const belt = [];
+    sx.scene.traverse((o) => {
+      const n = o.geometry?.attributes?.position?.count;
+      if (o.isPoints && (n === 2200 || n === 3000) && belt.length < 6) {
+        const a = o.geometry.attributes.position.array;
+        belt.push(a[0], a[1], a[2]);
+      }
+    });
+    return belt.join(',');
+  })()`;
+  const fp1 = await page.evaluate(worldFingerprint);
+  const page3 = await openPage(browser, BASE, consoleErrors);
+  const fp2 = await page3.evaluate(worldFingerprint);
+  await page3.close();
+  check('universe scatter is deterministic across loads', fp1 === fp2 && fp1.length > 0);
+
+  const moonPhase = await page.evaluate(() => {
+    const sx = window.__sx;
+    const moon = sx.bodies.get('moon');
+    const v = new (moon.mesh.position.constructor)();
+    moon.mesh.getWorldPosition(v);
+    const e = sx.bodies.get('earth').anchor.position;
+    const lambda = ((Math.atan2(-(v.z - e.z), v.x - e.x) * 180 / Math.PI) + 360) % 360;
+    const days = sx.sim.days;
+    const expected = ((218.316 + (360 / 27.321661) * days) % 360 + 360) % 360;
+    let diff = Math.abs(lambda - expected) % 360;
+    if (diff > 180) diff = 360 - diff;
+    return { lambda, expected, diff };
+  });
+  check(`Moon at its real ecliptic longitude (off by ${moonPhase.diff.toFixed(1)}°)`,
+    moonPhase.diff < 3);
+
   console.log('\n— True-scale mode');
   const ts = await openPage(browser, `${BASE}/?scale=true`, consoleErrors);
   const tsChecks = await ts.evaluate(() => {

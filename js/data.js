@@ -23,6 +23,19 @@ export function scaleRadius(km) {
 
 export const SUN_DISPLAY_RADIUS = TRUE_SCALE ? (696340 / KM_PER_AU) * DIST_MUL : 11;
 
+// Deterministic PRNG (mulberry32) — the universe scatter (stars, belts,
+// constellations, moon phases) must be reproducible run to run
+export function mulberry32(seed) {
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6D2B79F5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
 // Days since J2000 epoch (2000-01-01 12:00 UTC) for a JS Date
 export const J2000 = Date.UTC(2000, 0, 1, 12);
 export function daysSinceJ2000(date = new Date()) {
@@ -247,8 +260,8 @@ export const SUN = {
 export const MOONS = [
   {
     id: 'moon', name: 'Moon', type: 'Moon of Earth', parent: 'earth', texture: '2k_moon.jpg',
-    ecliptic: true,
-    radiusKm: 1737.4, orbitRadii: 3.2, trueOrbitRadii: 60.3, period: 27.32,
+    ecliptic: true, meanLongitude0: 218.316,
+    radiusKm: 1737.4, orbitRadii: 3.2, trueOrbitRadii: 60.3, period: 27.321661,
     info: {
       'Radius': '1,737 km', 'Orbital period': '27.3 days',
       'Distance from Earth': '384,400 km', 'Surface temp': '−173 to 127 °C',
