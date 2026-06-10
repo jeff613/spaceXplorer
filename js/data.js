@@ -30,7 +30,7 @@ export function daysSinceJ2000(date = new Date()) {
 
 export const PLANETS = [
   {
-    id: 'mercury', name: 'Mercury', type: 'Planet', texture: 'mercurymap.jpg',
+    id: 'mercury', name: 'Mercury', type: 'Planet', texture: '2k_mercury.jpg',
     radiusKm: 2439.7,
     elements: { a: 0.387, e: 0.2056, i: 7.0, Om: 48.33, varpi: 77.46, L0: 252.25, period: 87.97 },
     rotationHours: 1407.6, tilt: 0.03,
@@ -42,7 +42,7 @@ export const PLANETS = [
     fact: 'Mercury\'s day-night temperature swing of 600 °C is the most extreme in the solar system — yet ice hides in its permanently shadowed polar craters.',
   },
   {
-    id: 'venus', name: 'Venus', type: 'Planet', texture: 'venusmap.jpg', atmosphere: 0xe8cf9a,
+    id: 'venus', name: 'Venus', type: 'Planet', texture: '2k_venus_atmosphere.jpg', atmosphere: 0xe8cf9a,
     radiusKm: 6051.8,
     elements: { a: 0.723, e: 0.0068, i: 3.39, Om: 76.68, varpi: 131.53, L0: 181.98, period: 224.7 },
     rotationHours: -5832.5, tilt: 177.4,
@@ -54,7 +54,7 @@ export const PLANETS = [
     fact: 'Venus spins backwards and so slowly that its day is longer than its year. Its CO₂ atmosphere makes it hotter than Mercury.',
   },
   {
-    id: 'earth', name: 'Earth', type: 'Planet', texture: 'earthmap1k.jpg', clouds: 'earthcloudmap.jpg',
+    id: 'earth', name: 'Earth', type: 'Planet', texture: '2k_earth_daymap.jpg', clouds: '2k_earth_clouds.jpg',
     nightLights: 'earthlights.jpg', atmosphere: 0x5fa8ff,
     radiusKm: 6371,
     elements: { a: 1.0, e: 0.0167, i: 0.0, Om: 0.0, varpi: 102.94, L0: 100.46, period: 365.25 },
@@ -67,7 +67,7 @@ export const PLANETS = [
     fact: 'The only known world with liquid surface water and life. Roughly 8,000 active satellites orbit it — most of them Starlink.',
   },
   {
-    id: 'mars', name: 'Mars', type: 'Planet', texture: 'marsmap1k.jpg', atmosphere: 0xd89a72,
+    id: 'mars', name: 'Mars', type: 'Planet', texture: '2k_mars.jpg', atmosphere: 0xd89a72,
     radiusKm: 3389.5,
     elements: { a: 1.524, e: 0.0934, i: 1.85, Om: 49.56, varpi: 336.04, L0: 355.45, period: 686.98 },
     rotationHours: 24.62, tilt: 25.19,
@@ -79,7 +79,7 @@ export const PLANETS = [
     fact: 'Home to Olympus Mons, a volcano three times the height of Everest, and Valles Marineris, a canyon as long as the United States.',
   },
   {
-    id: 'jupiter', name: 'Jupiter', type: 'Planet', texture: 'jupitermap.jpg',
+    id: 'jupiter', name: 'Jupiter', type: 'Planet', texture: '2k_jupiter.jpg',
     radiusKm: 69911,
     elements: { a: 5.203, e: 0.0484, i: 1.30, Om: 100.56, varpi: 14.75, L0: 34.40, period: 4332.6 },
     rotationHours: 9.93, tilt: 3.13,
@@ -91,7 +91,7 @@ export const PLANETS = [
     fact: 'More than twice as massive as all other planets combined. The Great Red Spot is a storm larger than Earth that has raged for centuries.',
   },
   {
-    id: 'saturn', name: 'Saturn', type: 'Planet', texture: 'saturnmap.jpg', ring: 'saturnringcolor.jpg',
+    id: 'saturn', name: 'Saturn', type: 'Planet', texture: '2k_saturn.jpg', ring: '2k_saturn_ring_alpha.png',
     radiusKm: 58232,
     elements: { a: 9.537, e: 0.0542, i: 2.49, Om: 113.72, varpi: 92.43, L0: 49.94, period: 10759 },
     rotationHours: 10.7, tilt: 26.73,
@@ -103,7 +103,7 @@ export const PLANETS = [
     fact: 'Its rings span 280,000 km but are on average only about 10 metres thick — proportionally thinner than a sheet of paper.',
   },
   {
-    id: 'uranus', name: 'Uranus', type: 'Planet', texture: 'uranusmap.jpg', ringProc: 'uranus',
+    id: 'uranus', name: 'Uranus', type: 'Planet', texture: '2k_uranus.jpg', ringProc: 'uranus',
     radiusKm: 25362,
     elements: { a: 19.19, e: 0.0472, i: 0.77, Om: 74.0, varpi: 170.96, L0: 313.23, period: 30688.5 },
     rotationHours: -17.24, tilt: 97.77,
@@ -115,7 +115,7 @@ export const PLANETS = [
     fact: 'Uranus rolls around the Sun on its side, tilted 98° — likely the scar of an ancient collision with an Earth-sized body.',
   },
   {
-    id: 'neptune', name: 'Neptune', type: 'Planet', texture: 'neptunemap.jpg', ringProc: 'neptune',
+    id: 'neptune', name: 'Neptune', type: 'Planet', texture: '2k_neptune.jpg', ringProc: 'neptune',
     radiusKm: 24622,
     elements: { a: 30.07, e: 0.0086, i: 1.77, Om: 131.78, varpi: 44.97, L0: 304.88, period: 60182 },
     rotationHours: 16.11, tilt: 28.32,
@@ -223,7 +223,7 @@ export const PLANETS = [
 ];
 
 export const SUN = {
-  id: 'sun', name: 'Sun', type: 'G-type star', texture: 'sunmap.jpg',
+  id: 'sun', name: 'Sun', type: 'G-type star', texture: '2k_sun.jpg',
   info: {
     'Radius': '696,340 km (109 × Earth)', 'Mass': '1.99 × 10³⁰ kg (99.86% of system)',
     'Surface temp': '5,505 °C', 'Core temp': '15 million °C', 'Age': '4.6 billion years',
@@ -239,7 +239,7 @@ export const SUN = {
 // (Earth's Moon orbits near the ecliptic, not Earth's equator).
 export const MOONS = [
   {
-    id: 'moon', name: 'Moon', type: 'Moon of Earth', parent: 'earth', texture: 'moonmap1k.jpg',
+    id: 'moon', name: 'Moon', type: 'Moon of Earth', parent: 'earth', texture: '2k_moon.jpg',
     ecliptic: true,
     radiusKm: 1737.4, orbitRadii: 3.2, period: 27.32,
     info: {

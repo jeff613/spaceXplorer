@@ -211,8 +211,7 @@ function makeRing(planetR, map, { inner, outer, gain = 1.0 }) {
       varying vec2 vUv; varying vec3 vWorldPos;
       void main() {
         vec4 c = texture2D(map, vUv);
-        float lum = max(max(c.r, c.g), c.b);
-        float alpha = clamp(lum * 1.5, 0.0, 1.0) * c.a * gain;
+        float alpha = c.a * gain;
         // shadow cylinder cast by the planet, pointing away from the sun
         vec3 d = normalize(planetPos);
         vec3 rel = vWorldPos - planetPos;
@@ -462,8 +461,8 @@ export function createStarfield(scene) {
   const sky = new THREE.Mesh(
     new THREE.SphereGeometry(4600, 48, 24),
     new THREE.MeshBasicMaterial({
-      map: loadTex('galaxy_starfield.png'), side: THREE.BackSide,
-      color: 0x777788, depthWrite: false,
+      map: loadTex('2k_stars_milky_way.jpg'), side: THREE.BackSide,
+      color: 0x8890a0, depthWrite: false,
     }),
   );
   scene.add(sky);

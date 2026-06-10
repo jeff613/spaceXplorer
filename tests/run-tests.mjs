@@ -190,10 +190,18 @@ try {
   await frames(page, 2);
   await page.evaluate(() => window.__sx.deselect());
   await frames(page, 2);
+  // aim at Earth's disc but avoid floating labels that may overlay the
+  // exact centre (clicking a label is valid UX, but selects that object)
   const screenPos = await page.evaluate(() => {
     const sx = window.__sx;
     const v = sx.bodies.get('earth').anchor.position.clone().project(sx.camera);
-    return { x: (v.x * 0.5 + 0.5) * innerWidth, y: (-v.y * 0.5 + 0.5) * innerHeight };
+    const cx = (v.x * 0.5 + 0.5) * innerWidth;
+    const cy = (-v.y * 0.5 + 0.5) * innerHeight;
+    for (const dy of [0, 12, 24, -12, 36]) {
+      const el = document.elementFromPoint(cx, cy + dy);
+      if (el && el.id === 'scene') return { x: cx, y: cy + dy };
+    }
+    return { x: cx, y: cy };
   });
   await page.mouse.click(screenPos.x, screenPos.y);
   await frames(page, 2);

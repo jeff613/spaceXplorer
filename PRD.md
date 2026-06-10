@@ -2,7 +2,7 @@
 
 **Status:** Living document — the improvement loop works against this.
 **Owner:** Jeff
-**Last updated:** 2026-06-10 (iteration 9)
+**Last updated:** 2026-06-10 (iteration 10)
 
 ## 1. Vision
 
@@ -84,10 +84,10 @@ a date picker alongside NOW.
 **Graphics (top priority — best-in-class realistic & fancy)**
 - [x] Post-processing pipeline: UnrealBloomPass + ACES filmic tone mapping — shipped iter 5
 - [ ] Animated sun: ~~surface noise shader + corona~~ (shipped iter 5); lens flare remains
-- [ ] Higher-res planet textures (2K+) with normal/specular maps where available
+- [x] Higher-res planet textures: 2K set (Solar System Scope, CC-BY) + real ring alpha — shipped iter 10; normal/specular maps remain
 - [ ] Atmospheric scattering upgrade (day/night terminator glow)
 - [x] Planet self-shadowing on rings (Saturn ring shadow) — shipped iter 6
-- [ ] Milky way HDR skybox upgrade
+- [x] Milky way skybox upgrade (2K pano) — shipped iter 10
 - [ ] Camera motion polish (inertia, FOV easing on fly-to)
 
 **Fidelity & realism**

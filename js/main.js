@@ -250,7 +250,7 @@ document.body.classList.add('loaded');
 // programmatic handle for the test suite (and console tinkering)
 window.__sx = {
   bodies, craft, sim, camera, controls, scene, belt, tour,
-  select, deselect,
+  select, deselect, raycastAt,
   selected: () => selected,
   frame: () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))),
 };
