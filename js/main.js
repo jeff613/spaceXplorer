@@ -312,7 +312,10 @@ function animate() {
   for (const c of craft.values()) c.update(sim.days);
   belt.update(sim.days);
 
-  controls.autoRotate = !selected && performance.now() - idleState.last > 25000;
+  // cinematic drift while the tour dwells; otherwise only after long idle
+  controls.autoRotate = tour.active
+    || (!selected && performance.now() - idleState.last > 25000);
+  controls.autoRotateSpeed = tour.active ? 0.4 : 0.18;
 
   updateCamera(dt);
   controls.update();

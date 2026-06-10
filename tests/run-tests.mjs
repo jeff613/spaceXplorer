@@ -737,6 +737,9 @@ try {
   }));
   check('tour starts at the Sun with banner', tourStart.active && tourStart.selected === 'sun'
     && tourStart.banner && tourStart.step.startsWith('1 /'), JSON.stringify(tourStart));
+  check('tour dwell has cinematic camera drift', await page.evaluate(
+    () => window.__sx.controls.autoRotate === true,
+  ));
 
   await page.click('#tour-next');
   await frames(page, 2);
@@ -749,7 +752,8 @@ try {
   await frames(page, 2);
   check('manual selection exits the tour', await page.evaluate(
     () => !window.__sx.tour.active
-      && !document.getElementById('tour-banner').classList.contains('open'),
+      && !document.getElementById('tour-banner').classList.contains('open')
+      && window.__sx.controls.autoRotate === false,
   ));
   await page.keyboard.press('Escape');
   await frames(page, 2);

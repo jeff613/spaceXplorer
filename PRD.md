@@ -2,7 +2,7 @@
 
 **Status:** Living document — the improvement loop works against this.
 **Owner:** Jeff
-**Last updated:** 2026-06-13 (iteration 49)
+**Last updated:** 2026-06-13 (iteration 50)
 
 ## 1. Vision
 
@@ -116,7 +116,7 @@ a date picker alongside NOW.
 - [x] More Kuiper objects: Makemake, Haumea (iter 4); Arrokoth, Sedna (iter 9)
 
 **UX & fun**
-- [x] Guided tour mode ("Grand Tour" — autoplay through highlights) — shipped iter 7 (17 stops, prev/next/exit, auto-advance 9s, exits on manual selection)
+- [x] Guided tour mode ("Grand Tour" — autoplay through highlights) — shipped iter 7 (17 stops, prev/next/exit, auto-advance 9s, exits on manual selection); cinematic camera drift during dwells (iter 50)
 - [x] Label overlap avoidance (collision-aware placement) — shipped iter 8 (priority: selected > Sun > planets > craft > moons)
 - [x] Time-reverse (negative speeds) and date picker (jump to any date —
       e.g., 1986 Halley apparition, 2061 return) — shipped iter 4
