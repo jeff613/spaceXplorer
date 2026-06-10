@@ -210,6 +210,7 @@ try {
     const s = document.getElementById('nav-search');
     s.value = '';
     s.dispatchEvent(new Event('input'));
+    s.blur();
   });
 
   await page.click('#toggle-orbits');
@@ -300,6 +301,50 @@ try {
     return finite;
   });
   check('positions stay finite after +3000 days of fast-forward', stable);
+
+  console.log('\n— Keyboard, help & labels');
+  await page.keyboard.press('ArrowRight');
+  await frames(page, 2);
+  check('ArrowRight selects first object (Sun)', await page.evaluate(
+    () => window.__sx.selected()?.data.id === 'sun',
+  ));
+  await page.keyboard.press('ArrowRight');
+  await frames(page, 2);
+  check('ArrowRight again advances (Mercury)', await page.evaluate(
+    () => window.__sx.selected()?.data.id === 'mercury',
+  ));
+  await page.keyboard.press('ArrowLeft');
+  await frames(page, 2);
+  check('ArrowLeft goes back (Sun)', await page.evaluate(
+    () => window.__sx.selected()?.data.id === 'sun',
+  ));
+  await page.keyboard.press('Escape');
+
+  await page.keyboard.press('?');
+  check('? opens help overlay', await page.evaluate(
+    () => document.getElementById('help-overlay').classList.contains('open'),
+  ));
+  await page.keyboard.press('Escape');
+  check('Esc closes help overlay', await page.evaluate(
+    () => !document.getElementById('help-overlay').classList.contains('open'),
+  ));
+
+  const overlaps = await page.evaluate(async () => {
+    await window.__sx.frame();
+    const rects = [...document.querySelectorAll('.label')]
+      .filter((el) => el.style.display !== 'none' && el.offsetParent !== null)
+      .map((el) => el.getBoundingClientRect());
+    let n = 0;
+    for (let i = 0; i < rects.length; i++) {
+      for (let j = i + 1; j < rects.length; j++) {
+        const a = rects[i], b = rects[j];
+        if (a.left < b.right - 2 && a.right > b.left + 2
+          && a.top < b.bottom - 2 && a.bottom > b.top + 2) n++;
+      }
+    }
+    return { n, visible: rects.length };
+  });
+  check(`no overlapping labels (${overlaps.visible} visible, ${overlaps.n} collisions)`, overlaps.n === 0);
 
   console.log('\n— Grand Tour');
   await page.click('#btn-tour');

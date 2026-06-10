@@ -426,6 +426,67 @@ body.loaded #hud-header, body.loaded #nav-panel, body.loaded #time-bar { opacity
 
 .label:hover { color: var(--amber); }
 
+/* ── Help ───────────────────────────────────────────────────────────── */
+
+#btn-help {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 10;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--panel);
+  border: 1px solid var(--panel-edge);
+  color: var(--cyan);
+  font-family: var(--font-ui);
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+#btn-help:hover { border-color: var(--amber); color: var(--amber); }
+
+#help-overlay {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -48%);
+  z-index: 20;
+  width: 340px;
+  background: var(--panel);
+  border: 1px solid var(--panel-edge);
+  border-radius: 8px;
+  padding: 22px 26px;
+  backdrop-filter: blur(10px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s, transform 0.25s;
+}
+
+#help-overlay.open { opacity: 1; pointer-events: auto; transform: translate(-50%, -50%); }
+
+#help-overlay h3 {
+  font-family: var(--font-display);
+  font-size: 13px;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--amber);
+  margin-bottom: 14px;
+}
+
+.help-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(127, 214, 255, 0.08);
+  font-size: 12.5px;
+}
+
+.help-row span:first-child { color: var(--cyan); white-space: nowrap; }
+.help-row span:last-child { color: var(--ink); text-align: right; }
+
 /* ── Small screens ──────────────────────────────────────────────────── */
 
 @media (max-width: 720px) {

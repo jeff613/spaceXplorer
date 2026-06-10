@@ -2,7 +2,7 @@
 
 **Status:** Living document — the improvement loop works against this.
 **Owner:** Jeff
-**Last updated:** 2026-06-10 (iteration 7)
+**Last updated:** 2026-06-10 (iteration 8)
 
 ## 1. Vision
 
@@ -107,11 +107,11 @@ a date picker alongside NOW.
 
 **UX & fun**
 - [x] Guided tour mode ("Grand Tour" — autoplay through highlights) — shipped iter 7 (17 stops, prev/next/exit, auto-advance 9s, exits on manual selection)
-- [ ] Label overlap avoidance (collision-aware placement)
+- [x] Label overlap avoidance (collision-aware placement) — shipped iter 8 (priority: selected > Sun > planets > craft > moons)
 - [x] Time-reverse (negative speeds) and date picker (jump to any date —
       e.g., 1986 Halley apparition, 2061 return) — shipped iter 4
 - [ ] Object comparison cards (Earth vs. Jupiter size, etc.)
-- [ ] Keyboard navigation (arrows cycle objects, ? help overlay)
+- [x] Keyboard navigation (arrows cycle objects, ? help overlay) — shipped iter 8
 - [ ] Sound design (subtle, optional)
 - [ ] Mobile polish pass (touch targets, panel ergonomics)
 

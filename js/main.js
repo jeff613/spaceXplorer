@@ -90,8 +90,33 @@ function deselect() {
 }
 
 document.getElementById('info-close').addEventListener('click', deselect);
+
+const helpOverlay = () => document.getElementById('help-overlay');
+document.getElementById('btn-help').addEventListener('click', () => {
+  helpOverlay().classList.toggle('open');
+});
+
 window.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') { tour.stop(); deselect(); }
+  // block shortcuts only while a text-entry control has focus — checkboxes
+  // and buttons keep keyboard navigation alive
+  const a = document.activeElement;
+  const typing = !!a && (a.tagName === 'TEXTAREA'
+    || (a.tagName === 'INPUT' && !['checkbox', 'radio', 'button'].includes(a.type)));
+  if (e.key === 'Escape') {
+    if (helpOverlay().classList.contains('open')) { helpOverlay().classList.remove('open'); return; }
+    tour.stop();
+    deselect();
+    return;
+  }
+  if (typing) return;
+  if (e.key === '?') helpOverlay().classList.toggle('open');
+  if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+    e.preventDefault();
+    const order = navigator.order;
+    const i = selected ? order.indexOf(selected) : -1;
+    const step = e.key === 'ArrowRight' ? 1 : -1;
+    userSelect(order[(i + step + order.length) % order.length]);
+  }
 });
 
 // click-to-pick (ignore drags)
@@ -203,7 +228,7 @@ function animate() {
   updateCamera(dt);
   controls.update();
   timeUI.updateDate();
-  labels.update(camera, window.innerWidth, window.innerHeight);
+  labels.update(camera, window.innerWidth, window.innerHeight, selected?.data.id);
 
   composer.render();
 }

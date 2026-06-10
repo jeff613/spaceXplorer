@@ -62,7 +62,13 @@ export function buildNavigator(bodies, craft, onSelect) {
     }
   });
 
+  // flat selection order for keyboard cycling
+  const order = groups.flatMap((g) => g.ids)
+    .map((id) => bodies.get(id) || craft.get(id))
+    .filter(Boolean);
+
   return {
+    order,
     setActive(id) {
       for (const [key, el] of items) el.classList.toggle('active', key === id);
     },
@@ -119,13 +125,24 @@ export function createLabels(bodies, craft, onSelect) {
     if (id !== 'starlink') add(body, 'label-craft');
   }
 
+  // priority for collision resolution: lower wins a contested spot
+  const priorityOf = (body, selectedId) => {
+    if (body.data.id === selectedId) return 0;
+    if (body.data.id === 'sun') return 1;
+    if (body.data.parent) return 4;
+    if (body.data.kind) return 3;
+    return 2; // planets, dwarfs, comets
+  };
+
   let visible = true;
   return {
     setVisible(v) { visible = v; layer.style.display = v ? '' : 'none'; },
-    update(camera, width, height) {
+    update(camera, width, height, selectedId = null) {
       if (!visible) return;
       camera.getWorldPosition(camPos);
-      for (const { body, el } of entries) {
+      const candidates = [];
+      for (const entry of entries) {
+        const { body, el } = entry;
         body.mesh.getWorldPosition(tmp);
         const dist = camPos.distanceTo(tmp);
         // moons + small craft only get labels up close, to avoid clutter
@@ -136,9 +153,32 @@ export function createLabels(bodies, craft, onSelect) {
           el.style.display = 'none';
           continue;
         }
+        candidates.push({
+          entry,
+          sx: (tmp.x * 0.5 + 0.5) * width,
+          sy: (-tmp.y * 0.5 + 0.5) * height,
+          dist,
+          pri: priorityOf(body, selectedId),
+        });
+      }
+
+      // greedy collision-aware placement: high priority + nearer first
+      candidates.sort((a, b) => a.pri - b.pri || a.dist - b.dist);
+      const placed = [];
+      for (const c of candidates) {
+        const el = c.entry.el;
+        if (!c.entry.w) c.entry.w = el.offsetWidth || c.entry.body.data.name.length * 7 + 10;
+        const w = c.entry.w;
+        const x0 = c.sx - w / 2;
+        const y0 = c.sy - 32;
+        const x1 = x0 + w;
+        const y1 = y0 + 18;
+        const hit = placed.some((p) => x0 < p.x1 && x1 > p.x0 && y0 < p.y1 && y1 > p.y0);
+        if (hit) { el.style.display = 'none'; continue; }
+        placed.push({ x0, y0, x1, y1 });
         el.style.display = '';
-        el.style.left = `${(tmp.x * 0.5 + 0.5) * width}px`;
-        el.style.top = `${(-tmp.y * 0.5 + 0.5) * height}px`;
+        el.style.left = `${c.sx}px`;
+        el.style.top = `${c.sy}px`;
       }
     },
   };
