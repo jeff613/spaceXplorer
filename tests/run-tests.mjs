@@ -375,6 +375,11 @@ try {
   });
   check('Io is eclipsed by Jupiter\'s shadow once per orbit',
     eclipse.minC < 0.35 && eclipse.maxC > 0.8, JSON.stringify(eclipse));
+  check('every icon-only control is screen-reader labeled', await page.evaluate(
+    () => [...document.querySelectorAll(
+      'button, input[type=range], input[type=search], input[type=date]',
+    )].every((el) => el.getAttribute('aria-label') || el.textContent.trim().length >= 2),
+  ));
   const neb = await page.evaluate(() => {
     const g = window.__sx.scene.getObjectByName('nebulae');
     return {

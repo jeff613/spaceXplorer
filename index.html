@@ -45,10 +45,10 @@
 
   <!-- object navigator -->
   <aside id="nav-panel">
-    <button id="nav-toggle" title="Toggle navigator">☰</button>
+    <button id="nav-toggle" title="Toggle navigator" aria-label="Toggle navigator">☰</button>
     <div id="nav-scroll">
       <button id="btn-tour" title="Autoplay a tour of the highlights">✦ Grand Tour</button>
-      <input type="search" id="nav-search" placeholder="Search objects…" autocomplete="off" />
+      <input type="search" id="nav-search" placeholder="Search objects…" autocomplete="off" aria-label="Search objects" />
       <div id="nav-list"></div>
       <div class="nav-group">View</div>
       <label class="toggle"><input type="checkbox" id="toggle-orbits" checked /><span>Orbit lines</span></label>
@@ -62,8 +62,8 @@
 
   <!-- info panel -->
   <section id="info-panel">
-    <button id="info-share" title="Copy a link to this view">⧉</button>
-    <button id="info-close" title="Close">×</button>
+    <button id="info-share" title="Copy a link to this view" aria-label="Copy a link to this view">⧉</button>
+    <button id="info-close" title="Close" aria-label="Close info panel">×</button>
     <h2 class="info-name"></h2>
     <p class="info-type"></p>
     <div class="info-rows"></div>
@@ -74,38 +74,38 @@
 
   <!-- grand tour banner -->
   <div id="tour-banner">
-    <button id="tour-prev" title="Previous stop">⏮</button>
+    <button id="tour-prev" title="Previous stop" aria-label="Previous tour stop">⏮</button>
     <div id="tour-info">
       <span id="tour-name"></span>
       <span id="tour-step"></span>
     </div>
-    <button id="tour-next" title="Next stop">⏭</button>
-    <button id="tour-exit" title="End tour">✕</button>
+    <button id="tour-next" title="Next stop" aria-label="Next tour stop">⏭</button>
+    <button id="tour-exit" title="End tour" aria-label="End tour">✕</button>
   </div>
 
   <!-- time controls -->
   <footer id="time-bar">
-    <button id="btn-reverse" title="Reverse time">⏴</button>
-    <button id="btn-play" title="Pause">❚❚</button>
-    <button id="btn-realtime" title="Run at real time — one second per second">1×</button>
+    <button id="btn-reverse" title="Reverse time" aria-label="Reverse time">⏴</button>
+    <button id="btn-play" title="Pause" aria-label="Play or pause time">❚❚</button>
+    <button id="btn-realtime" title="Run at real time — one second per second" aria-label="Run at real time">1×</button>
     <div id="speed-wrap">
-      <input type="range" id="speed-slider" min="0" max="100" value="50" />
+      <input type="range" id="speed-slider" min="0" max="100" value="50" aria-label="Time speed" />
       <span id="speed-label"></span>
     </div>
     <span id="date-label"></span>
-    <input type="date" id="date-input" title="Jump to a date" />
-    <button id="btn-now" title="Jump to the present">NOW</button>
+    <input type="date" id="date-input" title="Jump to a date" aria-label="Jump to a date" />
+    <button id="btn-now" title="Jump to the present" aria-label="Jump to the present">NOW</button>
   </footer>
 
   <!-- first-visit nudge -->
   <div id="onboard-toast">
     <span>New here?</span>
     <button id="onboard-tour">✦ Take the Grand Tour</button>
-    <button id="onboard-close" title="Dismiss">✕</button>
+    <button id="onboard-close" title="Dismiss" aria-label="Dismiss welcome message">✕</button>
   </div>
 
   <!-- help -->
-  <button id="btn-help" title="Keyboard shortcuts & controls">?</button>
+  <button id="btn-help" title="Keyboard shortcuts & controls" aria-label="Keyboard shortcuts and controls">?</button>
   <div id="help-overlay">
     <h3>Controls</h3>
     <div class="help-row"><span>Drag</span><span>Orbit the camera</span></div>
