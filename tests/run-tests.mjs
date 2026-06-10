@@ -315,6 +315,11 @@ try {
   });
   check('asteroids are irregular rocks, dwarfs cratered, Haumea egg-shaped',
     Object.values(rocks).every(Boolean), JSON.stringify(rocks));
+  check('textureless moons have crater relief', await page.evaluate(
+    () => ['europa', 'titan', 'triton', 'io'].every(
+      (id) => !!window.__sx.bodies.get(id).mesh.material.bumpMap,
+    ),
+  ));
 
   console.log('\n— Orbital accuracy (current date)');
   const earthAU = await helioDistanceAU(page, 'earth');

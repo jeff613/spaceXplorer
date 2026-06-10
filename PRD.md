@@ -2,7 +2,7 @@
 
 **Status:** Living document — the improvement loop works against this.
 **Owner:** Jeff
-**Last updated:** 2026-06-13 (iteration 44)
+**Last updated:** 2026-06-13 (iteration 45)
 
 ## 1. Vision
 
@@ -86,6 +86,8 @@ a date picker alongside NOW.
 ## 6. Roadmap (prioritized backlog)
 
 **Graphics (top priority — best-in-class realistic & fancy)**
+- [ ] Procedural color maps for major moons (Io volcanic mottling, Europa lineae, Titan haze tint) — crater bump relief shipped iter 45, color identity still pending
+- [ ] Starfield nebula/cluster accents (seeded wispy sprites, Andromeda)
 - [x] Spacecraft visual upgrade: procedural PBR miniatures for every craft
       (dishes, foil, panels, rovers, Roadster w/ wheels), distance glints,
       PBR planet/moon materials, soft round constellation points, lumpy

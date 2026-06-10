@@ -552,6 +552,10 @@ export function createMoon(scene, data, parentBody) {
   if (data.bump) {
     mat.bumpMap = texLoader.load(`textures/${data.bump}`);
     mat.bumpScale = data.bumpScale ?? 1.6;
+  } else if (!data.texture) {
+    // textureless moons get the seeded crater field too
+    mat.bumpMap = makeCraterBump(data.id);
+    mat.bumpScale = data.bumpScale ?? 1.0;
   }
   const mesh = new THREE.Mesh(geo, mat);
   mesh.name = data.id;
