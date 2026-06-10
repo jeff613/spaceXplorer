@@ -303,6 +303,22 @@ document.getElementById('info-share').addEventListener('click', async () => {
   } catch { /* clipboard unavailable (permissions) — silently skip */ }
 });
 
+// first visit? offer the tour (skipped when a deep link brought them here)
+const toast = document.getElementById('onboard-toast');
+const dismissToast = () => toast.classList.remove('show');
+if (!localStorage.getItem('sx-visited') && !focusId) {
+  setTimeout(() => {
+    if (!selected && !tour.active) toast.classList.add('show');
+  }, 1500);
+}
+localStorage.setItem('sx-visited', '1');
+document.getElementById('onboard-tour').addEventListener('click', () => {
+  dismissToast();
+  tour.start();
+});
+document.getElementById('onboard-close').addEventListener('click', dismissToast);
+canvas.addEventListener('pointerdown', dismissToast, { once: false });
+
 // start focused on the whole system; fade in the HUD
 document.body.classList.add('loaded');
 

@@ -2,7 +2,7 @@
 
 **Status:** Living document — the improvement loop works against this.
 **Owner:** Jeff
-**Last updated:** 2026-06-10 (iteration 25)
+**Last updated:** 2026-06-10 (iteration 26)
 
 ## 1. Vision
 
@@ -130,6 +130,10 @@ a date picker alongside NOW.
 - No accounts, no backend, no build step — stays a static site.
 - No exoplanets / deep-sky catalog — this is the *solar system*.
 - No VR/AR for now.
+
+**Onboarding:** first-visit toast invites the Grand Tour (localStorage-gated,
+suppressed for deep links); tour refreshed to 19 stops incl. Perseverance
+and Apophis (iter 26).
 
 ## 8. Success criteria
 

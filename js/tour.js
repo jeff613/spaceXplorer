@@ -3,9 +3,9 @@
 // dwells, then advances. Any manual selection or Esc exits the tour.
 
 const STOPS = [
-  'sun', 'mercury', 'venus', 'earth', 'iss', 'moon', 'mars', 'jupiter',
-  'europa', 'saturn', 'titan', 'uranus', 'neptune', 'pluto', 'halley',
-  'roadster', 'voyager1',
+  'sun', 'mercury', 'venus', 'earth', 'iss', 'moon', 'mars', 'perseverance',
+  'jupiter', 'europa', 'saturn', 'titan', 'uranus', 'neptune', 'pluto',
+  'halley', 'apophis', 'roadster', 'voyager1',
 ];
 
 const DWELL_MS = 9000;

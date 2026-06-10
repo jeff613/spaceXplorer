@@ -576,3 +576,53 @@ body.loaded #hud-header, body.loaded #nav-panel, body.loaded #time-bar { opacity
   line-height: 1.6;
   color: var(--ink);
 }
+
+/* ── Onboarding toast ───────────────────────────────────────────────── */
+
+#onboard-toast {
+  position: fixed;
+  bottom: 88px;
+  left: 50%;
+  transform: translate(-50%, 14px);
+  z-index: 12;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--panel);
+  border: 1px solid rgba(255, 179, 71, 0.45);
+  border-radius: 28px;
+  padding: 9px 10px 9px 18px;
+  backdrop-filter: blur(8px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s, transform 0.4s;
+}
+
+#onboard-toast.show { opacity: 1; pointer-events: auto; transform: translate(-50%, 0); }
+
+#onboard-toast span { font-size: 12px; letter-spacing: 0.1em; color: var(--ink-dim); }
+
+#onboard-tour {
+  background: rgba(255, 179, 71, 0.14);
+  border: 1px solid var(--amber);
+  border-radius: 18px;
+  color: var(--amber);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  padding: 6px 14px;
+  cursor: pointer;
+}
+
+#onboard-tour:hover { background: rgba(255, 179, 71, 0.28); }
+
+#onboard-close {
+  background: none;
+  border: none;
+  color: var(--ink-dim);
+  font-size: 13px;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+#onboard-close:hover { color: var(--ink); }

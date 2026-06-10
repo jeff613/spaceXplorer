@@ -620,6 +620,31 @@ try {
   check('true scale: toggle reflects mode', tsChecks.toggleChecked);
   await ts.close();
 
+  console.log('\n— Onboarding');
+  const ob = await browser.newPage();
+  await ob.setViewport({ width: 1440, height: 900 });
+  await ob.goto(BASE, { waitUntil: 'networkidle0' });
+  await ob.evaluate(() => localStorage.clear());
+  await ob.reload({ waitUntil: 'networkidle0' });
+  await ob.waitForFunction('window.__sx !== undefined');
+  await new Promise((r) => setTimeout(r, 1900));
+  check('first visit shows tour invitation', await ob.evaluate(
+    () => document.getElementById('onboard-toast').classList.contains('show'),
+  ));
+  await ob.click('#onboard-tour');
+  await ob.evaluate(() => window.__sx.frame());
+  check('toast button starts the tour', await ob.evaluate(
+    () => window.__sx.tour.active
+      && !document.getElementById('onboard-toast').classList.contains('show'),
+  ));
+  await ob.reload({ waitUntil: 'networkidle0' });
+  await ob.waitForFunction('window.__sx !== undefined');
+  await new Promise((r) => setTimeout(r, 1900));
+  check('returning visitor is not nagged', await ob.evaluate(
+    () => !document.getElementById('onboard-toast').classList.contains('show'),
+  ));
+  await ob.close();
+
   console.log('\n— Share links');
   const shareCtx = browser.defaultBrowserContext();
   await shareCtx.overridePermissions(BASE, ['clipboard-read', 'clipboard-write', 'clipboard-sanitized-write']);
