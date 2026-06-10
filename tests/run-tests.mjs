@@ -333,6 +333,16 @@ try {
   });
   check('major moons have color identity, Titan has haze shell',
     moonStyle.colorMaps && moonStyle.titanAtmosphere, JSON.stringify(moonStyle));
+  const neb = await page.evaluate(() => {
+    const g = window.__sx.scene.getObjectByName('nebulae');
+    return {
+      count: g ? g.children.length : 0,
+      andromeda: !!g?.children.find((s) => s.name === 'andromeda'),
+      farOut: g ? g.children.every((s) => s.position.length() > 4000) : false,
+    };
+  });
+  check('starfield has nebula accents + Andromeda beyond the system',
+    neb.count >= 7 && neb.andromeda && neb.farOut, JSON.stringify(neb));
 
   console.log('\n— Orbital accuracy (current date)');
   const earthAU = await helioDistanceAU(page, 'earth');

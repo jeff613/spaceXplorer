@@ -1005,6 +1005,55 @@ export function createStarfield(scene) {
   // drive the twinkle clock here so the render loop needs no extra wiring
   stars.onBeforeRender = () => { mat.uniforms.uTime.value = performance.now() / 1000; };
   scene.add(stars);
+
+  // faint nebula wisps + the Andromeda smudge — own PRNG so the star
+  // sequences above stay byte-identical for visual regression
+  const nrand = mulberry32(0xa57eb1d);
+  const nebulae = new THREE.Group();
+  nebulae.name = 'nebulae';
+  const nebTex = (hue, elong = 1) => {
+    const size = 256;
+    const c = document.createElement('canvas');
+    c.width = c.height = size;
+    const ctx = c.getContext('2d');
+    ctx.translate(size / 2, size / 2);
+    ctx.scale(elong, 1 / elong);
+    for (let i = 0; i < 5; i++) {
+      const x = (nrand() - 0.5) * 70, y = (nrand() - 0.5) * 70;
+      const r = 38 + nrand() * 58;
+      const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+      g.addColorStop(0, `hsla(${hue + (nrand() - 0.5) * 30}, 60%, 70%, ${0.10 + nrand() * 0.1})`);
+      g.addColorStop(1, 'hsla(0, 0%, 0%, 0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(-size, -size, size * 2, size * 2);
+    }
+    return new THREE.CanvasTexture(c);
+  };
+  const HUES = [195, 285, 20, 160, 330, 230];
+  for (let i = 0; i < 6; i++) {
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({
+      map: nebTex(HUES[i]), blending: THREE.AdditiveBlending,
+      depthWrite: false, transparent: true, opacity: 0.16 + nrand() * 0.1,
+    }));
+    const u = nrand() * 2 - 1;
+    const t = nrand() * Math.PI * 2;
+    const sxy = Math.sqrt(1 - u * u);
+    sp.position.set(sxy * Math.cos(t), u, sxy * Math.sin(t)).multiplyScalar(4300);
+    sp.scale.setScalar(420 + nrand() * 380);
+    sp.raycast = () => {};
+    nebulae.add(sp);
+  }
+  // Andromeda: a small elongated glow, roughly at RA 0h42m / Dec +41°
+  const andromeda = new THREE.Sprite(new THREE.SpriteMaterial({
+    map: nebTex(220, 2.6), blending: THREE.AdditiveBlending,
+    depthWrite: false, transparent: true, opacity: 0.5,
+  }));
+  andromeda.name = 'andromeda';
+  andromeda.position.set(0.62, 0.66, -0.42).normalize().multiplyScalar(4300);
+  andromeda.scale.set(150, 60, 1);
+  andromeda.raycast = () => {};
+  nebulae.add(andromeda);
+  scene.add(nebulae);
 }
 
 // ─── Assemble all natural bodies ──────────────────────────────────────────

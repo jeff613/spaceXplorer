@@ -2,7 +2,7 @@
 
 **Status:** Living document — the improvement loop works against this.
 **Owner:** Jeff
-**Last updated:** 2026-06-13 (iteration 46)
+**Last updated:** 2026-06-13 (iteration 47)
 
 ## 1. Vision
 
@@ -87,7 +87,7 @@ a date picker alongside NOW.
 
 **Graphics (top priority — best-in-class realistic & fancy)**
 - [x] Procedural color maps for major moons — Io volcanic mottling, Europa lineae, Titan banded haze + atmosphere shell, Triton cantaloupe + pink cap (iter 46); crater bump relief for all textureless moons (iter 45)
-- [ ] Starfield nebula/cluster accents (seeded wispy sprites, Andromeda)
+- [x] Starfield nebula/cluster accents — six seeded wispy sprites + Andromeda smudge, isolated PRNG (iter 47)
 - [x] Spacecraft visual upgrade: procedural PBR miniatures for every craft
       (dishes, foil, panels, rovers, Roadster w/ wheels), distance glints,
       PBR planet/moon materials, soft round constellation points, lumpy
