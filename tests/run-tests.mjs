@@ -343,6 +343,18 @@ try {
   });
   check('major moons have color identity, Titan has haze shell',
     moonStyle.colorMaps && moonStyle.titanAtmosphere, JSON.stringify(moonStyle));
+  const binary = await page.evaluate(async () => {
+    const sx = window.__sx;
+    await sx.frame();
+    const p = sx.bodies.get('pluto').mesh.position;
+    const c = sx.bodies.get('charon').mesh.position;
+    return {
+      ratio: +(p.length() / c.length()).toFixed(3),
+      opposite: p.dot(c) < 0,
+    };
+  });
+  check('Pluto counter-wobbles around the Pluto–Charon barycenter',
+    Math.abs(binary.ratio - 0.109) < 0.005 && binary.opposite, JSON.stringify(binary));
   const neb = await page.evaluate(() => {
     const g = window.__sx.scene.getObjectByName('nebulae');
     return {

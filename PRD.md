@@ -2,7 +2,7 @@
 
 **Status:** Living document — the improvement loop works against this.
 **Owner:** Jeff
-**Last updated:** 2026-06-13 (iteration 51)
+**Last updated:** 2026-06-13 (iteration 52)
 
 ## 1. Vision
 
@@ -88,7 +88,7 @@ a date picker alongside NOW.
 ## 6. Roadmap (prioritized backlog)
 
 **Graphics (top priority — best-in-class realistic & fancy)**
-- [x] Procedural color maps for major moons — Io volcanic mottling, Europa lineae, Titan banded haze + atmosphere shell, Triton cantaloupe + pink cap (iter 46); crater bump relief for all textureless moons (iter 45); Phobos/Deimos potato shapes (iter 49)
+- [x] Procedural color maps for major moons — Io volcanic mottling, Europa lineae, Titan banded haze + atmosphere shell, Triton cantaloupe + pink cap (iter 46); crater bump relief for all textureless moons (iter 45); Phobos/Deimos potato shapes (iter 49); Pluto–Charon barycenter wobble (iter 52)
 - [x] Starfield nebula/cluster accents — six seeded wispy sprites + Andromeda smudge, isolated PRNG (iter 47)
 - [x] Spacecraft visual upgrade: procedural PBR miniatures for every craft
       (dishes, foil, panels, rovers, Roadster w/ wheels), distance glints,

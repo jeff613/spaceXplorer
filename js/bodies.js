@@ -1096,6 +1096,18 @@ export function buildSolarSystem(scene) {
   attachEclipse(bodies.get('earth'), () => bodies.get('moon'));
   attachEclipse(bodies.get('moon'), () => bodies.get('earth'));
 
+  // Pluto–Charon are a true binary: their barycenter sits outside Pluto, so
+  // Pluto counter-wobbles opposite Charon (mass ratio ≈ 0.109)
+  {
+    const pluto = bodies.get('pluto');
+    const charon = bodies.get('charon');
+    const charonUpdate = charon.update;
+    charon.update = (days) => {
+      charonUpdate(days);
+      pluto.mesh.position.copy(charon.mesh.position).multiplyScalar(-0.109);
+    };
+  }
+
   createStarfield(scene);
   const belt = createAsteroidBelt(scene);
 
