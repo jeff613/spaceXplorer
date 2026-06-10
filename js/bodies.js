@@ -181,7 +181,8 @@ function makeNightLights(radius, file) {
   return new THREE.Mesh(new THREE.SphereGeometry(radius * 1.002, 48, 24), mat);
 }
 
-// Thin rim glow hugging the limb of the planet
+// Rim glow with crude scattering: bright on the day side, fading into
+// night, warming to sunset hues along the terminator (sun at origin)
 function makeAtmosphere(radius, color) {
   const mat = new THREE.ShaderMaterial({
     uniforms: { atmColor: { value: new THREE.Color(color) } },
@@ -190,9 +191,16 @@ function makeAtmosphere(radius, color) {
       uniform vec3 atmColor;
       varying vec2 vUv; varying vec3 vWorldNormal; varying vec3 vWorldPos;
       void main() {
+        vec3 n = normalize(vWorldNormal);
         vec3 viewDir = normalize(cameraPosition - vWorldPos);
-        float rim = pow(1.0 - abs(dot(viewDir, normalize(vWorldNormal))), 3.0);
-        gl_FragColor = vec4(atmColor, rim * 0.75);
+        vec3 sunDir = normalize(-vWorldPos);
+        float rim = pow(1.0 - abs(dot(viewDir, n)), 3.0);
+        float sunDot = dot(n, sunDir);
+        float day = smoothstep(-0.22, 0.25, sunDot);
+        float term = 1.0 - smoothstep(0.0, 0.38, abs(sunDot));
+        vec3 sunset = mix(atmColor, vec3(1.0, 0.42, 0.22), 0.65);
+        vec3 col = mix(atmColor, sunset, term * 0.85);
+        gl_FragColor = vec4(col, rim * (0.18 + 0.72 * day));
       }`,
     transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
   });
@@ -290,7 +298,11 @@ export function createPlanet(scene, data) {
   tiltGroup.add(mesh);
 
   if (data.nightLights) mesh.add(makeNightLights(displayRadius, data.nightLights));
-  if (data.atmosphere) tiltGroup.add(makeAtmosphere(displayRadius, data.atmosphere));
+  let atmosphere = null;
+  if (data.atmosphere) {
+    atmosphere = makeAtmosphere(displayRadius, data.atmosphere);
+    tiltGroup.add(atmosphere);
+  }
 
   let clouds = null;
   if (data.clouds) {
@@ -318,7 +330,7 @@ export function createPlanet(scene, data) {
   scene.add(orbitLine);
 
   const body = {
-    data, mesh, anchor, tiltGroup, orbitLine, displayRadius, rings,
+    data, mesh, anchor, tiltGroup, orbitLine, displayRadius, rings, atmosphere,
     update(days) {
       keplerPosition(data.elements, days, anchor.position);
       mesh.rotation.y = (days * 24 / data.rotationHours) * Math.PI * 2;
