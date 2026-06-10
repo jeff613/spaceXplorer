@@ -2,7 +2,7 @@
 
 **Status:** Living document — the improvement loop works against this.
 **Owner:** Jeff
-**Last updated:** 2026-06-13 (iteration 34)
+**Last updated:** 2026-06-13 (priorities: visuals first)
 
 ## 1. Vision
 
@@ -12,7 +12,7 @@ a teacher — can fly around the real solar system as it is *right now*: every
 planet, the interesting moons, dwarf planets, comets, and the man-made objects
 humanity has scattered from low Earth orbit to interstellar space.
 
-## 2. Product principles (equal weight)
+## 2. Product principles (priority order — user, 2026-06-13: visual quality first, comprehensiveness last)
 
 1. **Accurate** — Real orbital mechanics (Keplerian elements, true periods,
    eccentricity, inclination, axial tilt, rotation). Positions reflect the
@@ -33,6 +33,10 @@ humanity has scattered from low Earth orbit to interstellar space.
    lighting, HDR tone mapping, bloom, animated sun, high-res textures,
    atmospheric scattering, shadows where they matter. It should look like a
    AAA space sim, not a textbook diagram — without sacrificing 60 fps.
+
+**Priority order for iteration (2026-06-13):** 1) visual quality / graphics,
+2) accuracy & realism, 3) UX & reliability, 4) comprehensiveness (new objects
+last — only when the visuals are world-class).
 
 ## 3. Users
 
