@@ -2,7 +2,7 @@
 
 **Status:** Living document — the improvement loop works against this.
 **Owner:** Jeff
-**Last updated:** 2026-06-10 (iteration 26)
+**Last updated:** 2026-06-10 (iteration 27)
 
 ## 1. Vision
 
@@ -97,7 +97,7 @@ a date picker alongside NOW.
 **Fidelity & realism**
 - [x] More comets: 67P (iter 11), NEOWISE (iter 16, drove a Kepler solver upgrade to Newton-Raphson for near-parabolic orbits)
 - [x] Uranus rings (ε + faint bands), Neptune rings (Adams, Le Verrier) — shipped iter 6 (arcs approximated as faint full rings)
-- [ ] Jupiter's Great Red Spot orientation; gas giant band motion
+- [x] Gas giant differential rotation: Jupiter/Saturn bands shear with sim time (System I vs III, textureGrad-correct mips) — shipped iter 27; GRS drifts with the equatorial current
 - [x] True-scale mode (?scale=true + toggle): linear distances, real radii, real moon orbits; craft become micro-markers — shipped iter 18
 - [x] Real lunar phase: Moon driven by J2000 mean longitude + sidereal month (true phase from sun-lit geometry) — shipped iter 19; eclipse shadows remain (stretch)
 

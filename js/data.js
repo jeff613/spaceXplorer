@@ -104,7 +104,7 @@ export const PLANETS = [
     fact: 'Home to Olympus Mons, a volcano three times the height of Everest, and Valles Marineris, a canyon as long as the United States.',
   },
   {
-    id: 'jupiter', name: 'Jupiter', type: 'Planet', texture: '2k_jupiter.jpg',
+    id: 'jupiter', name: 'Jupiter', type: 'Planet', texture: '2k_jupiter.jpg', bands: true,
     radiusKm: 69911,
     elements: { a: 5.203, e: 0.0484, i: 1.30, Om: 100.56, varpi: 14.75, L0: 34.40, period: 4332.6 },
     rotationHours: 9.93, tilt: 3.13,
@@ -116,7 +116,7 @@ export const PLANETS = [
     fact: 'More than twice as massive as all other planets combined. The Great Red Spot is a storm larger than Earth that has raged for centuries.',
   },
   {
-    id: 'saturn', name: 'Saturn', type: 'Planet', texture: '2k_saturn.jpg', ring: '2k_saturn_ring_alpha.png',
+    id: 'saturn', name: 'Saturn', type: 'Planet', texture: '2k_saturn.jpg', ring: '2k_saturn_ring_alpha.png', bands: true,
     radiusKm: 58232,
     elements: { a: 9.537, e: 0.0542, i: 2.49, Om: 113.72, varpi: 92.43, L0: 49.94, period: 10759 },
     rotationHours: 10.7, tilt: 26.73,

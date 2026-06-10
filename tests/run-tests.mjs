@@ -153,6 +153,16 @@ try {
   check('Earth, Venus, Mars have atmosphere shells', await page.evaluate(
     () => ['earth', 'venus', 'mars'].every((id) => !!window.__sx.bodies.get(id).atmosphere),
   ));
+  const bands = await page.evaluate(async () => {
+    const sx = window.__sx;
+    await sx.frame();
+    return ['jupiter', 'saturn'].map((id) => {
+      const sh = sx.bodies.get(id).mesh.material.userData.shader;
+      return sh ? sh.uniforms.uDays.value : null;
+    });
+  });
+  check('gas giant band shader compiled with live uniform',
+    bands.every((v) => typeof v === 'number' && v > 0), JSON.stringify(bands));
 
   console.log('\n— Orbital accuracy (current date)');
   const earthAU = await helioDistanceAU(page, 'earth');

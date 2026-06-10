@@ -308,6 +308,26 @@ export function createPlanet(scene, data) {
   const mat = data.texture
     ? new THREE.MeshStandardMaterial({ map: loadTex(data.texture), roughness: 0.92, metalness: 0 })
     : new THREE.MeshStandardMaterial({ color: data.color, roughness: 0.95, metalness: 0 });
+  if (data.bands) {
+    // differential rotation: equatorial bands outrun the poles (~4% on
+    // Jupiter, System I vs System III), sheared in the fragment shader
+    mat.map.wrapS = THREE.RepeatWrapping;
+    const rate = (24 / Math.abs(data.rotationHours)) * 0.04;
+    mat.onBeforeCompile = (shader) => {
+      shader.uniforms.uDays = { value: 0 };
+      shader.fragmentShader = shader.fragmentShader
+        .replace('#include <common>', '#include <common>\nuniform float uDays;')
+        .replace('#include <map_fragment>', `
+          vec2 buv = vMapUv;
+          float bandLat = (buv.y - 0.5) * 3.14159265;
+          buv.x += uDays * ${rate.toFixed(6)} * cos(bandLat * 3.0);
+          // keep mip selection from the unsheared uv, or the huge offset
+          // derivative collapses sampling to the blurriest mip
+          vec4 sampledDiffuseColor = textureGrad( map, buv, dFdx(vMapUv), dFdy(vMapUv) );
+          diffuseColor *= sampledDiffuseColor;`);
+      mat.userData.shader = shader;
+    };
+  }
   const mesh = new THREE.Mesh(geo, mat);
   mesh.name = data.id;
   tiltGroup.add(mesh);
@@ -349,6 +369,7 @@ export function createPlanet(scene, data) {
     update(days) {
       keplerPosition(data.elements, days, anchor.position);
       mesh.rotation.y = (days * 24 / data.rotationHours) * Math.PI * 2;
+      if (mat.userData.shader) mat.userData.shader.uniforms.uDays.value = days % 10000;
       if (clouds) clouds.rotation.y = mesh.rotation.y * 0.85;
       for (const ring of rings) ring.userData.shadowMat.uniforms.planetPos.value.copy(anchor.position);
     },
