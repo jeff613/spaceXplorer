@@ -227,6 +227,12 @@ function makeISSMesh() { // truss, bronze-gold arrays, module stack, radiators
 function craftMesh(data) {
   switch (data.id) {
     case 'iss': return makeISSMesh();
+    case 'tiangong': {
+      const t = makeISSMesh();
+      t.scale.setScalar(0.55);
+      return t;
+    }
+    case 'lro': return makeProbe({ dish: 0.08, panels: 1, scale: 0.55 });
     case 'hubble': return makeTelescope();
     case 'jwst': return makeJWST();
     case 'gaia': return makeProbe({ dish: 0.14, scale: 0.8 });

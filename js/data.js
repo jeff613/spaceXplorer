@@ -473,6 +473,26 @@ export const SPACECRAFT = [
     fact: 'Carries three LEGO figurines (Jupiter, Juno and Galileo) and skims 4,200 km above Jupiter\'s clouds through lethal radiation belts.',
   },
   {
+    id: 'tiangong', name: 'Tiangong', type: 'Space station', kind: 'orbiter', parent: 'earth',
+    orbitRadii: 1.41, periodDays: 0.0636, inclination: 41.5, color: 0xffd8d8,
+    info: {
+      'Operator': 'CMSA (China)', 'Completed': '2022',
+      'Altitude': '~390 km', 'Orbital period': '91.5 min',
+      'Crew': '3 taikonauts, rotating missions', 'Mass': '~100 tonnes',
+    },
+    fact: 'The second permanently crewed outpost in orbit — its name means "Heavenly Palace", and it hosts experiments from 17 nations.',
+  },
+  {
+    id: 'lro', name: 'LRO', type: 'Lunar orbiter', kind: 'orbiter', parent: 'moon',
+    orbitRadii: 1.6, periodDays: 0.0786, inclination: 86, color: 0xc8c8d8,
+    info: {
+      'Launched': 'June 18, 2009', 'Orbit': 'Polar, ~50 km above the Moon',
+      'Maps': 'Sharpest global lunar maps ever made',
+      'Spotted': 'Every Apollo landing site, flags and footprints',
+    },
+    fact: 'Photographed the Apollo landing sites clearly enough to see the astronauts\' foot trails — still there, half a century later.',
+  },
+  {
     id: 'mro', name: 'MRO', type: 'Mars orbiter', kind: 'orbiter', parent: 'mars',
     orbitRadii: 1.55, periodDays: 0.0786, inclination: 93, color: 0xffc8a8,
     info: {

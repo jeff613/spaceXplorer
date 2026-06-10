@@ -103,7 +103,7 @@ try {
   });
   check(`all ${integrity.count} objects have name/type/info/fact/update`,
     integrity.missing.length === 0, integrity.missing.join(','));
-  check('object count ≥ 58', integrity.count >= 58, `got ${integrity.count}`);
+  check('object count ≥ 60', integrity.count >= 60, `got ${integrity.count}`);
   check('roster complete (dwarfs, probes, constellations, Mars fleet)', await page.evaluate(() => {
     const sx = window.__sx;
     return ['vesta', 'pallas', 'bennu', 'apophis', 'makemake', 'haumea', 'sedna', 'arrokoth', 'churyumov']
@@ -126,6 +126,16 @@ try {
   check(`Perseverance pinned to Mars surface (${marsFleet.surfDist.toFixed(2)} R)`,
     marsFleet.surfDist > 0.95 && marsFleet.surfDist < 1.1);
   check('SOHO sits sunward of Earth (L1)', marsFleet.sohoInside);
+  // LRO must circle the Moon, not the Earth
+  const lro = await page.evaluate(() => {
+    const sx = window.__sx;
+    const v = sx.craft.get('lro').mesh.position.constructor;
+    const lroW = new v(); sx.craft.get('lro').mesh.getWorldPosition(lroW);
+    const moonW = new v(); sx.bodies.get('moon').mesh.getWorldPosition(moonW);
+    return lroW.distanceTo(moonW) / sx.bodies.get('moon').displayRadius;
+  });
+  check(`LRO orbits the Moon (${lro.toFixed(2)} lunar radii, 1.2–2.2)`, lro > 1.2 && lro < 2.2);
+  check('Tiangong present', await page.evaluate(() => window.__sx.craft.has('tiangong')));
   const cgAU = await helioDistanceAU(page, 'churyumov');
   check(`67P at ${cgAU.toFixed(1)} AU (within 1.2–5.7 range)`, cgAU > 1.2 && cgAU < 5.7);
 

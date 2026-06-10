@@ -389,7 +389,7 @@ export function createMoon(scene, data, parentBody) {
   for (const ch of data.id) seed = (seed * 31 + ch.charCodeAt(0)) >>> 0;
   const phase = (seed % 360) * DEG;
   return {
-    data, mesh, orbitLine, displayRadius, parent: parentBody,
+    data, mesh, anchor: mesh, orbitLine, displayRadius, parent: parentBody,
     update(days) {
       // ecliptic longitude maps to scene angle as a = -lambda (z = -y_ecl)
       const a = data.meanLongitude0 !== undefined
