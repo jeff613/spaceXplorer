@@ -2,7 +2,7 @@
 
 **Status:** Living document — the improvement loop works against this.
 **Owner:** Jeff
-**Last updated:** 2026-06-13 (iteration 43)
+**Last updated:** 2026-06-13 (iteration 44)
 
 ## 1. Vision
 
@@ -109,7 +109,7 @@ a date picker alongside NOW.
 - [x] More spacecraft: Juno (iter 4); Pioneers, Cassini memorial (iter 9);
       MRO, Perseverance, Curiosity, Gaia, SOHO (iter 11). Tiangong + LRO (iter 24); Akatsuki at Venus + L-point halo orbits (iter 28); Europa Clipper in transit (iter 30); Artemis Gateway awaits its real launch
 - [x] GPS + geostationary satellite rings around Earth — shipped iter 9
-- [x] Named asteroids: Vesta (iter 4); Pallas, Bennu, Apophis (iter 23)
+- [x] Named asteroids: Vesta (iter 4); Pallas, Bennu, Apophis (iter 23); small-body hero pass — irregular lumpy asteroids, seeded crater bumps on textureless dwarfs, Haumea egg shape (iter 44)
 - [x] More Kuiper objects: Makemake, Haumea (iter 4); Arrokoth, Sedna (iter 9)
 
 **UX & fun**

@@ -294,6 +294,27 @@ try {
   check('comet nucleus is a dark lumpy body, coma swells at perihelion only',
     comet.dark && comet.lumpy && comet.comaActive > 0.3 && comet.comaIdleNow,
     JSON.stringify(comet));
+  const rocks = await page.evaluate(() => {
+    const sx = window.__sx;
+    const radiusSpread = (mesh) => {
+      const p = mesh.geometry.attributes.position;
+      let min = 1e9, max = 0;
+      for (let i = 0; i < p.count; i++) {
+        const r = Math.hypot(p.getX(i), p.getY(i), p.getZ(i));
+        min = Math.min(min, r); max = Math.max(max, r);
+      }
+      return min / max;
+    };
+    return {
+      bennuLumpy: radiusSpread(sx.bodies.get('bennu').mesh) < 0.8,
+      vestaLumpy: radiusSpread(sx.bodies.get('vesta').mesh) < 0.8,
+      ceresCraters: !!sx.bodies.get('ceres').mesh.material.bumpMap,
+      erisCraters: !!sx.bodies.get('eris').mesh.material.bumpMap,
+      haumeaEgg: sx.bodies.get('haumea').mesh.scale.x === 1.5,
+    };
+  });
+  check('asteroids are irregular rocks, dwarfs cratered, Haumea egg-shaped',
+    Object.values(rocks).every(Boolean), JSON.stringify(rocks));
 
   console.log('\n— Orbital accuracy (current date)');
   const earthAU = await helioDistanceAU(page, 'earth');

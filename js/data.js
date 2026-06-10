@@ -171,7 +171,7 @@ export const PLANETS = [
     fact: 'Ceres holds about a third of the asteroid belt\'s total mass, and its bright Occator crater spots are salty brine left by a buried ocean.',
   },
   {
-    id: 'vesta', name: 'Vesta', type: 'Asteroid', color: 0xb5a285,
+    id: 'vesta', lumpy: true, name: 'Vesta', type: 'Asteroid', color: 0xb5a285,
     radiusKm: 262.7,
     elements: { a: 2.362, e: 0.0886, i: 7.14, Om: 103.8, varpi: 254.2, L0: 99.8, period: 1325 },
     rotationHours: 5.34, tilt: 29.0,
@@ -183,7 +183,7 @@ export const PLANETS = [
     fact: 'A surviving protoplanet from the dawn of the solar system. A giant impact at its south pole flung debris that still falls to Earth as meteorites.',
   },
   {
-    id: 'pallas', name: 'Pallas', type: 'Asteroid', color: 0x8e8a84,
+    id: 'pallas', lumpy: true, name: 'Pallas', type: 'Asteroid', color: 0x8e8a84,
     radiusKm: 256,
     elements: { a: 2.772, e: 0.230, i: 34.9, Om: 172.9, varpi: 123.8, L0: 220.0, period: 1686 },
     rotationHours: 7.81, tilt: 84,
@@ -194,7 +194,7 @@ export const PLANETS = [
     fact: 'Its orbit is tilted almost 35° out of the plane every planet orbits in — a cannonball cutting diagonally through the solar system.',
   },
   {
-    id: 'bennu', name: 'Bennu', type: 'Near-Earth asteroid', color: 0x4a4a50,
+    id: 'bennu', lumpy: true, name: 'Bennu', type: 'Near-Earth asteroid', color: 0x4a4a50,
     radiusKm: 0.245,
     elements: { a: 1.126, e: 0.2037, i: 6.03, Om: 2.06, varpi: 68.3, L0: 170.0, period: 436.6 },
     rotationHours: 4.3, tilt: 178,
@@ -207,7 +207,7 @@ export const PLANETS = [
     fact: 'When OSIRIS-REx touched it, the surface behaved like a ball pit — the probe would have sunk in if it hadn\'t fired thrusters and fled with its sample.',
   },
   {
-    id: 'apophis', name: 'Apophis', type: 'Near-Earth asteroid', color: 0x6e645a,
+    id: 'apophis', lumpy: true, name: 'Apophis', type: 'Near-Earth asteroid', color: 0x6e645a,
     radiusKm: 0.185,
     elements: { a: 0.9224, e: 0.1914, i: 3.34, Om: 204.4, varpi: 330.8, L0: 243.0, period: 323.6 },
     rotationHours: 30.4, tilt: 0,
@@ -256,7 +256,7 @@ export const PLANETS = [
     fact: 'Takes 11,400 years to orbit once — when Sedna last passed this close to the Sun, humans were inventing agriculture.',
   },
   {
-    id: 'arrokoth', name: 'Arrokoth', type: 'Kuiper Belt object', color: 0xb58a6a,
+    id: 'arrokoth', lumpy: true, name: 'Arrokoth', type: 'Kuiper Belt object', color: 0xb58a6a,
     radiusKm: 18,
     elements: { a: 44.58, e: 0.042, i: 2.45, Om: 159.0, varpi: 174.4, L0: 300.0, period: 107000 },
     rotationHours: 15.9, tilt: 99,
@@ -279,7 +279,7 @@ export const PLANETS = [
     fact: 'Named for the creator god of Rapa Nui (Easter Island), having been discovered just after Easter. Its surface is frosted with frozen methane.',
   },
   {
-    id: 'haumea', name: 'Haumea', type: 'Dwarf planet', color: 0xd8d8e0,
+    id: 'haumea', stretch: [1.5, 0.75, 1], name: 'Haumea', type: 'Dwarf planet', color: 0xd8d8e0,
     radiusKm: 816,
     elements: { a: 43.1, e: 0.195, i: 28.2, Om: 122.2, varpi: 1.2, L0: 219.2, period: 103660 },
     rotationHours: 3.9, tilt: 0,

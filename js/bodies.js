@@ -361,7 +361,9 @@ export function createPlanet(scene, data) {
   tiltGroup.rotation.z = -data.tilt * DEG;
   anchor.add(tiltGroup);
 
-  const geo = new THREE.SphereGeometry(displayRadius, 48, 24);
+  const geo = data.lumpy
+    ? makeLumpyGeometry(displayRadius, data.id)
+    : new THREE.SphereGeometry(displayRadius, 48, 24);
   const mat = data.texture
     ? new THREE.MeshStandardMaterial({ map: loadTex(data.texture), roughness: 0.92, metalness: 0, envMapIntensity: 0.25 })
     : new THREE.MeshStandardMaterial({ color: data.color, roughness: 0.95, metalness: 0, envMapIntensity: 0.25 });
@@ -369,6 +371,10 @@ export function createPlanet(scene, data) {
     const b = texLoader.load(`textures/${data.bump}`);
     mat.bumpMap = b;
     mat.bumpScale = data.bumpScale ?? 1.6;
+  } else if (!data.texture && !data.lumpy) {
+    // textureless round dwarfs get a seeded crater field
+    mat.bumpMap = makeCraterBump(data.id);
+    mat.bumpScale = data.bumpScale ?? 1.4;
   }
   if (data.water) {
     // water mask (white = ocean) inverted into a roughness map: smooth
@@ -389,6 +395,7 @@ export function createPlanet(scene, data) {
     img.src = `textures/${data.water}`;
   }
   const mesh = new THREE.Mesh(geo, mat);
+  if (data.stretch) mesh.scale.set(...data.stretch); // e.g. Haumea's egg shape
   mesh.name = data.id;
   tiltGroup.add(mesh);
 
@@ -589,13 +596,12 @@ export function createMoon(scene, data, parentBody) {
 
 // ─── Comets ───────────────────────────────────────────────────────────────
 
-export function createComet(scene, data) {
-  const displayRadius = 0.45;
-  // real comet nuclei are blacker than coal (albedo ~0.04): a dark, seeded
-  // lumpy potato — never a bright sphere, which bloom turns into a white egg
-  const geo = new THREE.IcosahedronGeometry(displayRadius, 2);
+// Seeded irregular rock: an icosahedron with per-vertex radial displacement.
+// Deterministic per body id so visual-regression snapshots stay stable.
+function makeLumpyGeometry(radius, id, detail = 2) {
+  const geo = new THREE.IcosahedronGeometry(radius, detail);
   let seed = 0;
-  for (const ch of data.id) seed = (seed * 31 + ch.charCodeAt(0)) >>> 0;
+  for (const ch of id) seed = (seed * 31 + ch.charCodeAt(0)) >>> 0;
   const nrand = mulberry32(seed);
   const bump = new Map();
   const pos = geo.attributes.position;
@@ -608,8 +614,45 @@ export function createComet(scene, data) {
     pos.setXYZ(i, v.x, v.y, v.z);
   }
   geo.computeVertexNormals();
+  return geo;
+}
+
+// Seeded crater field drawn to a canvas, used as a bump map so textureless
+// dwarf planets read as battered ice/rock instead of smooth billiard balls
+function makeCraterBump(id) {
+  const size = 256;
+  const c = document.createElement('canvas');
+  c.width = c.height = size;
+  const ctx = c.getContext('2d');
+  let seed = 0;
+  for (const ch of id) seed = (seed * 31 + ch.charCodeAt(0)) >>> 0;
+  const nrand = mulberry32(seed ^ 0x9e3779b9);
+  ctx.fillStyle = '#808080';
+  ctx.fillRect(0, 0, size, size);
+  for (let k = 0; k < 110; k++) {
+    const r = 2 + nrand() * 13;
+    const x = nrand() * size;
+    const y = nrand() * size;
+    const depth = Math.round(26 + nrand() * 44);
+    const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+    g.addColorStop(0, `rgb(${128 - depth},${128 - depth},${128 - depth})`);
+    g.addColorStop(0.62, `rgb(${128 - (depth >> 2)},${128 - (depth >> 2)},${128 - (depth >> 2)})`);
+    g.addColorStop(0.8, `rgb(${128 + (depth >> 1)},${128 + (depth >> 1)},${128 + (depth >> 1)})`);
+    g.addColorStop(1, 'rgb(128,128,128)');
+    ctx.fillStyle = g;
+    ctx.fillRect(x - r, y - r, r * 2, r * 2);
+  }
+  const tex = new THREE.CanvasTexture(c);
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  return tex;
+}
+
+export function createComet(scene, data) {
+  const displayRadius = 0.45;
+  // real comet nuclei are blacker than coal (albedo ~0.04): a dark, seeded
+  // lumpy potato — never a bright sphere, which bloom turns into a white egg
   const mesh = new THREE.Mesh(
-    geo,
+    makeLumpyGeometry(displayRadius, data.id),
     new THREE.MeshStandardMaterial({ color: 0x4a443c, roughness: 1.0, metalness: 0, envMapIntensity: 0.15 }),
   );
   mesh.scale.set(1.25, 0.8, 0.95); // lumpy nucleus, not a billiard ball
