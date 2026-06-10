@@ -21,7 +21,7 @@ export function buildNavigator(bodies, craft, onSelect) {
     {
       title: 'Spacecraft',
       ids: ['iss', 'tiangong', 'hubble', 'starlink', 'gps', 'geo', 'jwst', 'gaia', 'soho', 'lro',
-        'mro', 'perseverance', 'curiosity', 'juno', 'cassini', 'parker',
+        'akatsuki', 'mro', 'perseverance', 'curiosity', 'juno', 'cassini', 'parker',
         'roadster', 'newhorizons', 'pioneer10', 'pioneer11',
         'voyager1', 'voyager2'],
     },

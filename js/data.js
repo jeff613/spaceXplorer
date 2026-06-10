@@ -473,6 +473,17 @@ export const SPACECRAFT = [
     fact: 'Carries three LEGO figurines (Jupiter, Juno and Galileo) and skims 4,200 km above Jupiter\'s clouds through lethal radiation belts.',
   },
   {
+    id: 'akatsuki', name: 'Akatsuki', type: 'Venus orbiter', kind: 'orbiter', parent: 'venus',
+    orbitRadii: 3.2, periodDays: 10.8, inclination: 3, color: 0xffd0b8,
+    info: {
+      'Operator': 'JAXA (Japan)', 'Launched': 'May 20, 2010',
+      'First try': 'Engine failed — missed Venus entirely (2010)',
+      'Second try': 'Captured using tiny thrusters (2015)',
+      'Studies': 'Venus\'s super-rotating atmosphere',
+    },
+    fact: 'Missed Venus in 2010 when its engine died, orbited the Sun alone for five years, then threaded itself into Venus orbit using only its attitude thrusters.',
+  },
+  {
     id: 'tiangong', name: 'Tiangong', type: 'Space station', kind: 'orbiter', parent: 'earth',
     orbitRadii: 1.41, periodDays: 0.0636, inclination: 41.5, color: 0xffd8d8,
     info: {

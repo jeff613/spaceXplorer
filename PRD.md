@@ -2,7 +2,7 @@
 
 **Status:** Living document — the improvement loop works against this.
 **Owner:** Jeff
-**Last updated:** 2026-06-10 (iteration 27)
+**Last updated:** 2026-06-10 (iteration 28)
 
 ## 1. Vision
 
@@ -103,7 +103,7 @@ a date picker alongside NOW.
 
 **Comprehensiveness**
 - [x] More spacecraft: Juno (iter 4); Pioneers, Cassini memorial (iter 9);
-      MRO, Perseverance, Curiosity, Gaia, SOHO (iter 11). Tiangong + LRO shipped iter 24 (moons now valid orbiter parents); Artemis Gateway awaits its real launch
+      MRO, Perseverance, Curiosity, Gaia, SOHO (iter 11). Tiangong + LRO (iter 24); Akatsuki at Venus + L-point halo orbits (iter 28); Artemis Gateway awaits its real launch
 - [x] GPS + geostationary satellite rings around Earth — shipped iter 9
 - [x] Named asteroids: Vesta (iter 4); Pallas, Bennu, Apophis (iter 23)
 - [x] More Kuiper objects: Makemake, Haumea (iter 4); Arrokoth, Sedna (iter 9)

@@ -308,10 +308,19 @@ export function buildSpacecraft(scene, bodies) {
       mesh.name = data.id;
       scene.add(mesh);
       const pick = addPickProxy(mesh, 1.2);
+      // real L-point craft fly halo orbits around the point, not on it
+      const haloPhase = rand() * Math.PI * 2;
+      const haloR = TRUE_SCALE ? 0.02 : 0.45;
+      const u = new THREE.Vector3();
+      const w = new THREE.Vector3(0, 1, 0);
       craft.set(data.id, {
         data, mesh, pick, displayRadius: 0.7,
-        update() {
+        update(days) {
           mesh.position.copy(earth.anchor.position).multiplyScalar(data.factor);
+          const th = haloPhase + (days / 178) * Math.PI * 2; // ~6-month halo
+          u.copy(earth.anchor.position).normalize().cross(w);
+          mesh.position.addScaledVector(u, Math.cos(th) * haloR);
+          mesh.position.y += Math.sin(th) * haloR * 0.6;
         },
       });
     } else if (data.kind === 'surface') {

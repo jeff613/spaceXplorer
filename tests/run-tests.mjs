@@ -103,7 +103,7 @@ try {
   });
   check(`all ${integrity.count} objects have name/type/info/fact/update`,
     integrity.missing.length === 0, integrity.missing.join(','));
-  check('object count ≥ 60', integrity.count >= 60, `got ${integrity.count}`);
+  check('object count ≥ 61', integrity.count >= 61, `got ${integrity.count}`);
   check('roster complete (dwarfs, probes, constellations, Mars fleet)', await page.evaluate(() => {
     const sx = window.__sx;
     return ['vesta', 'pallas', 'bennu', 'apophis', 'makemake', 'haumea', 'sedna', 'arrokoth', 'churyumov']
@@ -136,6 +136,23 @@ try {
   });
   check(`LRO orbits the Moon (${lro.toFixed(2)} lunar radii, 1.2–2.2)`, lro > 1.2 && lro < 2.2);
   check('Tiangong present', await page.evaluate(() => window.__sx.craft.has('tiangong')));
+  // L-point craft fly halo orbits — near, but not exactly on, the Sun-Earth line
+  const halo = await page.evaluate(() => {
+    const sx = window.__sx;
+    const v = sx.craft.get('jwst').mesh.position.constructor;
+    const jw = new v(); sx.craft.get('jwst').mesh.getWorldPosition(jw);
+    const linePoint = sx.bodies.get('earth').anchor.position.clone().multiplyScalar(1.06);
+    return jw.distanceTo(linePoint);
+  });
+  check(`JWST halo-orbits L2 (offset ${halo.toFixed(2)} in 0.1–0.8)`, halo > 0.1 && halo < 0.8);
+  check('Akatsuki orbits Venus', await page.evaluate(() => {
+    const sx = window.__sx;
+    if (!sx.craft.has('akatsuki')) return false;
+    const v = sx.craft.get('akatsuki').mesh.position.constructor;
+    const ak = new v(); sx.craft.get('akatsuki').mesh.getWorldPosition(ak);
+    return ak.distanceTo(sx.bodies.get('venus').anchor.position)
+      < sx.bodies.get('venus').displayRadius * 5;
+  }));
   const cgAU = await helioDistanceAU(page, 'churyumov');
   check(`67P at ${cgAU.toFixed(1)} AU (within 1.2–5.7 range)`, cgAU > 1.2 && cgAU < 5.7);
 
