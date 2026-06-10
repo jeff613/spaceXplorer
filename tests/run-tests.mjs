@@ -620,6 +620,23 @@ try {
   check('true scale: toggle reflects mode', tsChecks.toggleChecked);
   await ts.close();
 
+  console.log('\n— Share links');
+  const shareCtx = browser.defaultBrowserContext();
+  await shareCtx.overridePermissions(BASE, ['clipboard-read', 'clipboard-write', 'clipboard-sanitized-write']);
+  const sp = await openPage(browser, `${BASE}/?focus=halley&date=1986-02-09`, consoleErrors);
+  const shareState = await sp.evaluate(() => ({
+    sel: window.__sx.selected()?.data.id,
+    date: document.getElementById('date-label').textContent.slice(0, 10),
+  }));
+  check('?focus+?date deep link: Halley selected in Feb 1986',
+    shareState.sel === 'halley' && shareState.date === '1986-02-09', JSON.stringify(shareState));
+  await sp.click('#info-share');
+  await new Promise((r) => setTimeout(r, 200));
+  const copied = await sp.evaluate(() => window.__lastShareUrl ?? '');
+  check('share button builds focus+date URL',
+    copied.includes('focus=halley') && copied.includes('date=1986-02-09'), copied);
+  await sp.close();
+
   console.log('\n— Visual regression (deterministic scene)');
   const SNAP_DIR = path.join(ROOT, 'tests', 'snapshots');
   fs.mkdirSync(SNAP_DIR, { recursive: true });

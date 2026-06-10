@@ -267,12 +267,41 @@ animate();
 
 document.getElementById('toggle-truescale').checked = TRUE_SCALE;
 
-// shareable deep link: ?focus=earth jumps straight to a body
-const focusId = new URLSearchParams(location.search).get('focus');
+// shareable deep links: ?focus=earth jumps to a body, ?date=1986-02-09
+// time-travels there
+const params = new URLSearchParams(location.search);
+const dateParam = params.get('date');
+if (dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam)) {
+  const [y, m, d] = dateParam.split('-').map(Number);
+  sim.days = (Date.UTC(y, m - 1, d, 12) - Date.UTC(2000, 0, 1, 12)) / 86400000;
+  // a shared moment should hold still until the visitor presses play
+  sim.playing = false;
+  const playBtn = document.getElementById('btn-play');
+  playBtn.textContent = '▶';
+  playBtn.title = 'Play';
+}
+const focusId = params.get('focus');
 if (focusId) {
   const target = bodies.get(focusId) || craft.get(focusId);
   if (target) select(target, { instant: true });
 }
+
+// copy a link to the current view (object + sim date + scale mode)
+document.getElementById('info-share').addEventListener('click', async () => {
+  if (!selected) return;
+  const u = new URL(location.origin + location.pathname);
+  u.searchParams.set('focus', selected.data.id);
+  const d = new Date(Date.UTC(2000, 0, 1, 12) + sim.days * 86400000);
+  u.searchParams.set('date', d.toISOString().slice(0, 10));
+  if (TRUE_SCALE) u.searchParams.set('scale', 'true');
+  window.__lastShareUrl = u.toString(); // exposed for the test suite
+  try {
+    await navigator.clipboard.writeText(u.toString());
+    const btn = document.getElementById('info-share');
+    btn.textContent = '✓';
+    setTimeout(() => { btn.textContent = '⧉'; }, 1200);
+  } catch { /* clipboard unavailable (permissions) — silently skip */ }
+});
 
 // start focused on the whole system; fade in the HUD
 document.body.classList.add('loaded');

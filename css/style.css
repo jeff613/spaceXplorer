@@ -216,6 +216,19 @@ body.loaded #hud-header, body.loaded #nav-panel, body.loaded #time-bar { opacity
 
 #info-close:hover { color: var(--amber); }
 
+#info-share {
+  position: absolute;
+  top: 12px;
+  right: 40px;
+  background: none;
+  border: none;
+  color: var(--ink-dim);
+  font-size: 15px;
+  cursor: pointer;
+}
+
+#info-share:hover { color: var(--cyan); }
+
 .info-name {
   font-family: var(--font-display);
   font-size: 19px;
