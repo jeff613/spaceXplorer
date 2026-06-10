@@ -185,8 +185,9 @@ try {
     return ['saturn', 'uranus', 'neptune'].map((id) => b.get(id).rings?.length || 0);
   });
   check('Saturn, Uranus, Neptune have ring meshes', rings.every((n) => n >= 1), rings.join(','));
-  check('Earth, Venus, Mars have atmosphere shells', await page.evaluate(
-    () => ['earth', 'venus', 'mars'].every((id) => !!window.__sx.bodies.get(id).atmosphere),
+  check('all atmospheric worlds have limb-haze shells', await page.evaluate(
+    () => ['earth', 'venus', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune']
+      .every((id) => !!window.__sx.bodies.get(id).atmosphere),
   ));
   const bands = await page.evaluate(async () => {
     const sx = window.__sx;

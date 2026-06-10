@@ -108,6 +108,7 @@ export const PLANETS = [
   },
   {
     id: 'jupiter', name: 'Jupiter', type: 'Planet', texture: '2k_jupiter.jpg', bands: true, moonShadows: true,
+    atmosphere: 0xd9bd92,
     radiusKm: 69911,
     elements: { a: 5.203, e: 0.0484, i: 1.30, Om: 100.56, varpi: 14.75, L0: 34.40, period: 4332.6 },
     rotationHours: 9.93, tilt: 3.13,
@@ -120,7 +121,7 @@ export const PLANETS = [
   },
   {
     id: 'saturn', name: 'Saturn', type: 'Planet', texture: '2k_saturn.jpg', ring: '2k_saturn_ring_alpha.png', bands: true,
-    moonShadows: true,
+    moonShadows: true, atmosphere: 0xe9dcae,
     radiusKm: 58232,
     elements: { a: 9.537, e: 0.0542, i: 2.49, Om: 113.72, varpi: 92.43, L0: 49.94, period: 10759 },
     rotationHours: 10.7, tilt: 26.73,
@@ -133,6 +134,7 @@ export const PLANETS = [
   },
   {
     id: 'uranus', name: 'Uranus', type: 'Planet', texture: '2k_uranus.jpg', ringProc: 'uranus',
+    atmosphere: 0xaee6ea,
     radiusKm: 25362,
     elements: { a: 19.19, e: 0.0472, i: 0.77, Om: 74.0, varpi: 170.96, L0: 313.23, period: 30688.5 },
     rotationHours: -17.24, tilt: 97.77,
@@ -145,6 +147,7 @@ export const PLANETS = [
   },
   {
     id: 'neptune', name: 'Neptune', type: 'Planet', texture: '2k_neptune.jpg', ringProc: 'neptune',
+    atmosphere: 0x7aa6f5,
     radiusKm: 24622,
     elements: { a: 30.07, e: 0.0086, i: 1.77, Om: 131.78, varpi: 44.97, L0: 304.88, period: 60182 },
     rotationHours: 16.11, tilt: 28.32,
