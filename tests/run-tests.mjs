@@ -355,6 +355,26 @@ try {
   });
   check('Pluto counter-wobbles around the Pluto–Charon barycenter',
     Math.abs(binary.ratio - 0.109) < 0.005 && binary.opposite, JSON.stringify(binary));
+  const eclipse = await page.evaluate(async () => {
+    const sx = window.__sx;
+    const io = sx.bodies.get('io');
+    const jup = sx.bodies.get('jupiter');
+    const save = sx.sim.days;
+    let minC = 1, maxC = 0;
+    for (let d = 0; d < 1.8; d += 0.01) {
+      jup.update(save + d);
+      io.update(save + d);
+      const c = io.mesh.material.color.r;
+      minC = Math.min(minC, c);
+      maxC = Math.max(maxC, c);
+    }
+    jup.update(save);
+    io.update(save);
+    await sx.frame();
+    return { minC: +minC.toFixed(2), maxC: +maxC.toFixed(2) };
+  });
+  check('Io is eclipsed by Jupiter\'s shadow once per orbit',
+    eclipse.minC < 0.35 && eclipse.maxC > 0.8, JSON.stringify(eclipse));
   const neb = await page.evaluate(() => {
     const g = window.__sx.scene.getObjectByName('nebulae');
     return {

@@ -680,6 +680,12 @@ export function createMoon(scene, data, parentBody) {
   let seed = 0;
   for (const ch of data.id) seed = (seed * 31 + ch.charCodeAt(0)) >>> 0;
   const phase = (seed % 360) * DEG;
+  // eclipse darkening: a moon passing through its planet's shadow goes dark
+  // (the Galilean eclipses Rømer timed to measure light speed)
+  const baseColor = mat.color.clone();
+  const pw = new THREE.Vector3();
+  const mw = new THREE.Vector3();
+  const sunDir = new THREE.Vector3();
   return {
     data, mesh, anchor: mesh, orbitLine, displayRadius, parent: parentBody,
     update(days) {
@@ -694,6 +700,18 @@ export function createMoon(scene, data, parentBody) {
         Math.sin(a) * Math.cos(inc) * orbitR,
       );
       mesh.rotation.y = -a; // tidally locked
+
+      parentBody.mesh.getWorldPosition(pw);
+      mesh.getWorldPosition(mw);
+      sunDir.copy(pw).normalize(); // sun is at the world origin
+      mw.sub(pw);
+      const along = mw.dot(sunDir);
+      const lit = along <= 0 ? 1 : (() => {
+        const perp = Math.sqrt(Math.max(0, mw.lengthSq() - along * along));
+        const r = parentBody.displayRadius;
+        return THREE.MathUtils.smoothstep(perp, r * 0.85, r * 1.15);
+      })();
+      mat.color.copy(baseColor).multiplyScalar(0.18 + 0.82 * lit);
     },
   };
 }
