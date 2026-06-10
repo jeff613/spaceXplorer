@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { Lensflare, LensflareElement } from 'three/addons/objects/Lensflare.js';
 import {
   PLANETS, SUN, MOONS, COMETS, scaleDistance, scaleRadius, SUN_DISPLAY_RADIUS,
 } from './data.js';
@@ -119,6 +120,27 @@ export function createSun(scene) {
   const light = new THREE.PointLight(0xffffff, 3.0, 0, 0);
   scene.add(light);
   scene.add(new THREE.AmbientLight(0x46506a, 0.85));
+
+  // lens flare ghosts along the view axis (textures drawn on canvases)
+  const flareTex = (stops, size = 128) => {
+    const fc = document.createElement('canvas');
+    fc.width = fc.height = size;
+    const fctx = fc.getContext('2d');
+    const fg = fctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
+    for (const [o, col] of stops) fg.addColorStop(o, col);
+    fctx.fillStyle = fg;
+    fctx.fillRect(0, 0, size, size);
+    return new THREE.CanvasTexture(fc);
+  };
+  const ghost = flareTex([[0, 'rgba(255,220,160,0.55)'], [0.5, 'rgba(255,180,90,0.12)'], [1, 'rgba(255,180,90,0)']]);
+  const halo = flareTex([[0, 'rgba(255,200,120,0)'], [0.78, 'rgba(255,190,110,0)'], [0.86, 'rgba(255,205,140,0.28)'], [1, 'rgba(255,190,110,0)']], 256);
+  const flare = new Lensflare();
+  flare.addElement(new LensflareElement(ghost, 56, 0.45));
+  flare.addElement(new LensflareElement(ghost, 30, 0.7));
+  flare.addElement(new LensflareElement(halo, 130, 1.0));
+  flare.addElement(new LensflareElement(ghost, 80, 1.35));
+  flare.raycast = () => {}; // never intercept clicks
+  light.add(flare);
 
   return {
     data: SUN, mesh, displayRadius: SUN_DISPLAY_RADIUS,
@@ -458,26 +480,101 @@ function createKuiperBelt(scene) {
 // ─── Starfield ────────────────────────────────────────────────────────────
 
 export function createStarfield(scene) {
+  // real Milky Way panorama (ESO-style survey photo) as the deep backdrop
   const sky = new THREE.Mesh(
-    new THREE.SphereGeometry(4600, 48, 24),
+    new THREE.SphereGeometry(4600, 64, 32),
     new THREE.MeshBasicMaterial({
-      map: loadTex('2k_stars_milky_way.jpg'), side: THREE.BackSide,
-      color: 0x8890a0, depthWrite: false,
+      map: loadTex('8k_stars_milky_way.jpg'), side: THREE.BackSide,
+      color: 0xf4f6fa, depthWrite: false,
     }),
   );
+  // the galactic plane is inclined ~60° to the ecliptic — tilt the panorama
+  // so the Milky Way band sweeps diagonally across the sky like the real one
+  sky.rotation.set(60 * DEG, 0, 12 * DEG);
   scene.add(sky);
 
-  const COUNT = 3500;
+  // procedural foreground stars: soft gaussian discs (not square points),
+  // blackbody-ish color mix and per-star twinkle
+  const COUNT = 7000;
   const positions = new Float32Array(COUNT * 3);
+  const colors = new Float32Array(COUNT * 3);
+  const sizes = new Float32Array(COUNT);
+  const phases = new Float32Array(COUNT);
+  const speeds = new Float32Array(COUNT);
+
+  // approximate stellar population: white/yellow common, blue + orange rarer
+  const TINTS = [
+    [0.62, [1.0, 1.0, 1.0]], // white
+    [0.80, [1.0, 0.96, 0.88]], // yellow-white
+    [0.92, [0.78, 0.86, 1.0]], // blue-white
+    [1.00, [1.0, 0.80, 0.62]], // orange-red
+  ];
+  const v = new THREE.Vector3();
   for (let i = 0; i < COUNT; i++) {
-    const v = new THREE.Vector3().randomDirection().multiplyScalar(4200);
+    v.randomDirection().multiplyScalar(4200);
     positions.set([v.x, v.y, v.z], i * 3);
+
+    const t = Math.random();
+    const tint = TINTS.find(([p]) => t <= p)[1];
+    const j = 0.92 + Math.random() * 0.08; // slight per-star tint jitter
+    colors.set([tint[0] * j, tint[1] * j, tint[2] * j], i * 3);
+
+    // power-law magnitudes: lots of faint stars, a handful of bright ones
+    sizes[i] = 0.9 + 5.5 * Math.pow(Math.random(), 7);
+    phases[i] = Math.random() * Math.PI * 2;
+    speeds[i] = 0.6 + Math.random() * 2.2;
   }
+
   const geo = new THREE.BufferGeometry();
   geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-  const stars = new THREE.Points(geo, new THREE.PointsMaterial({
-    color: 0xffffff, size: 2.2, sizeAttenuation: false, transparent: true, opacity: 0.8,
-  }));
+  geo.setAttribute('aColor', new THREE.BufferAttribute(colors, 3));
+  geo.setAttribute('aSize', new THREE.BufferAttribute(sizes, 1));
+  geo.setAttribute('aPhase', new THREE.BufferAttribute(phases, 1));
+  geo.setAttribute('aSpeed', new THREE.BufferAttribute(speeds, 1));
+
+  const mat = new THREE.ShaderMaterial({
+    uniforms: {
+      uTime: { value: 0 },
+      uPixelRatio: { value: Math.min(window.devicePixelRatio, 2) },
+    },
+    vertexShader: /* glsl */`
+      attribute vec3 aColor;
+      attribute float aSize, aPhase, aSpeed;
+      uniform float uTime, uPixelRatio;
+      varying vec3 vColor;
+      varying float vTwinkle, vSize;
+      void main() {
+        vColor = aColor;
+        // subtle atmospheric-style scintillation, stronger on faint stars
+        float amp = mix(0.45, 0.15, smoothstep(1.5, 5.0, aSize));
+        vTwinkle = 1.0 - amp * (0.5 + 0.5 * sin(uTime * aSpeed + aPhase));
+        vSize = aSize;
+        gl_PointSize = aSize * uPixelRatio;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: /* glsl */`
+      varying vec3 vColor;
+      varying float vTwinkle, vSize;
+      void main() {
+        vec2 p = gl_PointCoord * 2.0 - 1.0;
+        float d2 = dot(p, p);
+        // gaussian core with a faint wide halo
+        float i = exp(-d2 * 5.0) + 0.18 * exp(-d2 * 1.6);
+        // gentle diffraction spikes on the brightest stars only
+        float spikes = exp(-abs(p.x) * 14.0) + exp(-abs(p.y) * 14.0);
+        i += spikes * 0.25 * smoothstep(4.0, 6.4, vSize) * (1.0 - d2 * 0.5);
+        gl_FragColor = vec4(vColor, 1.0) * i * vTwinkle;
+      }
+    `,
+    transparent: true,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+  });
+
+  const stars = new THREE.Points(geo, mat);
+  // drive the twinkle clock here so the render loop needs no extra wiring
+  stars.onBeforeRender = () => { mat.uniforms.uTime.value = performance.now() / 1000; };
   scene.add(stars);
 }
 

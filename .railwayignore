@@ -1,3 +1,4 @@
+.git/
 node_modules/
 tests/
 .claude/
@@ -5,3 +6,18 @@ package.json
 package-lock.json
 PRD.md
 README.md
+# textures no longer referenced by the code (superseded by the 2k/8k set)
+textures/2k_stars_milky_way.jpg
+textures/earthcloudmap.jpg
+textures/earthmap1k.jpg
+textures/galaxy_starfield.png
+textures/jupitermap.jpg
+textures/marsmap1k.jpg
+textures/mercurymap.jpg
+textures/moonmap1k.jpg
+textures/neptunemap.jpg
+textures/saturnmap.jpg
+textures/saturnringcolor.jpg
+textures/sunmap.jpg
+textures/uranusmap.jpg
+textures/venusmap.jpg

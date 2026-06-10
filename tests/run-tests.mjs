@@ -466,6 +466,25 @@ try {
   ));
   await mob.close();
 
+  console.log('\n— WebGL fallback');
+  const noGl = await puppeteer.launch({
+    executablePath: CHROME,
+    headless: 'new',
+    args: ['--no-first-run', '--disable-webgl', '--disable-webgl2', '--disable-3d-apis'],
+  });
+  try {
+    const glPage = await noGl.newPage();
+    await glPage.goto(BASE, { waitUntil: 'networkidle0', timeout: 30000 });
+    const fallback = await glPage.evaluate(() => ({
+      shown: document.getElementById('webgl-fallback').classList.contains('show'),
+      visible: getComputedStyle(document.getElementById('webgl-fallback')).display !== 'none',
+    }));
+    check('WebGL-less browser sees a friendly fallback message', fallback.shown && fallback.visible,
+      JSON.stringify(fallback));
+  } finally {
+    await noGl.close();
+  }
+
   console.log('\n— Console cleanliness');
   check('zero console/page errors across all tests', consoleErrors.length === 0,
     consoleErrors.slice(0, 3).join(' | '));

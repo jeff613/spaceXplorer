@@ -499,3 +499,35 @@ body.loaded #hud-header, body.loaded #nav-panel, body.loaded #time-bar { opacity
   #nav-panel { width: 170px; }
   #nav-panel.collapsed { transform: translateX(-170px); }
 }
+
+/* ── WebGL fallback ─────────────────────────────────────────────────── */
+
+#webgl-fallback {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: #02050a;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px;
+}
+
+#webgl-fallback.show { display: flex; }
+
+#webgl-fallback h2 {
+  font-family: var(--font-display);
+  font-size: 20px;
+  letter-spacing: 0.4em;
+  color: var(--amber);
+  margin-bottom: 18px;
+}
+
+#webgl-fallback p {
+  max-width: 420px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ink);
+}

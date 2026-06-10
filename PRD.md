@@ -2,7 +2,7 @@
 
 **Status:** Living document — the improvement loop works against this.
 **Owner:** Jeff
-**Last updated:** 2026-06-10 (iteration 12)
+**Last updated:** 2026-06-10 (iteration 13)
 
 ## 1. Vision
 
@@ -83,7 +83,7 @@ a date picker alongside NOW.
 
 **Graphics (top priority — best-in-class realistic & fancy)**
 - [x] Post-processing pipeline: UnrealBloomPass + ACES filmic tone mapping — shipped iter 5
-- [ ] Animated sun: ~~surface noise shader + corona~~ (shipped iter 5); lens flare remains
+- [x] Animated sun: surface noise shader + corona (iter 5); lens flare (iter 13)
 - [x] Higher-res planet textures: 2K set (Solar System Scope, CC-BY) + real ring alpha — shipped iter 10; normal/specular maps remain
 - [ ] Atmospheric scattering upgrade (day/night terminator glow)
 - [x] Planet self-shadowing on rings (Saturn ring shadow) — shipped iter 6
@@ -118,7 +118,7 @@ a date picker alongside NOW.
 - [x] FPS budget test in suite; perf regression gate — shipped iter 5
 - [ ] Visual regression snapshots for key views
 - [x] Mobile-viewport E2E tests (boot, overflow, nav collapse, touch select) — shipped iter 12
-- [ ] Graceful degradation when WebGL is unavailable
+- [x] Graceful degradation when WebGL is unavailable — shipped iter 13 (tested with a WebGL-disabled browser)
 
 ## 7. Non-goals
 
