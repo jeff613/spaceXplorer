@@ -540,6 +540,83 @@ export function createPlanet(scene, data) {
   return body;
 }
 
+// Seeded procedural color maps giving the famous moons their identity:
+// Io's volcanic mottling, Europa's lineae, Titan's banded haze, Triton's
+// cantaloupe terrain. Deterministic per id for stable visual regression.
+function makeMoonColorMap(data) {
+  const W = 512, H = 256;
+  const c = document.createElement('canvas');
+  c.width = W; c.height = H;
+  const ctx = c.getContext('2d');
+  let seed = 0;
+  for (const ch of data.id) seed = (seed * 31 + ch.charCodeAt(0)) >>> 0;
+  const nrand = mulberry32(seed ^ 0x51ed270b);
+  ctx.fillStyle = `#${data.color.toString(16).padStart(6, '0')}`;
+  ctx.fillRect(0, 0, W, H);
+  const splat = (x, y, r, rgba) => {
+    const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+    g.addColorStop(0, rgba);
+    g.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(x - r, y - r, r * 2, r * 2);
+  };
+  if (data.style === 'io') {
+    for (let i = 0; i < 46; i++) {
+      const x = nrand() * W, y = nrand() * H, r = 8 + nrand() * 34;
+      const kind = nrand();
+      splat(x, y, r, kind < 0.4 ? 'rgba(150,74,32,0.55)'
+        : kind < 0.7 ? 'rgba(238,224,160,0.5)' : 'rgba(96,58,20,0.5)');
+    }
+    for (let i = 0; i < 14; i++) {
+      splat(nrand() * W, nrand() * H, 3 + nrand() * 5, 'rgba(30,18,8,0.85)');
+    }
+  } else if (data.style === 'europa') {
+    ctx.lineCap = 'round';
+    for (let i = 0; i < 26; i++) {
+      const x0 = nrand() * W, y0 = nrand() * H;
+      ctx.strokeStyle = `rgba(154,84,52,${0.25 + nrand() * 0.3})`;
+      ctx.lineWidth = 1 + nrand() * 1.6;
+      ctx.beginPath();
+      ctx.moveTo(x0, y0);
+      ctx.bezierCurveTo(
+        x0 + (nrand() - 0.5) * 300, y0 + (nrand() - 0.5) * 160,
+        x0 + (nrand() - 0.5) * 300, y0 + (nrand() - 0.5) * 160,
+        x0 + (nrand() - 0.5) * 420, y0 + (nrand() - 0.5) * 200,
+      );
+      ctx.stroke();
+    }
+    for (let i = 0; i < 10; i++) {
+      splat(nrand() * W, nrand() * H, 12 + nrand() * 26, 'rgba(255,252,244,0.28)');
+    }
+  } else if (data.style === 'titan') {
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, 'rgba(120,80,30,0.45)');
+    g.addColorStop(0.3, 'rgba(0,0,0,0)');
+    g.addColorStop(0.7, 'rgba(0,0,0,0)');
+    g.addColorStop(1, 'rgba(110,70,28,0.4)');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, H);
+    for (let i = 0; i < 8; i++) {
+      const y = nrand() * H;
+      ctx.fillStyle = `rgba(235,180,90,${0.05 + nrand() * 0.08})`;
+      ctx.fillRect(0, y, W, 6 + nrand() * 18);
+    }
+  } else if (data.style === 'triton') {
+    for (let i = 0; i < 90; i++) {
+      splat(nrand() * W, nrand() * H, 4 + nrand() * 12,
+        nrand() < 0.5 ? 'rgba(190,160,150,0.3)' : 'rgba(230,222,216,0.3)');
+    }
+    const cap = ctx.createLinearGradient(0, H * 0.62, 0, H);
+    cap.addColorStop(0, 'rgba(0,0,0,0)');
+    cap.addColorStop(1, 'rgba(238,200,190,0.55)');
+    ctx.fillStyle = cap;
+    ctx.fillRect(0, H * 0.62, W, H * 0.38);
+  }
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+
 export function createMoon(scene, data, parentBody) {
   const displayRadius = TRUE_SCALE ? scaleRadius(data.radiusKm) : Math.max(0.3, scaleRadius(data.radiusKm) * 0.55);
   const radiiMult = TRUE_SCALE ? (data.trueOrbitRadii ?? data.orbitRadii) : data.orbitRadii;
@@ -557,7 +634,12 @@ export function createMoon(scene, data, parentBody) {
     mat.bumpMap = makeCraterBump(data.id);
     mat.bumpScale = data.bumpScale ?? 1.0;
   }
+  if (data.style) {
+    mat.map = makeMoonColorMap(data);
+    mat.color.set(0xffffff);
+  }
   const mesh = new THREE.Mesh(geo, mat);
+  if (data.atmosphere) mesh.add(makeAtmosphere(displayRadius, data.atmosphere));
   mesh.name = data.id;
   // most moons orbit their planet's equator; Earth's Moon hugs the ecliptic
   const orbitGroup = data.ecliptic ? parentBody.anchor : parentBody.tiltGroup;

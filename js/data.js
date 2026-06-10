@@ -332,13 +332,13 @@ export const MOONS = [
     fact: 'So small that from its surface you could reach escape velocity on a bicycle.',
   },
   {
-    id: 'io', name: 'Io', type: 'Moon of Jupiter', parent: 'jupiter', color: 0xd8c95a,
+    id: 'io', style: 'io', name: 'Io', type: 'Moon of Jupiter', parent: 'jupiter', color: 0xd8c95a,
     radiusKm: 1821.6, orbitRadii: 2.0, trueOrbitRadii: 5.9, period: 1.77,
     info: { 'Radius': '1,822 km', 'Orbital period': '1.8 days', 'Volcanoes': '400+ active' },
     fact: 'The most volcanically active body in the solar system, kneaded by Jupiter\'s tides like a stress ball.',
   },
   {
-    id: 'europa', name: 'Europa', type: 'Moon of Jupiter', parent: 'jupiter', color: 0xcfc4ae,
+    id: 'europa', style: 'europa', name: 'Europa', type: 'Moon of Jupiter', parent: 'jupiter', color: 0xcfc4ae,
     radiusKm: 1560.8, orbitRadii: 2.7, trueOrbitRadii: 9.4, period: 3.55,
     info: { 'Radius': '1,561 km', 'Orbital period': '3.6 days', 'Ocean depth': '~100 km under ice' },
     fact: 'Beneath its cracked ice shell lies a salty ocean with twice the water of all Earth\'s oceans — a prime candidate for life.',
@@ -356,7 +356,7 @@ export const MOONS = [
     fact: 'Its ancient surface has barely changed in 4 billion years — a fossil record of the early solar system.',
   },
   {
-    id: 'titan', name: 'Titan', type: 'Moon of Saturn', parent: 'saturn', color: 0xc9a24b,
+    id: 'titan', style: 'titan', atmosphere: 0xd8954a, name: 'Titan', type: 'Moon of Saturn', parent: 'saturn', color: 0xc9a24b,
     radiusKm: 2574.7, orbitRadii: 3.6, trueOrbitRadii: 20.3, period: 15.95,
     info: { 'Radius': '2,575 km', 'Orbital period': '16 days', 'Atmosphere': 'Denser than Earth\'s' },
     fact: 'The only moon with a thick atmosphere, and the only world besides Earth with rivers, lakes and rain — of liquid methane.',
@@ -398,7 +398,7 @@ export const MOONS = [
     fact: 'The outermost large moon of Uranus, scarred by craters with mysterious dark floors.',
   },
   {
-    id: 'triton', name: 'Triton', type: 'Moon of Neptune', parent: 'neptune', color: 0xb8c4c9,
+    id: 'triton', style: 'triton', name: 'Triton', type: 'Moon of Neptune', parent: 'neptune', color: 0xb8c4c9,
     radiusKm: 1353.4, orbitRadii: 3.0, trueOrbitRadii: 14.4, period: -5.88,
     info: { 'Radius': '1,353 km', 'Orbital period': '5.9 days (retrograde)', 'Origin': 'Captured Kuiper Belt object' },
     fact: 'Orbits backwards — a captured Kuiper Belt world. Nitrogen geysers erupt from its −235 °C surface.',

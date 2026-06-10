@@ -320,6 +320,19 @@ try {
       (id) => !!window.__sx.bodies.get(id).mesh.material.bumpMap,
     ),
   ));
+  const moonStyle = await page.evaluate(() => {
+    const sx = window.__sx;
+    return {
+      colorMaps: ['io', 'europa', 'titan', 'triton'].every(
+        (id) => !!sx.bodies.get(id).mesh.material.map,
+      ),
+      titanAtmosphere: sx.bodies.get('titan').mesh.children.some(
+        (ch) => ch.material?.uniforms?.atmColor,
+      ),
+    };
+  });
+  check('major moons have color identity, Titan has haze shell',
+    moonStyle.colorMaps && moonStyle.titanAtmosphere, JSON.stringify(moonStyle));
 
   console.log('\n— Orbital accuracy (current date)');
   const earthAU = await helioDistanceAU(page, 'earth');
