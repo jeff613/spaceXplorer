@@ -497,10 +497,25 @@ try {
   check('mobile: no horizontal overflow', await mob.evaluate(
     () => document.documentElement.scrollWidth <= window.innerWidth + 1,
   ));
-  await mob.tap('#nav-toggle');
-  check('mobile: navigator collapses', await mob.evaluate(
+  check('mobile: navigator starts collapsed', await mob.evaluate(
     () => document.getElementById('nav-panel').classList.contains('collapsed'),
   ));
+  await mob.tap('#nav-toggle');
+  check('mobile: nav toggle expands it', await mob.evaluate(
+    () => !document.getElementById('nav-panel').classList.contains('collapsed'),
+  ));
+  await mob.tap('#nav-toggle');
+  await mob.evaluate(async () => {
+    window.__sx.select(window.__sx.bodies.get('earth'), { instant: true });
+    await window.__sx.frame();
+  });
+  const sheet = await mob.evaluate(() => {
+    const r = document.getElementById('info-panel').getBoundingClientRect();
+    return { top: r.top, vh: innerHeight, width: r.width, vw: innerWidth };
+  });
+  check(`mobile: info panel is a bottom sheet (top ${sheet.top.toFixed(0)} > 50% vh, full width)`,
+    sheet.top > sheet.vh * 0.5 && sheet.width >= sheet.vw - 2);
+  await mob.evaluate(() => window.__sx.deselect());
   const tapPos = await mob.evaluate(() => {
     const sx = window.__sx;
     const v = sx.bodies.get('sun').mesh.position.clone().project(sx.camera);

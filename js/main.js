@@ -233,6 +233,9 @@ window.addEventListener('resize', () => {
   composer.setSize(window.innerWidth, window.innerHeight);
 });
 
+// phones start with the navigator tucked away — the scene is the hero
+if (window.innerWidth < 720) document.getElementById('nav-panel').classList.add('collapsed');
+
 document.getElementById('nav-toggle').addEventListener('click', () => {
   document.getElementById('nav-panel').classList.toggle('collapsed');
 });

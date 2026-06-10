@@ -2,7 +2,7 @@
 
 **Status:** Living document — the improvement loop works against this.
 **Owner:** Jeff
-**Last updated:** 2026-06-10 (iteration 21)
+**Last updated:** 2026-06-10 (iteration 22)
 
 ## 1. Vision
 
@@ -116,7 +116,7 @@ a date picker alongside NOW.
 - [x] Object comparison cards: to-scale size discs vs Earth in info panel — shipped iter 16
 - [x] Keyboard navigation (arrows cycle objects, ? help overlay) — shipped iter 8
 - [x] Sound design: procedural ambient drone + soft select/deselect/tour blips, gesture-gated, mute toggle — shipped iter 17
-- [ ] Mobile polish pass (touch targets, panel ergonomics)
+- [x] Mobile polish pass: bottom-sheet info panel, nav starts collapsed, bigger touch targets, slimmer time bar — shipped iter 22
 
 **Reliability & performance**
 - [x] FPS budget test in suite; perf regression gate — shipped iter 5

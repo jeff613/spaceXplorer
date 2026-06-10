@@ -502,12 +502,34 @@ body.loaded #hud-header, body.loaded #nav-panel, body.loaded #time-bar { opacity
 @media (max-width: 720px) {
   #hud-header h1 { font-size: 15px; }
   #hud-header p { display: none; }
-  #info-panel { width: 86vw; top: 64px; }
+
+  /* info panel becomes a bottom sheet */
+  #info-panel {
+    top: auto;
+    bottom: 72px;
+    left: 0;
+    right: 0;
+    width: 100vw;
+    max-height: 44vh;
+    border-radius: 12px 12px 0 0;
+    border-right: 1px solid var(--panel-edge);
+    transform: translateY(120%);
+  }
+  #info-panel.open { transform: translateY(0); }
+
   #time-bar { gap: 8px; padding: 8px 12px; max-width: 94vw; }
   #speed-slider { width: 80px; }
   #date-label { display: none; }
-  #nav-panel { width: 170px; }
-  #nav-panel.collapsed { transform: translateX(-170px); }
+  #date-input { display: none; }
+
+  #nav-panel { width: 200px; }
+  #nav-panel.collapsed { transform: translateX(-200px); }
+  .nav-item { padding: 9px 8px; font-size: 14px; }
+  .toggle { padding: 7px 8px; font-size: 13px; }
+  #btn-play, #btn-now, #btn-reverse { padding: 9px 15px; }
+
+  #tour-banner { bottom: auto; top: 60px; }
+  #btn-help { display: none; }
 }
 
 /* ── WebGL fallback ─────────────────────────────────────────────────── */
