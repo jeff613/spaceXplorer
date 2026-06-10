@@ -301,6 +301,34 @@ try {
   });
   check('positions stay finite after +3000 days of fast-forward', stable);
 
+  console.log('\n— Grand Tour');
+  await page.click('#btn-tour');
+  await frames(page, 2);
+  const tourStart = await page.evaluate(() => ({
+    active: window.__sx.tour.active,
+    selected: window.__sx.selected()?.data.id,
+    banner: document.getElementById('tour-banner').classList.contains('open'),
+    step: document.getElementById('tour-step').textContent,
+  }));
+  check('tour starts at the Sun with banner', tourStart.active && tourStart.selected === 'sun'
+    && tourStart.banner && tourStart.step.startsWith('1 /'), JSON.stringify(tourStart));
+
+  await page.click('#tour-next');
+  await frames(page, 2);
+  check('tour next advances to Mercury', await page.evaluate(
+    () => window.__sx.selected()?.data.id === 'mercury',
+  ));
+
+  // manual selection exits the tour
+  await page.evaluate(() => document.querySelectorAll('.nav-item')[5].click());
+  await frames(page, 2);
+  check('manual selection exits the tour', await page.evaluate(
+    () => !window.__sx.tour.active
+      && !document.getElementById('tour-banner').classList.contains('open'),
+  ));
+  await page.keyboard.press('Escape');
+  await frames(page, 2);
+
   console.log('\n— Performance');
   const fps = await page.evaluate(async () => {
     let n = 0;

@@ -7,6 +7,7 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { daysSinceJ2000 } from './data.js';
 import { buildSolarSystem } from './bodies.js';
 import { buildSpacecraft } from './spacecraft.js';
+import { createTour } from './tour.js';
 import {
   buildNavigator, showInfo, hideInfo, createLabels, setupTimeControls, setupToggles,
 } from './ui.js';
@@ -57,8 +58,11 @@ let flight = null; // { t, fromPos, fromTarget }
 const followPos = new THREE.Vector3();
 const prevFollowPos = new THREE.Vector3();
 
-const navigator = buildNavigator(bodies, craft, select);
-const labels = createLabels(bodies, craft, select);
+// manual selection anywhere exits an active tour
+const userSelect = (body) => { tour.stop(); select(body); };
+const navigator = buildNavigator(bodies, craft, userSelect);
+const labels = createLabels(bodies, craft, userSelect);
+const tour = createTour(bodies, craft, select);
 
 function select(body, { instant = false } = {}) {
   selected = body;
@@ -87,7 +91,7 @@ function deselect() {
 
 document.getElementById('info-close').addEventListener('click', deselect);
 window.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') deselect();
+  if (e.key === 'Escape') { tour.stop(); deselect(); }
 });
 
 // click-to-pick (ignore drags)
@@ -122,7 +126,7 @@ canvas.addEventListener('pointerup', (e) => {
   let obj = hits[0].object;
   while (obj && !obj.name) obj = obj.parent;
   const found = obj && (bodies.get(obj.name) || craft.get(obj.name));
-  if (found) select(found); else deselect();
+  if (found) userSelect(found); else { tour.stop(); deselect(); }
 });
 
 // pointer feedback when hovering a clickable object (throttled raycast)
@@ -218,7 +222,7 @@ document.body.classList.add('loaded');
 
 // programmatic handle for the test suite (and console tinkering)
 window.__sx = {
-  bodies, craft, sim, camera, controls, scene, belt,
+  bodies, craft, sim, camera, controls, scene, belt, tour,
   select, deselect,
   selected: () => selected,
   frame: () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))),

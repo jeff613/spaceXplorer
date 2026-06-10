@@ -34,6 +34,7 @@
   <aside id="nav-panel">
     <button id="nav-toggle" title="Toggle navigator">☰</button>
     <div id="nav-scroll">
+      <button id="btn-tour" title="Autoplay a tour of the highlights">✦ Grand Tour</button>
       <input type="search" id="nav-search" placeholder="Search objects…" autocomplete="off" />
       <div id="nav-list"></div>
       <div class="nav-group">View</div>
@@ -52,6 +53,17 @@
     <div class="info-rows"></div>
     <p class="info-fact"></p>
   </section>
+
+  <!-- grand tour banner -->
+  <div id="tour-banner">
+    <button id="tour-prev" title="Previous stop">⏮</button>
+    <div id="tour-info">
+      <span id="tour-name"></span>
+      <span id="tour-step"></span>
+    </div>
+    <button id="tour-next" title="Next stop">⏭</button>
+    <button id="tour-exit" title="End tour">✕</button>
+  </div>
 
   <!-- time controls -->
   <footer id="time-bar">
