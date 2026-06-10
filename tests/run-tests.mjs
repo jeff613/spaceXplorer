@@ -62,7 +62,7 @@ const AU_FROM_UNITS = 'Math.pow(len / 62, 1 / 0.55)';
 
 async function helioDistanceAU(page, id) {
   return page.evaluate((bodyId) => {
-    const b = window.__sx.bodies.get(bodyId);
+    const b = window.__sx.bodies.get(bodyId) ?? window.__sx.craft.get(bodyId);
     const v = new (b.mesh.position.constructor)();
     b.mesh.getWorldPosition(v);
     const len = v.length();
@@ -103,7 +103,7 @@ try {
   });
   check(`all ${integrity.count} objects have name/type/info/fact/update`,
     integrity.missing.length === 0, integrity.missing.join(','));
-  check('object count ≥ 61', integrity.count >= 61, `got ${integrity.count}`);
+  check('object count ≥ 62', integrity.count >= 62, `got ${integrity.count}`);
   check('roster complete (dwarfs, probes, constellations, Mars fleet)', await page.evaluate(() => {
     const sx = window.__sx;
     return ['vesta', 'pallas', 'bennu', 'apophis', 'makemake', 'haumea', 'sedna', 'arrokoth', 'churyumov']
@@ -168,6 +168,9 @@ try {
     return ak.distanceTo(sx.bodies.get('venus').anchor.position)
       < sx.bodies.get('venus').displayRadius * 5;
   }));
+  const clipperAU = await helioDistanceAU(page, 'clipper');
+  check(`Europa Clipper in transit at ${clipperAU.toFixed(2)} AU (0.8–3.5)`,
+    clipperAU > 0.8 && clipperAU < 3.5);
   const cgAU = await helioDistanceAU(page, 'churyumov');
   check(`67P at ${cgAU.toFixed(1)} AU (within 1.2–5.7 range)`, cgAU > 1.2 && cgAU < 5.7);
 
@@ -372,6 +375,20 @@ try {
   check('pause freezes simulation time', t.paused);
   check(`speed slider max = 100 days/s (got ${t.fast.toFixed(0)})`, approx(t.fast, 100, 1));
   check('NOW returns to the present', t.nowDelta < 0.01);
+  const rt = await page.evaluate(() => {
+    document.getElementById('btn-realtime').click();
+    return {
+      speed: window.__sx.sim.speed,
+      label: document.getElementById('speed-label').textContent,
+    };
+  });
+  check(`1x button sets real time (${rt.label})`,
+    Math.abs(rt.speed - 1 / 86400) < 1e-9 && rt.label === 'real time');
+  await page.evaluate(() => {
+    const sl = document.getElementById('speed-slider');
+    sl.value = 50;
+    sl.dispatchEvent(new Event('input'));
+  });
 
   // reverse time
   const rev = await page.evaluate(async () => {

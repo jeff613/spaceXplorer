@@ -2,7 +2,7 @@
 
 **Status:** Living document — the improvement loop works against this.
 **Owner:** Jeff
-**Last updated:** 2026-06-13 (iteration 29, P0 craft graphics)
+**Last updated:** 2026-06-13 (iteration 30)
 
 ## 1. Vision
 
@@ -56,7 +56,7 @@ Probe · New Horizons · Voyager 1 · Voyager 2.
 
 **Experience:** shareable moments — ?focus + ?date deep links and a copy-link button (paused on arrival) (iter 25) · live distance-from-Earth + light-travel-time readout on every selection (iter 21) · click/nav/search to select → camera fly-to + follow + info
 panel with stats and a fun fact · floating labels with distance-based
-decluttering · orbit lines · time machine (pause, 0.01–100 days/s, NOW) ·
+decluttering · orbit lines · time machine (pause, real-time 1× to 100 days/s, reverse, date picker, NOW) ·
 toggles (orbits, labels, belts, Starlink) · deep links · Esc/empty-click
 deselect · hover cursor · Earth night lights + atmospheres · Saturn rings.
 
@@ -103,7 +103,7 @@ a date picker alongside NOW.
 
 **Comprehensiveness**
 - [x] More spacecraft: Juno (iter 4); Pioneers, Cassini memorial (iter 9);
-      MRO, Perseverance, Curiosity, Gaia, SOHO (iter 11). Tiangong + LRO (iter 24); Akatsuki at Venus + L-point halo orbits (iter 28); Artemis Gateway awaits its real launch
+      MRO, Perseverance, Curiosity, Gaia, SOHO (iter 11). Tiangong + LRO (iter 24); Akatsuki at Venus + L-point halo orbits (iter 28); Europa Clipper in transit (iter 30); Artemis Gateway awaits its real launch
 - [x] GPS + geostationary satellite rings around Earth — shipped iter 9
 - [x] Named asteroids: Vesta (iter 4); Pallas, Bennu, Apophis (iter 23)
 - [x] More Kuiper objects: Makemake, Haumea (iter 4); Arrokoth, Sedna (iter 9)

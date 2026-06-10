@@ -540,6 +540,18 @@ export const SPACECRAFT = [
     fact: 'Parked at L2 where Earth shields it from the Sun, it sees infrared light from the first galaxies ever formed.',
   },
   {
+    id: 'clipper', name: 'Europa Clipper', type: 'Jupiter-bound (in transit)', kind: 'helio',
+    color: 0x9fd8e8,
+    elements: { a: 3.1, e: 0.68, i: 3.0, Om: 0, varpi: 60.0, L0: 82.5, period: 1994 },
+    info: {
+      'Launched': 'Oct 14, 2024 (Falcon Heavy)', 'Arrives at Jupiter': 'April 2030',
+      'Status': 'Cruising — Earth gravity assist Dec 2026',
+      'Size': 'Largest NASA planetary spacecraft ever',
+      'Mission': '~50 flybys of Europa\'s hidden ocean',
+    },
+    fact: 'Carries a plate engraved with the word "water" in 103 languages, sailing toward an ocean moon that may harbor life.',
+  },
+  {
     id: 'gaia', name: 'Gaia', type: 'Astrometry observatory', kind: 'lagrange', factor: 1.045,
     color: 0xc8b8ff,
     info: {

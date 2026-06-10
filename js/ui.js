@@ -21,7 +21,7 @@ export function buildNavigator(bodies, craft, onSelect) {
     {
       title: 'Spacecraft',
       ids: ['iss', 'tiangong', 'hubble', 'starlink', 'gps', 'geo', 'jwst', 'gaia', 'soho', 'lro',
-        'akatsuki', 'mro', 'perseverance', 'curiosity', 'juno', 'cassini', 'parker',
+        'akatsuki', 'mro', 'perseverance', 'curiosity', 'juno', 'clipper', 'cassini', 'parker',
         'roadster', 'newhorizons', 'pioneer10', 'pioneer11',
         'voyager1', 'voyager2'],
     },
@@ -253,6 +253,11 @@ export function setupTimeControls(sim) {
 
   nowBtn.addEventListener('click', () => {
     sim.days = (Date.now() - J2000) / 86400000;
+  });
+
+  document.getElementById('btn-realtime').addEventListener('click', () => {
+    sim.speed = 1 / 86400; // one real second per second
+    speedLabel.textContent = 'real time';
   });
 
   reverseBtn.addEventListener('click', () => {
