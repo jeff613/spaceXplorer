@@ -80,8 +80,26 @@ const navigator = buildNavigator(bodies, craft, userSelect);
 const labels = createLabels(bodies, craft, userSelect);
 const tour = createTour(bodies, craft, select);
 
+// the selected body's orbit glows amber so its path stands out
+function setOrbitHighlight(body, on) {
+  const line = body?.orbitLine;
+  if (!line) return;
+  const m = line.material;
+  if (on) {
+    m.userData.prev = { color: m.color.getHex(), opacity: m.opacity };
+    m.color.setHex(0xffb347);
+    m.opacity = Math.min(1, m.opacity * 2 + 0.25);
+  } else if (m.userData.prev) {
+    m.color.setHex(m.userData.prev.color);
+    m.opacity = m.userData.prev.opacity;
+    delete m.userData.prev;
+  }
+}
+
 function select(body, { instant = false } = {}) {
   if (selected !== body) sound.select();
+  setOrbitHighlight(selected, false);
+  setOrbitHighlight(body, true);
   selected = body;
   navigator.setActive(body.data.id);
   showInfo(body);
@@ -101,6 +119,7 @@ function select(body, { instant = false } = {}) {
 
 function deselect() {
   if (selected) sound.deselect();
+  setOrbitHighlight(selected, false);
   selected = null;
   flight = null;
   navigator.setActive(null);

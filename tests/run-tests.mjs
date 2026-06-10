@@ -265,6 +265,26 @@ try {
   check(`camera arrives near Mars (dist ${sel.camDist.toFixed(1)} < 25)`, sel.camDist < 25);
   check(`controls target locks Mars (${sel.targetDist.toFixed(2)} < 0.5)`, sel.targetDist < 0.5);
 
+  // selection highlights the orbit, deselection restores it
+  const hl = await page.evaluate(async () => {
+    const sx = window.__sx;
+    sx.deselect(); // mars is still selected from the camera checks above
+    await sx.frame();
+    const line = sx.bodies.get('mars').orbitLine.material;
+    const before = { color: line.color.getHex(), opacity: line.opacity };
+    sx.select(sx.bodies.get('mars'), { instant: true });
+    await sx.frame();
+    const onSel = { color: line.color.getHex(), opacity: line.opacity };
+    sx.deselect();
+    await sx.frame();
+    const after = { color: line.color.getHex(), opacity: line.opacity };
+    return { before, onSel, after };
+  });
+  check('selected orbit glows amber and restores',
+    hl.onSel.color === 0xffb347 && hl.onSel.opacity > hl.before.opacity
+    && hl.after.color === hl.before.color && hl.after.opacity === hl.before.opacity,
+    JSON.stringify(hl));
+
   // live readout: Voyager 1's light-time is famously ~23 hours
   await page.evaluate(() => window.__sx.select(window.__sx.craft.get('voyager1'), { instant: true }));
   await frames(page, 2);
