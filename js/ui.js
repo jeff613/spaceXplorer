@@ -98,7 +98,8 @@ export function showInfo(body) {
   }
   p.querySelector('.info-live').innerHTML = `
     <div class="info-row"><span class="info-key" id="live-dist-key"></span><span class="info-val" id="live-dist"></span></div>
-    <div class="info-row"><span class="info-key">Light travel time</span><span class="info-val" id="live-light"></span></div>`;
+    <div class="info-row"><span class="info-key">Light travel time</span><span class="info-val" id="live-light"></span></div>
+    <div class="info-row" id="live-extra-row" style="display:none"><span class="info-key" id="live-extra-key"></span><span class="info-val" id="live-extra"></span></div>`;
 
   // size comparison vs Earth, drawn to scale
   const cmp = p.querySelector('.info-compare');
@@ -324,6 +325,29 @@ export function updateLiveStats(body, earth) {
     realAU(earth.anchor.position, _rb);
     dAU = _ra.distanceTo(_rb);
   }
+  // the Moon gets a live phase readout from real geometry
+  const extraRow = document.getElementById('live-extra-row');
+  if (body.data.id === 'moon') {
+    const toSun = _ra.clone().negate().normalize();
+    const toEarth = _rb.clone().sub(_ra).normalize();
+    const illum = (1 + toSun.dot(toEarth)) / 2;
+    // waxing if the moon trails the sun in geocentric longitude
+    const moonLon = Math.atan2(-(_ra.z - _rb.z), _ra.x - _rb.x);
+    const sunLon = Math.atan2(_rb.z, -_rb.x);
+    const waxing = ((moonLon - sunLon + Math.PI * 2) % (Math.PI * 2)) < Math.PI;
+    let name;
+    if (illum < 0.04) name = 'New Moon';
+    else if (illum > 0.96) name = 'Full Moon';
+    else if (illum > 0.45 && illum < 0.55) name = waxing ? 'First Quarter' : 'Last Quarter';
+    else if (illum < 0.5) name = waxing ? 'Waxing Crescent' : 'Waning Crescent';
+    else name = waxing ? 'Waxing Gibbous' : 'Waning Gibbous';
+    document.getElementById('live-extra-key').textContent = 'Phase (now)';
+    document.getElementById('live-extra').textContent = `${name} · ${(illum * 100).toFixed(0)}% lit`;
+    extraRow.style.display = '';
+  } else if (extraRow) {
+    extraRow.style.display = 'none';
+  }
+
   const km = dAU * 149597870;
   const kmTxt = km >= 1e9 ? `${(km / 1e9).toFixed(2)} billion km` : `${Math.round(km).toLocaleString('en-US')} km`;
   distEl.textContent = `${dAU >= 0.01 ? dAU.toFixed(2) : dAU.toFixed(4)} AU (${kmTxt})`;

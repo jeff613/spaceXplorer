@@ -2,7 +2,7 @@
 
 **Status:** Living document — the improvement loop works against this.
 **Owner:** Jeff
-**Last updated:** 2026-06-13 (iteration 32)
+**Last updated:** 2026-06-13 (iteration 33)
 
 ## 1. Vision
 
@@ -99,7 +99,7 @@ a date picker alongside NOW.
 - [x] Uranus rings (ε + faint bands), Neptune rings (Adams, Le Verrier) — shipped iter 6 (arcs approximated as faint full rings)
 - [x] Gas giant differential rotation: Jupiter/Saturn bands shear with sim time (System I vs III, textureGrad-correct mips) — shipped iter 27; GRS drifts with the equatorial current
 - [x] True-scale mode (?scale=true + toggle): linear distances, real radii, real moon orbits; craft become micro-markers — shipped iter 18
-- [x] Real lunar phase: Moon driven by J2000 mean longitude + sidereal month (true phase from sun-lit geometry) — shipped iter 19; eclipse shadows remain (stretch)
+- [x] Real lunar phase: J2000 mean longitude + sidereal month (iter 19); eclipse shadows + 5.14° inclination (iter 29); live phase-name readout, verified against the real lunar calendar (iter 33)
 
 **Comprehensiveness**
 - [x] More spacecraft: Juno (iter 4); Pioneers, Cassini memorial (iter 9);

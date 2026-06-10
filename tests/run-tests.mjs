@@ -299,6 +299,33 @@ try {
   await page.evaluate(() => window.__sx.deselect());
   await frames(page, 1);
 
+  // moon phase live readout
+  const phase = await page.evaluate(async () => {
+    const sx = window.__sx;
+    sx.select(sx.bodies.get('moon'), { instant: true });
+    await sx.frame();
+    const txt = document.getElementById('live-extra').textContent;
+    const visible = document.getElementById('live-extra-row').style.display !== 'none';
+    sx.deselect();
+    return { txt, visible };
+  });
+  const phaseNames = ['New Moon', 'Full Moon', 'First Quarter', 'Last Quarter',
+    'Waxing Crescent', 'Waning Crescent', 'Waxing Gibbous', 'Waning Gibbous'];
+  check(`Moon shows live phase (${phase.txt})`,
+    phase.visible && phaseNames.some((n) => phase.txt.startsWith(n)) && /\d+% lit/.test(phase.txt));
+  check('non-moon hides phase row', await page.evaluate(async () => {
+    const sx = window.__sx;
+    sx.select(sx.bodies.get('mars'), { instant: true });
+    await sx.frame();
+    const hidden = document.getElementById('live-extra-row').style.display === 'none';
+    sx.deselect();
+    return hidden;
+  }));
+  check('social meta tags present', await page.evaluate(
+    () => !!document.querySelector('meta[property="og:title"]')
+      && !!document.querySelector('meta[name="description"]'),
+  ));
+
   // click empty space deselects
   await page.mouse.click(720, 80);
   await frames(page, 2);
