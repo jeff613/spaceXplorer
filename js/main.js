@@ -4,6 +4,7 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { daysSinceJ2000, TRUE_SCALE } from './data.js';
 import { buildSolarSystem } from './bodies.js';
 import { buildSpacecraft } from './spacecraft.js';
@@ -29,6 +30,11 @@ renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.15;
 
 const scene = new THREE.Scene();
+// image-based lighting: gives PBR metals real reflections (craft especially)
+{
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+}
 const camera = new THREE.PerspectiveCamera(
   55, window.innerWidth / window.innerHeight, TRUE_SCALE ? 0.001 : 0.1, 20000,
 );
@@ -63,6 +69,7 @@ const sim = { days: daysSinceJ2000(), speed: 1, dir: 1, playing: true };
 let selected = null;
 let flight = null; // { t, fromPos, fromTarget }
 const followPos = new THREE.Vector3();
+const glintTmp = new THREE.Vector3();
 const prevFollowPos = new THREE.Vector3();
 
 const sound = createSound();
@@ -258,6 +265,19 @@ function animate() {
   controls.update();
   timeUI.updateDate();
   if (selected) updateLiveStats(selected, bodies.get('earth'));
+
+  // glints are far-visibility beacons — fade them out up close so the
+  // actual spacecraft model is what you see
+  for (const c of craft.values()) {
+    if (c.isCloud) continue;
+    if (c._glint === undefined) c._glint = c.mesh.getObjectByName('glint') ?? null;
+    if (c._glint) {
+      c.mesh.getWorldPosition(glintTmp);
+      const d = camera.position.distanceTo(glintTmp);
+      const near = Math.max(6, c.displayRadius * 9);
+      c._glint.material.opacity = Math.min(0.45, Math.max(0, (d - near) / (near * 3)));
+    }
+  }
   labels.update(camera, window.innerWidth, window.innerHeight, selected?.data.id);
 
   composer.render();

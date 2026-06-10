@@ -306,8 +306,8 @@ export function createPlanet(scene, data) {
 
   const geo = new THREE.SphereGeometry(displayRadius, 48, 24);
   const mat = data.texture
-    ? new THREE.MeshStandardMaterial({ map: loadTex(data.texture), roughness: 0.92, metalness: 0 })
-    : new THREE.MeshStandardMaterial({ color: data.color, roughness: 0.95, metalness: 0 });
+    ? new THREE.MeshStandardMaterial({ map: loadTex(data.texture), roughness: 0.92, metalness: 0, envMapIntensity: 0.25 })
+    : new THREE.MeshStandardMaterial({ color: data.color, roughness: 0.95, metalness: 0, envMapIntensity: 0.25 });
   if (data.bands) {
     // differential rotation: equatorial bands outrun the poles (~4% on
     // Jupiter, System I vs System III), sheared in the fragment shader
@@ -384,8 +384,8 @@ export function createMoon(scene, data, parentBody) {
 
   const geo = new THREE.SphereGeometry(displayRadius, 32, 16);
   const mat = data.texture
-    ? new THREE.MeshStandardMaterial({ map: loadTex(data.texture), roughness: 0.96, metalness: 0 })
-    : new THREE.MeshStandardMaterial({ color: data.color, roughness: 0.96, metalness: 0 });
+    ? new THREE.MeshStandardMaterial({ map: loadTex(data.texture), roughness: 0.96, metalness: 0, envMapIntensity: 0.25 })
+    : new THREE.MeshStandardMaterial({ color: data.color, roughness: 0.96, metalness: 0, envMapIntensity: 0.25 });
   const mesh = new THREE.Mesh(geo, mat);
   mesh.name = data.id;
   // most moons orbit their planet's equator; Earth's Moon hugs the ecliptic
@@ -416,7 +416,12 @@ export function createMoon(scene, data, parentBody) {
       const a = data.meanLongitude0 !== undefined
         ? -(data.meanLongitude0 + (360 / data.period) * days) * DEG
         : phase + (days / data.period) * Math.PI * 2;
-      mesh.position.set(Math.cos(a) * orbitR, 0, Math.sin(a) * orbitR);
+      const inc = (data.orbitInclination || 0) * DEG;
+      mesh.position.set(
+        Math.cos(a) * orbitR,
+        Math.sin(a) * Math.sin(inc) * orbitR,
+        Math.sin(a) * Math.cos(inc) * orbitR,
+      );
       mesh.rotation.y = -a; // tidally locked
     },
   };
@@ -480,6 +485,47 @@ export function createComet(scene, data) {
       }
       tailGeo.attributes.position.needsUpdate = true;
     },
+  };
+}
+
+// ─── Eclipse shadows ──────────────────────────────────────────────────────
+// Patch a body's material so an occluder (sun at the origin) casts a soft
+// shadow cylinder on it — Moon on Earth (solar eclipse), Earth on Moon
+// (lunar eclipse).
+
+function attachEclipse(target, getOccluder) {
+  const mat = target.mesh.material;
+  mat.onBeforeCompile = (shader) => {
+    shader.uniforms.uOccPos = { value: new THREE.Vector3(1e9, 0, 0) };
+    shader.uniforms.uOccR = { value: 1 };
+    shader.vertexShader = shader.vertexShader
+      .replace('#include <common>', '#include <common>\nvarying vec3 vEclipseWorld;')
+      .replace('#include <worldpos_vertex>', `#include <worldpos_vertex>
+        vec4 wpE = modelMatrix * vec4( transformed, 1.0 );
+        vEclipseWorld = wpE.xyz;`);
+    shader.fragmentShader = shader.fragmentShader
+      .replace('#include <common>', '#include <common>\nuniform vec3 uOccPos;\nuniform float uOccR;\nvarying vec3 vEclipseWorld;')
+      .replace('#include <map_fragment>', `#include <map_fragment>
+        {
+          vec3 sd = normalize(uOccPos);
+          vec3 relE = vEclipseWorld - uOccPos;
+          float alongE = dot(relE, sd);
+          float perpE = length(relE - sd * alongE);
+          float litE = alongE < 0.0 ? 1.0
+            : mix(0.12, 1.0, smoothstep(uOccR * 0.9, uOccR * 1.7, perpE));
+          diffuseColor.rgb *= litE;
+        }`);
+    mat.userData.eclipseShader = shader;
+  };
+  const baseUpdate = target.update;
+  target.update = (days) => {
+    baseUpdate(days);
+    const sh = mat.userData.eclipseShader;
+    if (sh) {
+      const occ = getOccluder();
+      occ.mesh.getWorldPosition(sh.uniforms.uOccPos.value);
+      sh.uniforms.uOccR.value = occ.displayRadius;
+    }
   };
 }
 
@@ -645,6 +691,10 @@ export function buildSolarSystem(scene) {
   for (const p of PLANETS) bodies.set(p.id, createPlanet(scene, p));
   for (const m of MOONS) bodies.set(m.id, createMoon(scene, m, bodies.get(m.parent)));
   for (const c of COMETS) bodies.set(c.id, createComet(scene, c));
+
+  // Earth and Moon eclipse each other
+  attachEclipse(bodies.get('earth'), () => bodies.get('moon'));
+  attachEclipse(bodies.get('moon'), () => bodies.get('earth'));
 
   createStarfield(scene);
   const belt = createAsteroidBelt(scene);

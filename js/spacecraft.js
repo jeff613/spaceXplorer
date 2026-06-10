@@ -9,11 +9,11 @@ const rand = mulberry32(48151623);
 // Recognizable miniatures built from primitives with PBR materials, so they
 // catch real sunlight instead of reading as flat glowing dots.
 
-const matMetal = () => new THREE.MeshStandardMaterial({ color: 0xd2d8de, metalness: 0.85, roughness: 0.35 });
-const matWhite = () => new THREE.MeshStandardMaterial({ color: 0xe8e6e0, metalness: 0.2, roughness: 0.6 });
-const matFoil = () => new THREE.MeshStandardMaterial({ color: 0xc89a3c, metalness: 0.95, roughness: 0.4 });
-const matPanel = () => new THREE.MeshStandardMaterial({ color: 0x1d3a6e, metalness: 0.7, roughness: 0.3 });
-const matBronze = () => new THREE.MeshStandardMaterial({ color: 0x8a6d3a, metalness: 0.8, roughness: 0.45 });
+const matMetal = () => new THREE.MeshStandardMaterial({ color: 0xd2d8de, metalness: 0.9, roughness: 0.28, envMapIntensity: 1.3 });
+const matWhite = () => new THREE.MeshStandardMaterial({ color: 0xe8e6e0, metalness: 0.15, roughness: 0.5, envMapIntensity: 0.9 });
+const matFoil = () => new THREE.MeshStandardMaterial({ color: 0xc89a3c, metalness: 1.0, roughness: 0.32, envMapIntensity: 1.4 });
+const matPanel = () => new THREE.MeshStandardMaterial({ color: 0x1d3a6e, metalness: 0.75, roughness: 0.25, envMapIntensity: 1.2 });
+const matBronze = () => new THREE.MeshStandardMaterial({ color: 0x8a6d3a, metalness: 0.85, roughness: 0.38, envMapIntensity: 1.2 });
 
 // faint sprite glint so craft stay visible from far away
 let glintTex = null;
@@ -35,6 +35,7 @@ function makeGlint(color, scale = 0.9) {
     depthWrite: false, transparent: true, opacity: 0.28,
   }));
   s.scale.setScalar(scale);
+  s.name = 'glint';
   s.raycast = () => {};
   return s;
 }
@@ -58,17 +59,25 @@ function roundPointTexture() {
 function makeDish(r = 0.2) {
   const g = new THREE.Group();
   const bowl = new THREE.Mesh(
-    new THREE.SphereGeometry(r, 20, 10, 0, Math.PI * 2, 0, Math.PI * 0.24),
+    new THREE.SphereGeometry(r, 40, 20, 0, Math.PI * 2, 0, Math.PI * 0.24),
     new THREE.MeshStandardMaterial({
-      color: 0xb8bfc6, metalness: 0.7, roughness: 0.5, side: THREE.DoubleSide,
+      color: 0xcdd4da, metalness: 0.75, roughness: 0.35,
+      envMapIntensity: 1.2, side: THREE.DoubleSide,
     }),
   );
   bowl.rotation.x = Math.PI / 2; // open toward +z
   g.add(bowl);
-  const feed = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, r * 0.8, 6), matMetal());
+  const rimR = r * Math.sin(Math.PI * 0.24);
+  const rim = new THREE.Mesh(new THREE.TorusGeometry(rimR, r * 0.02, 8, 48), matMetal());
+  rim.position.z = r * Math.cos(Math.PI * 0.24) - r * 0.005;
+  g.add(rim);
+  const feed = new THREE.Mesh(new THREE.CylinderGeometry(0.007, 0.012, r * 0.85, 8), matMetal());
   feed.rotation.x = Math.PI / 2;
-  feed.position.z = r * 0.35;
+  feed.position.z = r * 0.4;
   g.add(feed);
+  const horn = new THREE.Mesh(new THREE.SphereGeometry(r * 0.08, 12, 8), matFoil());
+  horn.position.z = r * 0.82;
+  g.add(horn);
   return g;
 }
 
@@ -80,11 +89,11 @@ function makeProbe({ dish = 0.26, panels = 0, scale = 1 } = {}) {
   const d = makeDish(dish);
   d.position.z = 0.08;
   g.add(d);
-  const boom = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, 0.4, 5), matMetal());
+  const boom = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, 0.4, 12), matMetal());
   boom.rotation.z = Math.PI / 2;
   boom.position.x = -0.26;
   g.add(boom);
-  const rtg = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.1, 8), matBronze());
+  const rtg = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.1, 16), matBronze());
   rtg.rotation.z = Math.PI / 2;
   rtg.position.x = -0.44;
   g.add(rtg);
@@ -101,10 +110,10 @@ function makeProbe({ dish = 0.26, panels = 0, scale = 1 } = {}) {
 
 function makeTelescope() { // Hubble-like: silver tube + panels
   const g = new THREE.Group();
-  const tube = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.42, 14), matMetal());
+  const tube = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.42, 28), matMetal());
   tube.rotation.x = Math.PI / 2;
   g.add(tube);
-  const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.092, 0.092, 0.04, 14), matFoil());
+  const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.092, 0.092, 0.04, 28), matFoil());
   cap.rotation.x = Math.PI / 2;
   cap.position.z = 0.2;
   g.add(cap);
@@ -140,11 +149,11 @@ function makeJWST() { // gold hex mirror over a silver kite sunshield
 
 function makeParker() { // white heat shield facing a small bus
   const g = new THREE.Group();
-  const shield = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.035, 18), matWhite());
+  const shield = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.035, 32), matWhite());
   shield.rotation.x = Math.PI / 2;
   shield.position.z = 0.1;
   g.add(shield);
-  const bus = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.16, 10), matMetal());
+  const bus = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.16, 20), matMetal());
   bus.rotation.x = Math.PI / 2;
   g.add(bus);
   for (const x of [-0.12, 0.12]) {
@@ -164,7 +173,7 @@ function makeRoadster() { // cherry-red car, headed for the asteroid belt
     new THREE.MeshStandardMaterial({ color: 0x202830, metalness: 0.4, roughness: 0.2 }));
   cabin.position.set(-0.01, 0.045, 0);
   g.add(cabin);
-  const wheelGeo = new THREE.CylinderGeometry(0.035, 0.035, 0.02, 10);
+  const wheelGeo = new THREE.CylinderGeometry(0.035, 0.035, 0.02, 18);
   const dark = new THREE.MeshStandardMaterial({ color: 0x14161a, roughness: 0.9 });
   for (const [x, z] of [[-0.1, 0.07], [0.1, 0.07], [-0.1, -0.07], [0.1, -0.07]]) {
     const w = new THREE.Mesh(wheelGeo, dark);
@@ -179,13 +188,13 @@ function makeRover() { // boxy body, mast, six wheels
   const g = new THREE.Group();
   const body = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.04, 0.07), matWhite());
   g.add(body);
-  const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.005, 0.005, 0.06, 5), matMetal());
+  const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.005, 0.005, 0.06, 10), matMetal());
   mast.position.set(0.03, 0.05, 0);
   g.add(mast);
   const dark = new THREE.MeshStandardMaterial({ color: 0x1a1c20, roughness: 0.9 });
   for (const x of [-0.04, 0, 0.04]) {
     for (const z of [0.045, -0.045]) {
-      const w = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.012, 8), dark);
+      const w = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.012, 14), dark);
       w.rotation.x = Math.PI / 2;
       w.position.set(x, -0.028, z);
       g.add(w);
@@ -196,15 +205,22 @@ function makeRover() { // boxy body, mast, six wheels
 
 function makeISSMesh() { // truss, bronze-gold arrays, module stack, radiators
   const g = new THREE.Group();
-  const truss = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.04, 0.04), matMetal());
+  const truss = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.035, 0.035), matMetal());
   g.add(truss);
-  // pressurized modules along z
+  // pressurized modules along z, with a node sphere and a docked capsule
   for (const [z, len, r] of [[0.0, 0.5, 0.05], [0.18, 0.22, 0.04]]) {
-    const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, len, 12), matWhite());
+    const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, len, 24), matWhite());
     m.rotation.x = Math.PI / 2;
     m.position.z = z * 0.6;
     g.add(m);
   }
+  const node = new THREE.Mesh(new THREE.SphereGeometry(0.055, 20, 14), matWhite());
+  node.position.z = 0.25;
+  g.add(node);
+  const capsule = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.034, 0.08, 16), matFoil());
+  capsule.rotation.x = Math.PI / 2;
+  capsule.position.z = 0.32;
+  g.add(capsule);
   // four solar array pairs, ISS-bronze
   for (const x of [-0.46, -0.3, 0.3, 0.46]) {
     for (const z of [0.16, -0.16]) {

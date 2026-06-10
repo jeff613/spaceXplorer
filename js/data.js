@@ -303,7 +303,7 @@ export const SUN = {
 export const MOONS = [
   {
     id: 'moon', name: 'Moon', type: 'Moon of Earth', parent: 'earth', texture: '2k_moon.jpg',
-    ecliptic: true, meanLongitude0: 218.316,
+    ecliptic: true, meanLongitude0: 218.316, orbitInclination: 5.14,
     radiusKm: 1737.4, orbitRadii: 3.2, trueOrbitRadii: 60.3, period: 27.321661,
     info: {
       'Radius': '1,737 km', 'Orbital period': '27.3 days',

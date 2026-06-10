@@ -136,6 +136,21 @@ try {
   });
   check(`LRO orbits the Moon (${lro.toFixed(2)} lunar radii, 1.2–2.2)`, lro > 1.2 && lro < 2.2);
   check('Tiangong present', await page.evaluate(() => window.__sx.craft.has('tiangong')));
+  // P0 (user): craft must read as models, not glowing orbs — when focused,
+  // the visibility glint must be faded out and the model must have detail
+  const orbCheck = await page.evaluate(async () => {
+    const sx = window.__sx;
+    sx.select(sx.craft.get('iss'), { instant: true });
+    await sx.frame(); await sx.frame();
+    const glint = sx.craft.get('iss').mesh.getObjectByName('glint');
+    let meshCount = 0;
+    sx.craft.get('iss').mesh.traverse((o) => { if (o.isMesh && o.material?.visible !== false) meshCount++; });
+    sx.deselect();
+    return { glintOpacity: glint ? glint.material.opacity : -1, meshCount };
+  });
+  check(`focused craft shows model not orb (glint ${orbCheck.glintOpacity.toFixed(2)} < 0.05)`,
+    orbCheck.glintOpacity >= 0 && orbCheck.glintOpacity < 0.05);
+  check(`craft models have real detail (${orbCheck.meshCount} parts ≥ 8)`, orbCheck.meshCount >= 8);
   // L-point craft fly halo orbits — near, but not exactly on, the Sun-Earth line
   const halo = await page.evaluate(() => {
     const sx = window.__sx;
