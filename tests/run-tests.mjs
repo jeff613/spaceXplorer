@@ -103,10 +103,10 @@ try {
   });
   check(`all ${integrity.count} objects have name/type/info/fact/update`,
     integrity.missing.length === 0, integrity.missing.join(','));
-  check('object count ≥ 55', integrity.count >= 55, `got ${integrity.count}`);
+  check('object count ≥ 58', integrity.count >= 58, `got ${integrity.count}`);
   check('roster complete (dwarfs, probes, constellations, Mars fleet)', await page.evaluate(() => {
     const sx = window.__sx;
-    return ['vesta', 'makemake', 'haumea', 'sedna', 'arrokoth', 'churyumov']
+    return ['vesta', 'pallas', 'bennu', 'apophis', 'makemake', 'haumea', 'sedna', 'arrokoth', 'churyumov']
       .every((id) => sx.bodies.has(id))
       && ['juno', 'cassini', 'gps', 'geo', 'pioneer10', 'pioneer11',
         'mro', 'perseverance', 'curiosity', 'gaia', 'soho'].every((id) => sx.craft.has(id));
@@ -154,6 +154,8 @@ try {
   const halleyAU = await helioDistanceAU(page, 'halley');
   check(`Halley at ${halleyAU.toFixed(1)} AU (30–35.5, near aphelion in 2026)`,
     halleyAU > 30 && halleyAU < 35.5);
+  const bennuAU = await helioDistanceAU(page, 'bennu');
+  check(`Bennu at ${bennuAU.toFixed(2)} AU (0.89–1.36 range)`, bennuAU > 0.89 && bennuAU < 1.36);
   const neowiseAU = await helioDistanceAU(page, 'neowise');
   check(`NEOWISE at ${neowiseAU.toFixed(1)} AU (outbound, 10-45)`, neowiseAU > 10 && neowiseAU < 45);
   const sednaAU = await helioDistanceAU(page, 'sedna');

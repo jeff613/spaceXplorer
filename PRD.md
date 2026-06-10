@@ -2,7 +2,7 @@
 
 **Status:** Living document — the improvement loop works against this.
 **Owner:** Jeff
-**Last updated:** 2026-06-10 (iteration 22)
+**Last updated:** 2026-06-10 (iteration 23)
 
 ## 1. Vision
 
@@ -105,7 +105,7 @@ a date picker alongside NOW.
 - [x] More spacecraft: Juno (iter 4); Pioneers, Cassini memorial (iter 9);
       MRO, Perseverance, Curiosity, Gaia, SOHO (iter 11). Artemis assets remain (future)
 - [x] GPS + geostationary satellite rings around Earth — shipped iter 9
-- [ ] Named asteroids: ~~Vesta~~ (shipped iter 4); Pallas, Bennu, Apophis remain
+- [x] Named asteroids: Vesta (iter 4); Pallas, Bennu, Apophis (iter 23)
 - [x] More Kuiper objects: Makemake, Haumea (iter 4); Arrokoth, Sedna (iter 9)
 
 **UX & fun**

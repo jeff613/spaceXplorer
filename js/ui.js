@@ -15,7 +15,7 @@ export function buildNavigator(bodies, craft, onSelect) {
     },
     {
       title: 'Dwarfs, Asteroids & Comets',
-      ids: ['ceres', 'vesta', 'pluto', 'charon', 'eris', 'makemake', 'haumea',
+      ids: ['ceres', 'vesta', 'pallas', 'bennu', 'apophis', 'pluto', 'charon', 'eris', 'makemake', 'haumea',
         'sedna', 'arrokoth', 'halley', 'churyumov', 'neowise'],
     },
     {

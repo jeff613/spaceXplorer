@@ -176,6 +176,43 @@ export const PLANETS = [
     fact: 'A surviving protoplanet from the dawn of the solar system. A giant impact at its south pole flung debris that still falls to Earth as meteorites.',
   },
   {
+    id: 'pallas', name: 'Pallas', type: 'Asteroid', color: 0x8e8a84,
+    radiusKm: 256,
+    elements: { a: 2.772, e: 0.230, i: 34.9, Om: 172.9, varpi: 123.8, L0: 220.0, period: 1686 },
+    rotationHours: 7.81, tilt: 84,
+    info: {
+      'Radius': '256 km', 'Orbital period': '4.6 years',
+      'Inclination': '34.9° — wildly tilted orbit', 'Discovered': '1802 (second asteroid ever)',
+    },
+    fact: 'Its orbit is tilted almost 35° out of the plane every planet orbits in — a cannonball cutting diagonally through the solar system.',
+  },
+  {
+    id: 'bennu', name: 'Bennu', type: 'Near-Earth asteroid', color: 0x4a4a50,
+    radiusKm: 0.245,
+    elements: { a: 1.126, e: 0.2037, i: 6.03, Om: 2.06, varpi: 68.3, L0: 170.0, period: 436.6 },
+    rotationHours: 4.3, tilt: 178,
+    info: {
+      'Diameter': '490 m', 'Orbital period': '1.2 years',
+      'Visited': 'OSIRIS-REx, sample returned Sept 2023',
+      'Surface': 'Rubble pile that nearly swallowed the probe',
+      'Impact odds': '1-in-2,700 in 2182',
+    },
+    fact: 'When OSIRIS-REx touched it, the surface behaved like a ball pit — the probe would have sunk in if it hadn\'t fired thrusters and fled with its sample.',
+  },
+  {
+    id: 'apophis', name: 'Apophis', type: 'Near-Earth asteroid', color: 0x6e645a,
+    radiusKm: 0.185,
+    elements: { a: 0.9224, e: 0.1914, i: 3.34, Om: 204.4, varpi: 330.8, L0: 243.0, period: 323.6 },
+    rotationHours: 30.4, tilt: 0,
+    info: {
+      'Diameter': '370 m', 'Orbital period': '0.9 years',
+      'April 13, 2029': 'Passes within 32,000 km of Earth',
+      'That is': 'Closer than GPS and TV satellites',
+      'Named for': 'The Egyptian serpent of chaos',
+    },
+    fact: 'On Friday, April 13, 2029, two billion people will be able to watch an asteroid cross the sky with the naked eye — and Earth\'s gravity will permanently bend its orbit.',
+  },
+  {
     id: 'pluto', name: 'Pluto', type: 'Dwarf planet', texture: 'plutomap1k.jpg',
     radiusKm: 1188.3,
     elements: { a: 39.48, e: 0.2488, i: 17.14, Om: 110.30, varpi: 224.07, L0: 238.93, period: 90560 },
