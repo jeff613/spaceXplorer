@@ -312,7 +312,7 @@ export function createPlanet(scene, data) {
   if (data.bump) {
     const b = texLoader.load(`textures/${data.bump}`);
     mat.bumpMap = b;
-    mat.bumpScale = 1.6;
+    mat.bumpScale = data.bumpScale ?? 1.6;
   }
   if (data.water) {
     // water mask (white = ocean) inverted into a roughness map: smooth
@@ -486,6 +486,10 @@ export function createMoon(scene, data, parentBody) {
   const mat = data.texture
     ? new THREE.MeshStandardMaterial({ map: loadTex(data.texture), roughness: 0.96, metalness: 0, envMapIntensity: 0.25 })
     : new THREE.MeshStandardMaterial({ color: data.color, roughness: 0.96, metalness: 0, envMapIntensity: 0.25 });
+  if (data.bump) {
+    mat.bumpMap = texLoader.load(`textures/${data.bump}`);
+    mat.bumpScale = data.bumpScale ?? 1.6;
+  }
   const mesh = new THREE.Mesh(geo, mat);
   mesh.name = data.id;
   // most moons orbit their planet's equator; Earth's Moon hugs the ecliptic

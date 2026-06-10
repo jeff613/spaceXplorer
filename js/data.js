@@ -56,6 +56,7 @@ export function daysSinceJ2000(date = new Date()) {
 export const PLANETS = [
   {
     id: 'mercury', name: 'Mercury', type: 'Planet', texture: '2k_mercury.jpg',
+    bump: 'mercurybump.jpg', bumpScale: 2.0,
     radiusKm: 2439.7,
     elements: { a: 0.387, e: 0.2056, i: 7.0, Om: 48.33, varpi: 77.46, L0: 252.25, period: 87.97 },
     rotationHours: 1407.6, tilt: 0.03,
@@ -94,6 +95,7 @@ export const PLANETS = [
   },
   {
     id: 'mars', name: 'Mars', type: 'Planet', texture: '2k_mars.jpg', atmosphere: 0xd89a72,
+    bump: 'marsbump1k.jpg', bumpScale: 2.4,
     radiusKm: 3389.5,
     elements: { a: 1.524, e: 0.0934, i: 1.85, Om: 49.56, varpi: 336.04, L0: 355.45, period: 686.98 },
     rotationHours: 24.62, tilt: 25.19,
@@ -304,6 +306,7 @@ export const SUN = {
 export const MOONS = [
   {
     id: 'moon', name: 'Moon', type: 'Moon of Earth', parent: 'earth', texture: '2k_moon.jpg',
+    bump: 'moonbump1k.jpg', bumpScale: 1.8,
     ecliptic: true, meanLongitude0: 218.316, orbitInclination: 5.14,
     radiusKm: 1737.4, orbitRadii: 3.2, trueOrbitRadii: 60.3, period: 27.321661,
     info: {

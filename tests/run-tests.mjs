@@ -208,6 +208,14 @@ try {
   check('Galilean transit shadows track all four moons',
     Array.isArray(transits) && transits.length === 4 && transits.every((d) => d > 100),
     JSON.stringify(transits));
+  const bumps = await page.evaluate(() => {
+    const sx = window.__sx;
+    return ['earth', 'mars', 'mercury', 'moon'].map((id) => {
+      const m = sx.bodies.get(id).mesh.material;
+      return !!m.bumpMap && m.bumpScale > 0;
+    });
+  });
+  check('terrain bump maps on Earth, Mars, Mercury, Moon', bumps.every(Boolean), JSON.stringify(bumps));
 
   console.log('\n— Orbital accuracy (current date)');
   const earthAU = await helioDistanceAU(page, 'earth');
