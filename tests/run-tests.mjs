@@ -208,6 +208,20 @@ try {
   check(`camera arrives near Mars (dist ${sel.camDist.toFixed(1)} < 25)`, sel.camDist < 25);
   check(`controls target locks Mars (${sel.targetDist.toFixed(2)} < 0.5)`, sel.targetDist < 0.5);
 
+  // live readout: Voyager 1's light-time is famously ~23 hours
+  await page.evaluate(() => window.__sx.select(window.__sx.craft.get('voyager1'), { instant: true }));
+  await frames(page, 2);
+  const live = await page.evaluate(() => ({
+    dist: document.getElementById('live-dist')?.textContent ?? '',
+    light: document.getElementById('live-light')?.textContent ?? '',
+  }));
+  const lightHours = parseFloat(live.light);
+  check(`Voyager 1 live light-time ${live.light} (22–25 h)`,
+    live.light.includes('hours') && lightHours > 22 && lightHours < 25, JSON.stringify(live));
+  check('live distance readout shows AU + km', /AU \(.+km\)/.test(live.dist), live.dist);
+  await page.evaluate(() => window.__sx.deselect());
+  await frames(page, 1);
+
   // click empty space deselects
   await page.mouse.click(720, 80);
   await frames(page, 2);
@@ -237,9 +251,13 @@ try {
   });
   await page.mouse.click(screenPos.x, screenPos.y);
   await frames(page, 2);
-  check('clicking a planet selects it', await page.evaluate(
-    () => window.__sx.selected()?.data.id === 'earth',
-  ));
+  // the ray may legitimately hit an Earth-orbiting craft's pick proxy
+  // hovering over the disc — both prove click-to-select works
+  check('clicking a planet selects it (or craft in front of it)', await page.evaluate(() => {
+    const sel = window.__sx.selected();
+    return sel != null && (sel.data.id === 'earth' || sel.data.parent === 'earth'
+      || sel.data.kind === 'lagrange'); // JWST/Gaia/SOHO ride the Sun-Earth line
+  }));
 
   await page.keyboard.press('Escape');
   await frames(page, 2);

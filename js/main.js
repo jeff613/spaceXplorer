@@ -10,7 +10,7 @@ import { buildSpacecraft } from './spacecraft.js';
 import { createTour } from './tour.js';
 import { createSound } from './sound.js';
 import {
-  buildNavigator, showInfo, hideInfo, createLabels, setupTimeControls, setupToggles,
+  buildNavigator, showInfo, hideInfo, createLabels, setupTimeControls, setupToggles, updateLiveStats,
 } from './ui.js';
 
 // ─── Renderer / scene / camera ────────────────────────────────────────────
@@ -254,6 +254,7 @@ function animate() {
   updateCamera(dt);
   controls.update();
   timeUI.updateDate();
+  if (selected) updateLiveStats(selected, bodies.get('earth'));
   labels.update(camera, window.innerWidth, window.innerHeight, selected?.data.id);
 
   composer.render();

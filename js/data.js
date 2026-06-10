@@ -15,6 +15,12 @@ export function scaleDistance(au) {
   return Math.pow(au, DIST_EXP) * DIST_MUL;
 }
 
+// inverse: display-space length back to real AU
+export function displayLenToAU(len) {
+  if (TRUE_SCALE) return len / DIST_MUL;
+  return Math.pow(len / DIST_MUL, 1 / DIST_EXP);
+}
+
 export function scaleRadius(km) {
   if (TRUE_SCALE) return (km / KM_PER_AU) * DIST_MUL;
   const earthR = km / 6371;

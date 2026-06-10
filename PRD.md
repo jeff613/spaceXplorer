@@ -2,7 +2,7 @@
 
 **Status:** Living document — the improvement loop works against this.
 **Owner:** Jeff
-**Last updated:** 2026-06-10 (iteration 20)
+**Last updated:** 2026-06-10 (iteration 21)
 
 ## 1. Vision
 
@@ -54,7 +54,7 @@ asteroid belt · Kuiper belt · starfield.
 (700 sats) · Juno (polar Jupiter orbit) · Tesla Roadster · Parker Solar
 Probe · New Horizons · Voyager 1 · Voyager 2.
 
-**Experience:** click/nav/search to select → camera fly-to + follow + info
+**Experience:** live distance-from-Earth + light-travel-time readout on every selection (iter 21) · click/nav/search to select → camera fly-to + follow + info
 panel with stats and a fun fact · floating labels with distance-based
 decluttering · orbit lines · time machine (pause, 0.01–100 days/s, NOW) ·
 toggles (orbits, labels, belts, Starlink) · deep links · Esc/empty-click

@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { J2000 } from './data.js';
+import { J2000, displayLenToAU } from './data.js';
 
 // ─── Object navigator ─────────────────────────────────────────────────────
 
@@ -96,6 +96,10 @@ export function showInfo(body) {
     row.querySelector('.info-val').textContent = v;
     rows.appendChild(row);
   }
+  p.querySelector('.info-live').innerHTML = `
+    <div class="info-row"><span class="info-key" id="live-dist-key"></span><span class="info-val" id="live-dist"></span></div>
+    <div class="info-row"><span class="info-key">Light travel time</span><span class="info-val" id="live-light"></span></div>`;
+
   // size comparison vs Earth, drawn to scale
   const cmp = p.querySelector('.info-compare');
   const rKm = body.data.radiusKm;
@@ -279,4 +283,44 @@ export function setupToggles(handlers) {
     const el = document.getElementById(id);
     el.addEventListener('change', () => fn(el.checked));
   }
+}
+
+
+// ─── Live distance readout ────────────────────────────────────────────────
+// Real positions are recovered from display space: direction is preserved
+// by the compression, so realPos = dir * trueAU.
+
+const _ra = new THREE.Vector3();
+const _rb = new THREE.Vector3();
+
+function realAU(worldPos, target) {
+  const len = worldPos.length();
+  if (len === 0) return target.set(0, 0, 0);
+  return target.copy(worldPos).multiplyScalar(displayLenToAU(len) / len);
+}
+
+function fmtLight(seconds) {
+  if (seconds < 90) return `${seconds.toFixed(1)} s`;
+  if (seconds < 5400) return `${(seconds / 60).toFixed(1)} min`;
+  return `${(seconds / 3600).toFixed(1)} hours`;
+}
+
+export function updateLiveStats(body, earth) {
+  const distEl = document.getElementById('live-dist');
+  if (!distEl || !body) return;
+  body.mesh.getWorldPosition(_ra);
+  realAU(_ra, _ra);
+  let dAU;
+  if (body.data.id === 'earth') {
+    document.getElementById('live-dist-key').textContent = 'Distance from Sun (now)';
+    dAU = _ra.length();
+  } else {
+    document.getElementById('live-dist-key').textContent = 'Distance from Earth (now)';
+    realAU(earth.anchor.position, _rb);
+    dAU = _ra.distanceTo(_rb);
+  }
+  const km = dAU * 149597870;
+  const kmTxt = km >= 1e9 ? `${(km / 1e9).toFixed(2)} billion km` : `${Math.round(km).toLocaleString('en-US')} km`;
+  distEl.textContent = `${dAU >= 0.01 ? dAU.toFixed(2) : dAU.toFixed(4)} AU (${kmTxt})`;
+  document.getElementById('live-light').textContent = fmtLight(dAU * 499.005);
 }
