@@ -103,7 +103,7 @@ export const PLANETS = [
     fact: 'Its rings span 280,000 km but are on average only about 10 metres thick — proportionally thinner than a sheet of paper.',
   },
   {
-    id: 'uranus', name: 'Uranus', type: 'Planet', texture: 'uranusmap.jpg',
+    id: 'uranus', name: 'Uranus', type: 'Planet', texture: 'uranusmap.jpg', ringProc: 'uranus',
     radiusKm: 25362,
     elements: { a: 19.19, e: 0.0472, i: 0.77, Om: 74.0, varpi: 170.96, L0: 313.23, period: 30688.5 },
     rotationHours: -17.24, tilt: 97.77,
@@ -115,7 +115,7 @@ export const PLANETS = [
     fact: 'Uranus rolls around the Sun on its side, tilted 98° — likely the scar of an ancient collision with an Earth-sized body.',
   },
   {
-    id: 'neptune', name: 'Neptune', type: 'Planet', texture: 'neptunemap.jpg',
+    id: 'neptune', name: 'Neptune', type: 'Planet', texture: 'neptunemap.jpg', ringProc: 'neptune',
     radiusKm: 24622,
     elements: { a: 30.07, e: 0.0086, i: 1.77, Om: 131.78, varpi: 44.97, L0: 304.88, period: 60182 },
     rotationHours: 16.11, tilt: 28.32,

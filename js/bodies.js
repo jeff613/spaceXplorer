@@ -177,25 +177,78 @@ function makeAtmosphere(radius, color) {
   return new THREE.Mesh(new THREE.SphereGeometry(radius * 1.03, 48, 24), mat);
 }
 
-// Saturn's ring: RingGeometry with UVs remapped radially so the strip
-// texture reads as concentric bands.
-function makeRing(planetR, file) {
-  const inner = planetR * 1.25;
-  const outer = planetR * 2.35;
-  const geo = new THREE.RingGeometry(inner, outer, 128, 1);
+// Rings: RingGeometry with UVs remapped radially so a strip texture reads
+// as concentric bands, plus a shader that casts the planet's shadow across
+// the ring plane (sun is always at the world origin).
+function makeRing(planetR, map, { inner, outer, gain = 1.0 }) {
+  const r0 = planetR * inner;
+  const r1 = planetR * outer;
+  const geo = new THREE.RingGeometry(r0, r1, 128, 1);
   const pos = geo.attributes.position;
   const uv = geo.attributes.uv;
   const v = new THREE.Vector3();
   for (let i = 0; i < pos.count; i++) {
     v.fromBufferAttribute(pos, i);
-    uv.setXY(i, (v.length() - inner) / (outer - inner), 0.5);
+    uv.setXY(i, (v.length() - r0) / (r1 - r0), 0.5);
   }
-  const mat = new THREE.MeshBasicMaterial({
-    map: loadTex(file), side: THREE.DoubleSide, transparent: true, opacity: 0.92,
+  const mat = new THREE.ShaderMaterial({
+    uniforms: {
+      map: { value: map },
+      planetR: { value: planetR },
+      planetPos: { value: new THREE.Vector3() },
+      gain: { value: gain },
+    },
+    vertexShader: `
+      varying vec2 vUv; varying vec3 vWorldPos;
+      void main() {
+        vUv = uv;
+        vec4 wp = modelMatrix * vec4(position, 1.0);
+        vWorldPos = wp.xyz;
+        gl_Position = projectionMatrix * viewMatrix * wp;
+      }`,
+    fragmentShader: `
+      uniform sampler2D map; uniform float planetR; uniform vec3 planetPos; uniform float gain;
+      varying vec2 vUv; varying vec3 vWorldPos;
+      void main() {
+        vec4 c = texture2D(map, vUv);
+        float lum = max(max(c.r, c.g), c.b);
+        float alpha = clamp(lum * 1.5, 0.0, 1.0) * c.a * gain;
+        // shadow cylinder cast by the planet, pointing away from the sun
+        vec3 d = normalize(planetPos);
+        vec3 rel = vWorldPos - planetPos;
+        float along = dot(rel, d);
+        float radial = length(rel - d * along);
+        float lit = along < 0.0 ? 1.0
+          : mix(0.18, 1.0, smoothstep(planetR * 0.96, planetR * 1.12, radial));
+        gl_FragColor = vec4(c.rgb * lit, alpha);
+      }`,
+    transparent: true, side: THREE.DoubleSide, depthWrite: false,
   });
   const ring = new THREE.Mesh(geo, mat);
   ring.rotation.x = -Math.PI / 2;
+  ring.userData.shadowMat = mat;
   return ring;
+}
+
+// Procedural ring strips for Uranus (bright narrow ε ring) and Neptune
+// (faint Adams + Le Verrier rings)
+function makeProcRingTexture(kind) {
+  const c = document.createElement('canvas');
+  c.width = 256; c.height = 4;
+  const ctx = c.getContext('2d');
+  ctx.clearRect(0, 0, 256, 4);
+  const band = (x0, x1, rgba) => { ctx.fillStyle = rgba; ctx.fillRect(x0 * 256, 0, (x1 - x0) * 256, 4); };
+  if (kind === 'uranus') {
+    band(0.10, 0.14, 'rgba(150,170,190,0.20)');
+    band(0.38, 0.41, 'rgba(160,180,200,0.25)');
+    band(0.84, 0.92, 'rgba(200,220,240,0.85)'); // ε ring
+  } else {
+    band(0.30, 0.36, 'rgba(170,180,200,0.22)'); // Le Verrier
+    band(0.78, 0.86, 'rgba(190,200,220,0.40)'); // Adams
+  }
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
 }
 
 export function createPlanet(scene, data) {
@@ -229,18 +282,27 @@ export function createPlanet(scene, data) {
     );
     tiltGroup.add(clouds);
   }
-  if (data.ring) tiltGroup.add(makeRing(displayRadius, data.ring));
+  const rings = [];
+  if (data.ring) {
+    rings.push(makeRing(displayRadius, loadTex(data.ring), { inner: 1.25, outer: 2.35 }));
+  }
+  if (data.ringProc) {
+    rings.push(makeRing(displayRadius, makeProcRingTexture(data.ringProc),
+      { inner: 1.55, outer: 2.0, gain: 0.85 }));
+  }
+  for (const ring of rings) tiltGroup.add(ring);
 
   scene.add(anchor);
   const orbitLine = makeOrbitLine(data.elements);
   scene.add(orbitLine);
 
   const body = {
-    data, mesh, anchor, tiltGroup, orbitLine, displayRadius,
+    data, mesh, anchor, tiltGroup, orbitLine, displayRadius, rings,
     update(days) {
       keplerPosition(data.elements, days, anchor.position);
       mesh.rotation.y = (days * 24 / data.rotationHours) * Math.PI * 2;
       if (clouds) clouds.rotation.y = mesh.rotation.y * 0.85;
+      for (const ring of rings) ring.userData.shadowMat.uniforms.planetPos.value.copy(anchor.position);
     },
   };
   return body;

@@ -2,7 +2,7 @@
 
 **Status:** Living document — the improvement loop works against this.
 **Owner:** Jeff
-**Last updated:** 2026-06-10 (iteration 5)
+**Last updated:** 2026-06-10 (iteration 6)
 
 ## 1. Vision
 
@@ -86,13 +86,13 @@ a date picker alongside NOW.
 - [ ] Animated sun: ~~surface noise shader + corona~~ (shipped iter 5); lens flare remains
 - [ ] Higher-res planet textures (2K+) with normal/specular maps where available
 - [ ] Atmospheric scattering upgrade (day/night terminator glow)
-- [ ] Planet self-shadowing on rings (Saturn ring shadow)
+- [x] Planet self-shadowing on rings (Saturn ring shadow) — shipped iter 6
 - [ ] Milky way HDR skybox upgrade
 - [ ] Camera motion polish (inertia, FOV easing on fly-to)
 
 **Fidelity & realism**
 - [ ] More comets (67P, NEOWISE) with correct apparitions
-- [ ] Uranus rings (faint), Neptune ring arcs
+- [x] Uranus rings (ε + faint bands), Neptune rings (Adams, Le Verrier) — shipped iter 6 (arcs approximated as faint full rings)
 - [ ] Jupiter's Great Red Spot orientation; gas giant band motion
 - [ ] Optional true-scale mode (educational toggle)
 - [ ] Real lunar phase / eclipse shadows (stretch)

@@ -112,6 +112,12 @@ try {
   });
   check('navigator lists every object', navOk.items >= 35, `got ${navOk.items}`);
 
+  const rings = await page.evaluate(() => {
+    const b = window.__sx.bodies;
+    return ['saturn', 'uranus', 'neptune'].map((id) => b.get(id).rings?.length || 0);
+  });
+  check('Saturn, Uranus, Neptune have ring meshes', rings.every((n) => n >= 1), rings.join(','));
+
   console.log('\n— Orbital accuracy (current date)');
   const earthAU = await helioDistanceAU(page, 'earth');
   check(`Earth at ${earthAU.toFixed(3)} AU (0.98–1.02)`, earthAU > 0.98 && earthAU < 1.02);
