@@ -2,7 +2,7 @@
 
 **Status:** Living document — the improvement loop works against this.
 **Owner:** Jeff
-**Last updated:** 2026-06-13 (iteration 31)
+**Last updated:** 2026-06-13 (iteration 32)
 
 ## 1. Vision
 
@@ -90,7 +90,7 @@ a date picker alongside NOW.
 - [x] Animated sun: surface noise shader + corona (iter 5); lens flare (iter 13)
 - [x] Higher-res planet textures: 2K set (Solar System Scope, CC-BY) + real ring alpha — shipped iter 10; normal/specular maps remain
 - [x] Atmospheric scattering upgrade (day-side rim, sunset terminator band) — shipped iter 15
-- [x] Planet self-shadowing on rings (Saturn ring shadow) — shipped iter 6
+- [x] Ring shadows both ways: planet→rings (iter 6) and rings→planet sampling real ring alpha (iter 32)
 - [x] Milky way skybox upgrade (2K pano) — shipped iter 10
 - [x] Camera motion polish: FOV breathing on fly-to — shipped iter 12
 

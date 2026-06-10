@@ -295,6 +295,7 @@ function makeProcRingTexture(kind) {
   return tex;
 }
 
+
 export function createPlanet(scene, data) {
   const displayRadius = scaleRadius(data.radiusKm);
 
@@ -308,26 +309,6 @@ export function createPlanet(scene, data) {
   const mat = data.texture
     ? new THREE.MeshStandardMaterial({ map: loadTex(data.texture), roughness: 0.92, metalness: 0, envMapIntensity: 0.25 })
     : new THREE.MeshStandardMaterial({ color: data.color, roughness: 0.95, metalness: 0, envMapIntensity: 0.25 });
-  if (data.bands) {
-    // differential rotation: equatorial bands outrun the poles (~4% on
-    // Jupiter, System I vs System III), sheared in the fragment shader
-    mat.map.wrapS = THREE.RepeatWrapping;
-    const rate = (24 / Math.abs(data.rotationHours)) * 0.04;
-    mat.onBeforeCompile = (shader) => {
-      shader.uniforms.uDays = { value: 0 };
-      shader.fragmentShader = shader.fragmentShader
-        .replace('#include <common>', '#include <common>\nuniform float uDays;')
-        .replace('#include <map_fragment>', `
-          vec2 buv = vMapUv;
-          float bandLat = (buv.y - 0.5) * 3.14159265;
-          buv.x += uDays * ${rate.toFixed(6)} * cos(bandLat * 3.0);
-          // keep mip selection from the unsheared uv, or the huge offset
-          // derivative collapses sampling to the blurriest mip
-          vec4 sampledDiffuseColor = textureGrad( map, buv, dFdx(vMapUv), dFdy(vMapUv) );
-          diffuseColor *= sampledDiffuseColor;`);
-      mat.userData.shader = shader;
-    };
-  }
   const mesh = new THREE.Mesh(geo, mat);
   mesh.name = data.id;
   tiltGroup.add(mesh);
@@ -360,6 +341,69 @@ export function createPlanet(scene, data) {
   }
   for (const ring of rings) tiltGroup.add(ring);
 
+  // One shader hook per planet (bands drift and/or ring shadow). A unique
+  // program cache key is essential: three keys programs by onBeforeCompile
+  // source, and identical wrappers made Saturn reuse Jupiter's program.
+  if (data.bands || (data.ring && rings.length)) {
+    const bandRate = data.bands ? (24 / Math.abs(data.rotationHours)) * 0.04 : 0;
+    const inner = displayRadius * 1.25;
+    const outer = displayRadius * 2.35;
+    const ringTex = data.ring && rings.length ? rings[0].userData.shadowMat.uniforms.map.value : null;
+    if (data.bands) mat.map.wrapS = THREE.RepeatWrapping;
+    mat.customProgramCacheKey = () => `planetfx-${data.id}`;
+    mat.onBeforeCompile = (shader) => {
+      let frag = shader.fragmentShader;
+      let decls = '';
+      let mapCode = '#include <map_fragment>';
+      if (data.bands) {
+        shader.uniforms.uDays = { value: 0 };
+        decls += '\nuniform float uDays;';
+        mapCode = `
+          vec2 buv = vMapUv;
+          float bandLat = (buv.y - 0.5) * 3.14159265;
+          buv.x += uDays * ${bandRate.toFixed(6)} * cos(bandLat * 3.0);
+          vec4 sampledDiffuseColor = textureGrad( map, buv, dFdx(vMapUv), dFdy(vMapUv) );
+          diffuseColor *= sampledDiffuseColor;`;
+      }
+      if (ringTex) {
+        shader.uniforms.uRingMap = { value: ringTex };
+        shader.uniforms.uRingInner = { value: inner };
+        shader.uniforms.uRingOuter = { value: outer };
+        shader.uniforms.uRingNormal = { value: new THREE.Vector3(0, 1, 0) };
+        shader.uniforms.uPlanetPos = { value: new THREE.Vector3() };
+        decls += `
+          uniform sampler2D uRingMap; uniform float uRingInner; uniform float uRingOuter;
+          uniform vec3 uRingNormal; uniform vec3 uPlanetPos; varying vec3 vRingWorld;`;
+        shader.vertexShader = shader.vertexShader
+          .replace('#include <common>', '#include <common>\nvarying vec3 vRingWorld;')
+          .replace('#include <worldpos_vertex>', `#include <worldpos_vertex>
+            vec4 wpR = modelMatrix * vec4( transformed, 1.0 );
+            vRingWorld = wpR.xyz;`);
+        mapCode += `
+          {
+            vec3 toSun = normalize(-vRingWorld);
+            float denom = dot(toSun, uRingNormal);
+            if (abs(denom) > 1e-4) {
+              float tHit = dot(uPlanetPos - vRingWorld, uRingNormal) / denom;
+              if (tHit > 0.0) {
+                float rr = length(vRingWorld + toSun * tHit - uPlanetPos);
+                float ru = (rr - uRingInner) / (uRingOuter - uRingInner);
+                if (ru > 0.0 && ru < 1.0) {
+                  float aR = texture2D(uRingMap, vec2(ru, 0.5)).a;
+                  diffuseColor.rgb *= mix(1.0, 0.28, aR * 0.85);
+                }
+              }
+            }
+          }`;
+      }
+      frag = frag
+        .replace('#include <common>', '#include <common>' + decls)
+        .replace('#include <map_fragment>', mapCode);
+      shader.fragmentShader = frag;
+      mat.userData.shader = shader;
+    };
+  }
+
   scene.add(anchor);
   const orbitLine = makeOrbitLine(data.elements);
   scene.add(orbitLine);
@@ -369,7 +413,14 @@ export function createPlanet(scene, data) {
     update(days) {
       keplerPosition(data.elements, days, anchor.position);
       mesh.rotation.y = (days * 24 / data.rotationHours) * Math.PI * 2;
-      if (mat.userData.shader) mat.userData.shader.uniforms.uDays.value = days % 10000;
+      const sh = mat.userData.shader;
+      if (sh) {
+        if (sh.uniforms.uDays) sh.uniforms.uDays.value = days % 10000;
+        if (sh.uniforms.uPlanetPos) {
+          sh.uniforms.uPlanetPos.value.copy(anchor.position);
+          sh.uniforms.uRingNormal.value.set(0, 1, 0).applyQuaternion(tiltGroup.quaternion);
+        }
+      }
       if (clouds) clouds.rotation.y = mesh.rotation.y * 0.85;
       for (const ring of rings) ring.userData.shadowMat.uniforms.planetPos.value.copy(anchor.position);
     },
