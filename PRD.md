@@ -2,7 +2,7 @@
 
 **Status:** Living document — the improvement loop works against this.
 **Owner:** Jeff
-**Last updated:** 2026-06-10 (iteration 13)
+**Last updated:** 2026-06-10 (iteration 14)
 
 ## 1. Vision
 
@@ -50,7 +50,7 @@ Ganymede, Callisto, Titan, Enceladus, Rhea, Iapetus, Miranda, Titania,
 Oberon, Triton, Charon · Halley's Comet (dynamic anti-sunward tail) ·
 asteroid belt · Kuiper belt · starfield.
 
-**Man-made (10):** ISS (modeled) · Hubble · JWST at L2 · Starlink shell
+**Man-made:** all spacecraft are procedural PBR miniatures (iter 14) — ISS · Hubble · JWST at L2 · Starlink shell
 (700 sats) · Juno (polar Jupiter orbit) · Tesla Roadster · Parker Solar
 Probe · New Horizons · Voyager 1 · Voyager 2.
 
@@ -82,6 +82,10 @@ a date picker alongside NOW.
 ## 6. Roadmap (prioritized backlog)
 
 **Graphics (top priority — best-in-class realistic & fancy)**
+- [x] Spacecraft visual upgrade: procedural PBR miniatures for every craft
+      (dishes, foil, panels, rovers, Roadster w/ wheels), distance glints,
+      PBR planet/moon materials, soft round constellation points, lumpy
+      comet nuclei — shipped iter 14 on user feedback ("dots look horrible")
 - [x] Post-processing pipeline: UnrealBloomPass + ACES filmic tone mapping — shipped iter 5
 - [x] Animated sun: surface noise shader + corona (iter 5); lens flare (iter 13)
 - [x] Higher-res planet textures: 2K set (Solar System Scope, CC-BY) + real ring alpha — shipped iter 10; normal/specular maps remain

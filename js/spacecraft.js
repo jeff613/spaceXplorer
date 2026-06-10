@@ -4,29 +4,246 @@ import { keplerPosition } from './bodies.js';
 
 const DEG = Math.PI / 180;
 
-// Tiny stylized ISS: truss + solar wings
-function makeISSMesh() {
+// ─── Procedural spacecraft model kit ──────────────────────────────────────
+// Recognizable miniatures built from primitives with PBR materials, so they
+// catch real sunlight instead of reading as flat glowing dots.
+
+const matMetal = () => new THREE.MeshStandardMaterial({ color: 0xd2d8de, metalness: 0.85, roughness: 0.35 });
+const matWhite = () => new THREE.MeshStandardMaterial({ color: 0xe8e6e0, metalness: 0.2, roughness: 0.6 });
+const matFoil = () => new THREE.MeshStandardMaterial({ color: 0xc89a3c, metalness: 0.95, roughness: 0.4 });
+const matPanel = () => new THREE.MeshStandardMaterial({ color: 0x1d3a6e, metalness: 0.7, roughness: 0.3 });
+const matBronze = () => new THREE.MeshStandardMaterial({ color: 0x8a6d3a, metalness: 0.8, roughness: 0.45 });
+
+// faint sprite glint so craft stay visible from far away
+let glintTex = null;
+function makeGlint(color, scale = 0.9) {
+  if (!glintTex) {
+    const c = document.createElement('canvas');
+    c.width = c.height = 64;
+    const ctx = c.getContext('2d');
+    const g = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+    g.addColorStop(0, 'rgba(255,255,255,0.95)');
+    g.addColorStop(0.3, 'rgba(255,255,255,0.25)');
+    g.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, 64, 64);
+    glintTex = new THREE.CanvasTexture(c);
+  }
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({
+    map: glintTex, color, blending: THREE.AdditiveBlending,
+    depthWrite: false, transparent: true, opacity: 0.28,
+  }));
+  s.scale.setScalar(scale);
+  s.raycast = () => {};
+  return s;
+}
+
+let roundTex = null;
+function roundPointTexture() {
+  if (roundTex) return roundTex;
+  const c = document.createElement('canvas');
+  c.width = c.height = 32;
+  const ctx = c.getContext('2d');
+  const g = ctx.createRadialGradient(16, 16, 0, 16, 16, 16);
+  g.addColorStop(0, 'rgba(255,255,255,1)');
+  g.addColorStop(0.6, 'rgba(255,255,255,0.7)');
+  g.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, 32, 32);
+  roundTex = new THREE.CanvasTexture(c);
+  return roundTex;
+}
+
+function makeDish(r = 0.2) {
   const g = new THREE.Group();
-  const metal = new THREE.MeshPhongMaterial({ color: 0xd8d8e0 });
-  const panel = new THREE.MeshPhongMaterial({ color: 0x2a4d8f, emissive: 0x12203d });
-  const truss = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.07, 0.07), metal);
-  g.add(truss);
-  const module = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.5, 8), metal);
-  module.rotation.x = Math.PI / 2;
-  g.add(module);
-  for (const x of [-0.38, 0.38]) {
-    const wing = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.01, 0.5), panel);
+  const bowl = new THREE.Mesh(
+    new THREE.SphereGeometry(r, 20, 10, 0, Math.PI * 2, 0, Math.PI * 0.24),
+    new THREE.MeshStandardMaterial({
+      color: 0xb8bfc6, metalness: 0.7, roughness: 0.5, side: THREE.DoubleSide,
+    }),
+  );
+  bowl.rotation.x = Math.PI / 2; // open toward +z
+  g.add(bowl);
+  const feed = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, r * 0.8, 6), matMetal());
+  feed.rotation.x = Math.PI / 2;
+  feed.position.z = r * 0.35;
+  g.add(feed);
+  return g;
+}
+
+// Generic deep-space probe: foil bus + big dish + RTG boom
+function makeProbe({ dish = 0.26, panels = 0, scale = 1 } = {}) {
+  const g = new THREE.Group();
+  const bus = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.1, 0.16), matFoil());
+  g.add(bus);
+  const d = makeDish(dish);
+  d.position.z = 0.08;
+  g.add(d);
+  const boom = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, 0.4, 5), matMetal());
+  boom.rotation.z = Math.PI / 2;
+  boom.position.x = -0.26;
+  g.add(boom);
+  const rtg = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.1, 8), matBronze());
+  rtg.rotation.z = Math.PI / 2;
+  rtg.position.x = -0.44;
+  g.add(rtg);
+  for (let i = 0; i < panels; i++) {
+    const wing = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.006, 0.14), matPanel());
+    const a = (i / panels) * Math.PI * 2;
+    wing.position.set(Math.cos(a) * 0.3, 0, Math.sin(a) * 0.3);
+    wing.rotation.y = -a;
+    g.add(wing);
+  }
+  g.scale.setScalar(scale);
+  return g;
+}
+
+function makeTelescope() { // Hubble-like: silver tube + panels
+  const g = new THREE.Group();
+  const tube = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.42, 14), matMetal());
+  tube.rotation.x = Math.PI / 2;
+  g.add(tube);
+  const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.092, 0.092, 0.04, 14), matFoil());
+  cap.rotation.x = Math.PI / 2;
+  cap.position.z = 0.2;
+  g.add(cap);
+  for (const x of [-0.22, 0.22]) {
+    const wing = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.005, 0.3), matPanel());
     wing.position.x = x;
     g.add(wing);
   }
   return g;
 }
 
-function makeDot(color, size = 0.45) {
-  return new THREE.Mesh(
-    new THREE.SphereGeometry(size, 16, 8),
-    new THREE.MeshBasicMaterial({ color }),
+function makeJWST() { // gold hex mirror over a silver kite sunshield
+  const g = new THREE.Group();
+  const mirror = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.16, 0.16, 0.015, 6),
+    new THREE.MeshStandardMaterial({ color: 0xd4af37, metalness: 1.0, roughness: 0.25 }),
   );
+  mirror.position.y = 0.09;
+  g.add(mirror);
+  const shield = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.55, 0.34),
+    new THREE.MeshStandardMaterial({
+      color: 0xcfc2e8, metalness: 0.9, roughness: 0.35, side: THREE.DoubleSide,
+    }),
+  );
+  shield.rotation.x = -Math.PI / 2;
+  g.add(shield);
+  const strut = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, 0.1, 5), matMetal());
+  strut.position.y = 0.045;
+  g.add(strut);
+  return g;
+}
+
+function makeParker() { // white heat shield facing a small bus
+  const g = new THREE.Group();
+  const shield = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.035, 18), matWhite());
+  shield.rotation.x = Math.PI / 2;
+  shield.position.z = 0.1;
+  g.add(shield);
+  const bus = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.16, 10), matMetal());
+  bus.rotation.x = Math.PI / 2;
+  g.add(bus);
+  for (const x of [-0.12, 0.12]) {
+    const wing = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.004, 0.08), matPanel());
+    wing.position.set(x, 0, -0.02);
+    g.add(wing);
+  }
+  return g;
+}
+
+function makeRoadster() { // cherry-red car, headed for the asteroid belt
+  const g = new THREE.Group();
+  const red = new THREE.MeshStandardMaterial({ color: 0xc41e2f, metalness: 0.7, roughness: 0.3 });
+  const body = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.05, 0.13), red);
+  g.add(body);
+  const cabin = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.045, 0.11),
+    new THREE.MeshStandardMaterial({ color: 0x202830, metalness: 0.4, roughness: 0.2 }));
+  cabin.position.set(-0.01, 0.045, 0);
+  g.add(cabin);
+  const wheelGeo = new THREE.CylinderGeometry(0.035, 0.035, 0.02, 10);
+  const dark = new THREE.MeshStandardMaterial({ color: 0x14161a, roughness: 0.9 });
+  for (const [x, z] of [[-0.1, 0.07], [0.1, 0.07], [-0.1, -0.07], [0.1, -0.07]]) {
+    const w = new THREE.Mesh(wheelGeo, dark);
+    w.rotation.x = Math.PI / 2;
+    w.position.set(x, -0.03, z);
+    g.add(w);
+  }
+  return g;
+}
+
+function makeRover() { // boxy body, mast, six wheels
+  const g = new THREE.Group();
+  const body = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.04, 0.07), matWhite());
+  g.add(body);
+  const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.005, 0.005, 0.06, 5), matMetal());
+  mast.position.set(0.03, 0.05, 0);
+  g.add(mast);
+  const dark = new THREE.MeshStandardMaterial({ color: 0x1a1c20, roughness: 0.9 });
+  for (const x of [-0.04, 0, 0.04]) {
+    for (const z of [0.045, -0.045]) {
+      const w = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.012, 8), dark);
+      w.rotation.x = Math.PI / 2;
+      w.position.set(x, -0.028, z);
+      g.add(w);
+    }
+  }
+  return g;
+}
+
+function makeISSMesh() { // truss, bronze-gold arrays, module stack, radiators
+  const g = new THREE.Group();
+  const truss = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.04, 0.04), matMetal());
+  g.add(truss);
+  // pressurized modules along z
+  for (const [z, len, r] of [[0.0, 0.5, 0.05], [0.18, 0.22, 0.04]]) {
+    const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, len, 12), matWhite());
+    m.rotation.x = Math.PI / 2;
+    m.position.z = z * 0.6;
+    g.add(m);
+  }
+  // four solar array pairs, ISS-bronze
+  for (const x of [-0.46, -0.3, 0.3, 0.46]) {
+    for (const z of [0.16, -0.16]) {
+      const wing = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.004, 0.26), matBronze());
+      wing.position.set(x, 0, z);
+      g.add(wing);
+    }
+  }
+  // white radiators
+  for (const x of [-0.12, 0.12]) {
+    const rad = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.003, 0.1), matWhite());
+    rad.position.set(x, -0.05, 0);
+    rad.rotation.x = 0.5;
+    g.add(rad);
+  }
+  return g;
+}
+
+// model picker — every craft gets a real miniature
+function craftMesh(data) {
+  switch (data.id) {
+    case 'iss': return makeISSMesh();
+    case 'hubble': return makeTelescope();
+    case 'jwst': return makeJWST();
+    case 'gaia': return makeProbe({ dish: 0.14, scale: 0.8 });
+    case 'soho': return makeProbe({ dish: 0.1, panels: 2, scale: 0.8 });
+    case 'parker': return makeParker();
+    case 'roadster': return makeRoadster();
+    case 'perseverance':
+    case 'curiosity': return makeRover();
+    case 'juno': return makeProbe({ dish: 0.16, panels: 3 });
+    case 'cassini': return makeProbe({ dish: 0.22 });
+    case 'mro': return makeProbe({ dish: 0.18, panels: 2, scale: 0.7 });
+    case 'voyager1':
+    case 'voyager2': return makeProbe({ dish: 0.22, scale: 3.2 });
+    case 'pioneer10':
+    case 'pioneer11': return makeProbe({ dish: 0.22, scale: 3.2 });
+    case 'newhorizons': return makeProbe({ dish: 0.2, scale: 3.2 });
+    default: return makeProbe({ scale: 0.8 });
+  }
 }
 
 // Invisible, oversized sphere so tiny craft are clickable
@@ -57,7 +274,8 @@ export function buildSpacecraft(scene, bodies) {
     if (data.kind === 'orbiter') {
       const parent = bodies.get(data.parent);
       const orbitR = parent.displayRadius * data.orbitRadii;
-      const mesh = data.id === 'iss' ? makeISSMesh() : makeDot(data.color, 0.18);
+      const mesh = craftMesh(data);
+      mesh.add(makeGlint(data.color, 0.3));
       mesh.name = data.id;
       const plane = new THREE.Group();
       plane.rotation.x = data.inclination * DEG;
@@ -76,7 +294,8 @@ export function buildSpacecraft(scene, bodies) {
     } else if (data.kind === 'lagrange') {
       // L1/L2 sit on the Sun–Earth line; factor <1 = sunward L1, >1 = L2
       // (display-exaggerated)
-      const mesh = makeDot(data.color, 0.22);
+      const mesh = craftMesh(data);
+      mesh.add(makeGlint(data.color, 0.35));
       mesh.name = data.id;
       scene.add(mesh);
       const pick = addPickProxy(mesh, 1.2);
@@ -90,7 +309,8 @@ export function buildSpacecraft(scene, bodies) {
       // rover pinned to the parent's surface at lat/lon — added as a child
       // of the spinning mesh so it rides the planet's rotation
       const parent = bodies.get(data.parent);
-      const mesh = makeDot(data.color, 0.12);
+      const mesh = craftMesh(data);
+      mesh.add(makeGlint(data.color, 0.12));
       mesh.name = data.id;
       const lat = data.lat * DEG;
       const lon = data.lon * DEG;
@@ -104,7 +324,8 @@ export function buildSpacecraft(scene, bodies) {
       const pick = addPickProxy(mesh, 0.7);
       craft.set(data.id, { data, mesh, pick, displayRadius: 0.45, update() {} });
     } else if (data.kind === 'helio') {
-      const mesh = makeDot(data.color, 0.3);
+      const mesh = craftMesh(data);
+      mesh.add(makeGlint(data.color, 0.35));
       mesh.name = data.id;
       scene.add(mesh);
       const pick = addPickProxy(mesh, 1.4);
@@ -126,10 +347,14 @@ export function buildSpacecraft(scene, bodies) {
         update(days) { keplerPosition(data.elements, days, mesh.position); },
       });
     } else if (data.kind === 'deep') {
-      const mesh = makeDot(data.color, 0.5);
+      const mesh = craftMesh(data);
+      mesh.add(makeGlint(data.color, 0.4));
       mesh.name = data.id;
       const dir = raDecToDir(data.raDeg, data.decDeg);
       mesh.position.copy(dir).multiplyScalar(scaleDistance(data.distanceAU));
+      mesh.lookAt(0, 0, 0); // the real ones aim their dishes at Earth
+      mesh.rotateY(0.65); // ... shown at a slight angle so the dish reads as a dish
+      mesh.rotateX(-0.15);
       scene.add(mesh);
       const pick = addPickProxy(mesh, 6);
       // trajectory hint: faint line from the inner system outward
@@ -167,8 +392,9 @@ function buildStarlink(earth, data) {
   const geo = new THREE.BufferGeometry();
   geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
   const points = new THREE.Points(geo, new THREE.PointsMaterial({
-    color: data.color, size: 1.6, sizeAttenuation: false,
-    transparent: true, opacity: 0.85, depthWrite: false,
+    color: data.color, size: 2.2, sizeAttenuation: false,
+    map: roundPointTexture(), alphaTest: 0.25,
+    transparent: true, opacity: 0.9, depthWrite: false,
   }));
   points.name = data.id;
   earth.anchor.add(points);

@@ -283,8 +283,8 @@ export function createPlanet(scene, data) {
 
   const geo = new THREE.SphereGeometry(displayRadius, 48, 24);
   const mat = data.texture
-    ? new THREE.MeshPhongMaterial({ map: loadTex(data.texture), shininess: 6 })
-    : new THREE.MeshPhongMaterial({ color: data.color, shininess: 6 });
+    ? new THREE.MeshStandardMaterial({ map: loadTex(data.texture), roughness: 0.92, metalness: 0 })
+    : new THREE.MeshStandardMaterial({ color: data.color, roughness: 0.95, metalness: 0 });
   const mesh = new THREE.Mesh(geo, mat);
   mesh.name = data.id;
   tiltGroup.add(mesh);
@@ -335,8 +335,8 @@ export function createMoon(scene, data, parentBody) {
 
   const geo = new THREE.SphereGeometry(displayRadius, 32, 16);
   const mat = data.texture
-    ? new THREE.MeshPhongMaterial({ map: loadTex(data.texture), shininess: 4 })
-    : new THREE.MeshPhongMaterial({ color: data.color, shininess: 4 });
+    ? new THREE.MeshStandardMaterial({ map: loadTex(data.texture), roughness: 0.96, metalness: 0 })
+    : new THREE.MeshStandardMaterial({ color: data.color, roughness: 0.96, metalness: 0 });
   const mesh = new THREE.Mesh(geo, mat);
   mesh.name = data.id;
   // most moons orbit their planet's equator; Earth's Moon hugs the ecliptic
@@ -373,9 +373,11 @@ export function createMoon(scene, data, parentBody) {
 export function createComet(scene, data) {
   const displayRadius = 0.45;
   const mesh = new THREE.Mesh(
-    new THREE.SphereGeometry(displayRadius, 16, 8),
-    new THREE.MeshBasicMaterial({ color: data.color }),
+    new THREE.SphereGeometry(displayRadius, 18, 10),
+    new THREE.MeshStandardMaterial({ color: data.color, roughness: 1.0, metalness: 0 }),
   );
+  mesh.scale.set(1.25, 0.8, 0.95); // lumpy nucleus, not a billiard ball
+  mesh.rotation.set(0.4, 0.9, 0.2);
   mesh.name = data.id;
   scene.add(mesh);
 
