@@ -221,6 +221,19 @@ try {
     });
   });
   check('terrain bump maps on Earth, Mars, Mercury, Moon', bumps.every(Boolean), JSON.stringify(bumps));
+  const sunfx = await page.evaluate(async () => {
+    const sx = window.__sx;
+    await sx.frame();
+    const sun = sx.bodies.get('sun');
+    const rim = sun.mesh.children.find((ch) => ch.name === 'chromosphere');
+    return {
+      rim: !!rim,
+      rimAnimated: rim ? rim.material.uniforms.time.value > 0 : false,
+      limb: sun.mesh.material.fragmentShader.includes('limb darkening'),
+    };
+  });
+  check('sun has limb darkening + animated chromosphere rim',
+    sunfx.rim && sunfx.rimAnimated && sunfx.limb, JSON.stringify(sunfx));
 
   console.log('\n— Orbital accuracy (current date)');
   const earthAU = await helioDistanceAU(page, 'earth');

@@ -82,11 +82,17 @@ export function createSun(scene) {
   const mat = new THREE.ShaderMaterial({
     uniforms: { map: { value: loadTex(SUN.texture) }, time: { value: 0 } },
     vertexShader: `
-      varying vec2 vUv;
-      void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+      varying vec2 vUv; varying vec3 vN; varying vec3 vV;
+      void main() {
+        vUv = uv;
+        vN = normalize(normalMatrix * normal);
+        vec4 mv = modelViewMatrix * vec4(position, 1.0);
+        vV = -mv.xyz;
+        gl_Position = projectionMatrix * mv;
+      }`,
     fragmentShader: `
       uniform sampler2D map; uniform float time;
-      varying vec2 vUv;
+      varying vec2 vUv; varying vec3 vN; varying vec3 vV;
       float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
       float noise(vec2 p) {
         vec2 i = floor(p), f = fract(p);
@@ -105,12 +111,61 @@ export function createSun(scene) {
         float granule = 0.82 + 0.5 * fbm(vUv * 16.0 + vec2(-time * 0.022, time * 0.014));
         c *= granule;
         c = mix(c, vec3(1.0, 0.86, 0.55), 0.15);
-        gl_FragColor = vec4(c * 1.35, 1.0);
+        // photospheric limb darkening: the disc center looks deeper (hotter)
+        // into the sun than the grazing limb, so the edge dims and reddens
+        float mu = clamp(dot(normalize(vN), normalize(vV)), 0.0, 1.0);
+        float ld = 0.30 + 0.70 * pow(mu, 0.62);
+        c = mix(c * vec3(1.0, 0.52, 0.26), c, smoothstep(0.0, 0.5, mu));
+        gl_FragColor = vec4(c * ld * 1.45, 1.0);
       }`,
   });
   const mesh = new THREE.Mesh(geo, mat);
   mesh.name = 'sun';
   scene.add(mesh);
+
+  // chromosphere rim: a slightly larger additive shell, fresnel-gated so it
+  // only lives at the limb, with fbm flame licks crawling along the edge
+  const rimMat = new THREE.ShaderMaterial({
+    uniforms: { time: { value: 0 } },
+    vertexShader: `
+      varying vec2 vUv; varying vec3 vN; varying vec3 vV;
+      void main() {
+        vUv = uv;
+        vN = normalize(normalMatrix * normal);
+        vec4 mv = modelViewMatrix * vec4(position, 1.0);
+        vV = -mv.xyz;
+        gl_Position = projectionMatrix * mv;
+      }`,
+    fragmentShader: `
+      uniform float time;
+      varying vec2 vUv; varying vec3 vN; varying vec3 vV;
+      float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+      float noise(vec2 p) {
+        vec2 i = floor(p), f = fract(p);
+        f = f * f * (3.0 - 2.0 * f);
+        return mix(mix(hash(i), hash(i + vec2(1, 0)), f.x),
+                   mix(hash(i + vec2(0, 1)), hash(i + vec2(1, 1)), f.x), f.y);
+      }
+      float fbm(vec2 p) {
+        float v = 0.0, a = 0.5;
+        for (int k = 0; k < 3; k++) { v += a * noise(p); p *= 2.11; a *= 0.5; }
+        return v;
+      }
+      void main() {
+        float mu = clamp(dot(normalize(vN), normalize(vV)), 0.0, 1.0);
+        float rim = pow(1.0 - mu, 3.5);
+        float lick = fbm(vUv * vec2(28.0, 9.0) + vec2(time * 0.05, -time * 0.03));
+        vec3 col = mix(vec3(1.0, 0.30, 0.10), vec3(1.0, 0.62, 0.22), lick);
+        gl_FragColor = vec4(col, 1.0) * rim * (0.45 + 0.9 * lick);
+      }`,
+    transparent: true,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+  });
+  const rim = new THREE.Mesh(new THREE.SphereGeometry(SUN_DISPLAY_RADIUS * 1.04, 64, 32), rimMat);
+  rim.name = 'chromosphere';
+  rim.raycast = () => {}; // never intercept clicks meant for the sun
+  mesh.add(rim);
 
   // radial-gradient glow sprite
   const c = document.createElement('canvas');
@@ -163,6 +218,7 @@ export function createSun(scene) {
       mesh.rotation.y = (days / 25.4) * Math.PI * 2;
       // granulation churns in real time, even when the sim is paused
       mat.uniforms.time.value = performance.now() / 1000;
+      rimMat.uniforms.time.value = mat.uniforms.time.value;
     },
   };
 }
