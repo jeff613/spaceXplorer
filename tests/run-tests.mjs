@@ -437,6 +437,35 @@ try {
   check(`camera lands at Saturn (dist ${deep.camDist.toFixed(1)} < 40)`, deep.camDist < 40);
   await page2.close();
 
+  console.log('\n— Mobile viewport (390×844)');
+  const mob = await browser.newPage();
+  await mob.setViewport({ width: 390, height: 844, isMobile: true, hasTouch: true });
+  mob.on('console', (m) => { if (m.type() === 'error') consoleErrors.push(`mobile: ${m.text()}`); });
+  mob.on('pageerror', (e) => consoleErrors.push(`mobile pageerror: ${e.message}`));
+  await mob.goto(BASE, { waitUntil: 'networkidle0', timeout: 30000 });
+  await mob.waitForFunction('window.__sx !== undefined', { timeout: 15000 });
+  await mob.evaluate(() => window.__sx.frame());
+
+  check('mobile: app boots', await mob.evaluate(() => document.body.classList.contains('loaded')));
+  check('mobile: no horizontal overflow', await mob.evaluate(
+    () => document.documentElement.scrollWidth <= window.innerWidth + 1,
+  ));
+  await mob.tap('#nav-toggle');
+  check('mobile: navigator collapses', await mob.evaluate(
+    () => document.getElementById('nav-panel').classList.contains('collapsed'),
+  ));
+  const tapPos = await mob.evaluate(() => {
+    const sx = window.__sx;
+    const v = sx.bodies.get('sun').mesh.position.clone().project(sx.camera);
+    return { x: (v.x * 0.5 + 0.5) * innerWidth, y: (-v.y * 0.5 + 0.5) * innerHeight };
+  });
+  await mob.touchscreen.tap(tapPos.x, tapPos.y);
+  await mob.evaluate(() => window.__sx.frame());
+  check('mobile: tap selects the Sun', await mob.evaluate(
+    () => window.__sx.selected()?.data.id === 'sun',
+  ));
+  await mob.close();
+
   console.log('\n— Console cleanliness');
   check('zero console/page errors across all tests', consoleErrors.length === 0,
     consoleErrors.slice(0, 3).join(' | '));

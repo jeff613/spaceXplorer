@@ -177,7 +177,14 @@ function updateCamera(dt) {
     const destPos = followPos.clone().add(dir.multiplyScalar(viewDist));
     camera.position.lerpVectors(flight.fromPos, destPos, k);
     controls.target.lerpVectors(flight.fromTarget, followPos, k);
-    if (flight.t >= 1) flight = null;
+    // gentle FOV breath mid-flight for a cinematic dolly feel
+    camera.fov = 55 + 6 * Math.sin(Math.PI * k);
+    camera.updateProjectionMatrix();
+    if (flight.t >= 1) {
+      flight = null;
+      camera.fov = 55;
+      camera.updateProjectionMatrix();
+    }
   } else {
     // follow: ride along with the body as it moves
     const delta = followPos.clone().sub(prevFollowPos);

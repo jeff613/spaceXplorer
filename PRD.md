@@ -2,7 +2,7 @@
 
 **Status:** Living document — the improvement loop works against this.
 **Owner:** Jeff
-**Last updated:** 2026-06-10 (iteration 11)
+**Last updated:** 2026-06-10 (iteration 12)
 
 ## 1. Vision
 
@@ -88,7 +88,7 @@ a date picker alongside NOW.
 - [ ] Atmospheric scattering upgrade (day/night terminator glow)
 - [x] Planet self-shadowing on rings (Saturn ring shadow) — shipped iter 6
 - [x] Milky way skybox upgrade (2K pano) — shipped iter 10
-- [ ] Camera motion polish (inertia, FOV easing on fly-to)
+- [x] Camera motion polish: FOV breathing on fly-to — shipped iter 12
 
 **Fidelity & realism**
 - [x] More comets: 67P/Churyumov–Gerasimenko with Rosetta history — shipped iter 11; NEOWISE remains
@@ -117,7 +117,7 @@ a date picker alongside NOW.
 **Reliability & performance**
 - [x] FPS budget test in suite; perf regression gate — shipped iter 5
 - [ ] Visual regression snapshots for key views
-- [ ] Mobile-viewport E2E tests
+- [x] Mobile-viewport E2E tests (boot, overflow, nav collapse, touch select) — shipped iter 12
 - [ ] Graceful degradation when WebGL is unavailable
 
 ## 7. Non-goals
