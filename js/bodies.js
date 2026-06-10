@@ -367,7 +367,7 @@ export function createPlanet(scene, data) {
   // One shader hook per planet (bands drift and/or ring shadow). A unique
   // program cache key is essential: three keys programs by onBeforeCompile
   // source, and identical wrappers made Saturn reuse Jupiter's program.
-  if (data.bands || (data.ring && rings.length)) {
+  if (data.bands || (data.ring && rings.length) || data.moonShadows) {
     const bandRate = data.bands ? (24 / Math.abs(data.rotationHours)) * 0.04 : 0;
     const inner = displayRadius * 1.25;
     const outer = displayRadius * 2.35;
@@ -388,6 +388,31 @@ export function createPlanet(scene, data) {
           vec4 sampledDiffuseColor = textureGrad( map, buv, dFdx(vMapUv), dFdy(vMapUv) );
           diffuseColor *= sampledDiffuseColor;`;
       }
+      if (ringTex || data.moonShadows) {
+        shader.vertexShader = shader.vertexShader
+          .replace('#include <common>', '#include <common>\nvarying vec3 vRingWorld;')
+          .replace('#include <worldpos_vertex>', `#include <worldpos_vertex>
+            vec4 wpR = modelMatrix * vec4( transformed, 1.0 );
+            vRingWorld = wpR.xyz;`);
+        decls += '\nvarying vec3 vRingWorld;';
+      }
+      if (data.moonShadows) {
+        shader.uniforms.uMoonPos = { value: [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()] };
+        shader.uniforms.uMoonR = { value: [0, 0, 0, 0] };
+        decls += '\nuniform vec3 uMoonPos[4];\nuniform float uMoonR[4];';
+        mapCode += `
+          for (int mi = 0; mi < 4; mi++) {
+            if (uMoonR[mi] > 0.0) {
+              vec3 msd = normalize(uMoonPos[mi]);
+              vec3 mrel = vRingWorld - uMoonPos[mi];
+              float malong = dot(mrel, msd);
+              float mperp = length(mrel - msd * malong);
+              float mlit = malong < 0.0 ? 1.0
+                : mix(0.25, 1.0, smoothstep(uMoonR[mi] * 0.7, uMoonR[mi] * 1.5, mperp));
+              diffuseColor.rgb *= mlit;
+            }
+          }`;
+      }
       if (ringTex) {
         shader.uniforms.uRingMap = { value: ringTex };
         shader.uniforms.uRingInner = { value: inner };
@@ -396,12 +421,7 @@ export function createPlanet(scene, data) {
         shader.uniforms.uPlanetPos = { value: new THREE.Vector3() };
         decls += `
           uniform sampler2D uRingMap; uniform float uRingInner; uniform float uRingOuter;
-          uniform vec3 uRingNormal; uniform vec3 uPlanetPos; varying vec3 vRingWorld;`;
-        shader.vertexShader = shader.vertexShader
-          .replace('#include <common>', '#include <common>\nvarying vec3 vRingWorld;')
-          .replace('#include <worldpos_vertex>', `#include <worldpos_vertex>
-            vec4 wpR = modelMatrix * vec4( transformed, 1.0 );
-            vRingWorld = wpR.xyz;`);
+          uniform vec3 uRingNormal; uniform vec3 uPlanetPos;`;
         mapCode += `
           {
             vec3 toSun = normalize(-vRingWorld);
@@ -442,6 +462,12 @@ export function createPlanet(scene, data) {
         if (sh.uniforms.uPlanetPos) {
           sh.uniforms.uPlanetPos.value.copy(anchor.position);
           sh.uniforms.uRingNormal.value.set(0, 1, 0).applyQuaternion(tiltGroup.quaternion);
+        }
+        if (sh.uniforms.uMoonPos && body.shadowMoons) {
+          body.shadowMoons.forEach((m, i) => {
+            m.mesh.getWorldPosition(sh.uniforms.uMoonPos.value[i]);
+            sh.uniforms.uMoonR.value[i] = m.displayRadius;
+          });
         }
       }
       if (clouds) clouds.rotation.y = mesh.rotation.y * 0.85;
@@ -765,6 +791,10 @@ export function buildSolarSystem(scene) {
   for (const p of PLANETS) bodies.set(p.id, createPlanet(scene, p));
   for (const m of MOONS) bodies.set(m.id, createMoon(scene, m, bodies.get(m.parent)));
   for (const c of COMETS) bodies.set(c.id, createComet(scene, c));
+
+  // Galilean moons cast transit shadows on Jupiter
+  bodies.get('jupiter').shadowMoons = ['io', 'europa', 'ganymede', 'callisto']
+    .map((id) => bodies.get(id));
 
   // Earth and Moon eclipse each other
   attachEclipse(bodies.get('earth'), () => bodies.get('moon'));

@@ -198,6 +198,16 @@ try {
   });
   check('gas giant band shader compiled with live uniform',
     bands.every((v) => typeof v === 'number' && v > 0), JSON.stringify(bands));
+  const transits = await page.evaluate(async () => {
+    const sx = window.__sx;
+    await sx.frame();
+    const sh = sx.bodies.get('jupiter').mesh.material.userData.shader;
+    if (!sh?.uniforms.uMoonPos) return null;
+    return sh.uniforms.uMoonPos.value.map((v) => v.length());
+  });
+  check('Galilean transit shadows track all four moons',
+    Array.isArray(transits) && transits.length === 4 && transits.every((d) => d > 100),
+    JSON.stringify(transits));
 
   console.log('\n— Orbital accuracy (current date)');
   const earthAU = await helioDistanceAU(page, 'earth');

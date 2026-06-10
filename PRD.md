@@ -2,7 +2,7 @@
 
 **Status:** Living document — the improvement loop works against this.
 **Owner:** Jeff
-**Last updated:** 2026-06-13 (iteration 35 — visuals-first era)
+**Last updated:** 2026-06-13 (iteration 36)
 
 ## 1. Vision
 
@@ -94,7 +94,7 @@ a date picker alongside NOW.
 - [x] Animated sun: surface noise shader + corona (iter 5); lens flare (iter 13)
 - [x] Higher-res planet textures: 2K set + ring alpha (iter 10); Earth hero pass — 8K daymap, topology bump, specular oceans w/ sun glint (iter 35). Other planets' bump maps remain
 - [x] Atmospheric scattering upgrade (day-side rim, sunset terminator band) — shipped iter 15
-- [x] Ring shadows both ways: planet→rings (iter 6) and rings→planet sampling real ring alpha (iter 32)
+- [x] Ring shadows both ways (iter 6, 32); Galilean moon transit shadows on Jupiter (iter 36)
 - [x] Milky way skybox upgrade (2K pano) — shipped iter 10
 - [x] Camera motion polish: FOV breathing on fly-to — shipped iter 12
 
