@@ -235,6 +235,17 @@ try {
   });
   check('sun has limb darkening + animated chromosphere rim',
     sunfx.rim && sunfx.rimAnimated && sunfx.limb, JSON.stringify(sunfx));
+  const film = await page.evaluate(async () => {
+    const sx = window.__sx;
+    await sx.frame();
+    const f = sx.finishing;
+    return {
+      enabled: !!f?.enabled,
+      simClock: f ? f.uniforms.uGrainTime.value === sx.sim.days % 1.0 : false,
+    };
+  });
+  check('film finishing pass active with sim-time grain clock',
+    film.enabled && film.simClock, JSON.stringify(film));
 
   console.log('\n— Orbital accuracy (current date)');
   const earthAU = await helioDistanceAU(page, 'earth');

@@ -4,6 +4,7 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { daysSinceJ2000, TRUE_SCALE } from './data.js';
 import { buildSolarSystem } from './bodies.js';
@@ -48,6 +49,29 @@ const bloom = new UnrealBloomPass(
 );
 composer.addPass(bloom);
 composer.addPass(new OutputPass());
+
+// film-grade finishing: gentle corner vignette + fine grain. The grain clock
+// follows sim time, not wall time, so a paused scene renders pixel-identical
+// frames (the visual-regression suite depends on that).
+const finishing = new ShaderPass({
+  uniforms: { tDiffuse: { value: null }, uGrainTime: { value: 0 } },
+  vertexShader: /* glsl */`
+    varying vec2 vUv;
+    void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+  fragmentShader: /* glsl */`
+    uniform sampler2D tDiffuse;
+    uniform float uGrainTime;
+    varying vec2 vUv;
+    float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+    void main() {
+      vec4 c = texture2D(tDiffuse, vUv);
+      vec2 q = vUv - 0.5;
+      float vig = 1.0 - 0.26 * smoothstep(0.12, 0.5, dot(q, q));
+      float g = hash(vUv * 1024.0 + fract(uGrainTime) * 64.0) - 0.5;
+      gl_FragColor = vec4(c.rgb * vig + g * 0.012, c.a);
+    }`,
+});
+composer.addPass(finishing);
 
 const controls = new OrbitControls(camera, canvas);
 controls.enableDamping = true;
@@ -309,6 +333,7 @@ function animate() {
   }
   labels.update(camera, window.innerWidth, window.innerHeight, selected?.data.id);
 
+  finishing.uniforms.uGrainTime.value = sim.days % 1.0;
   composer.render();
 }
 
@@ -373,7 +398,7 @@ document.body.classList.add('loaded');
 
 // programmatic handle for the test suite (and console tinkering)
 window.__sx = {
-  bodies, craft, sim, camera, controls, scene, belt, tour, sound, idleState,
+  bodies, craft, sim, camera, controls, scene, belt, tour, sound, idleState, finishing,
   select, deselect, raycastAt,
   selected: () => selected,
   frame: () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))),

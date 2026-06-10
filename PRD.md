@@ -2,7 +2,7 @@
 
 **Status:** Living document — the improvement loop works against this.
 **Owner:** Jeff
-**Last updated:** 2026-06-13 (iteration 40)
+**Last updated:** 2026-06-13 (iteration 41)
 
 ## 1. Vision
 
@@ -90,7 +90,7 @@ a date picker alongside NOW.
       (dishes, foil, panels, rovers, Roadster w/ wheels), distance glints,
       PBR planet/moon materials, soft round constellation points, lumpy
       comet nuclei — shipped iter 14 on user feedback ("dots look horrible")
-- [x] Post-processing pipeline: UnrealBloomPass + ACES filmic tone mapping — shipped iter 5
+- [x] Post-processing pipeline: UnrealBloomPass + ACES filmic tone mapping — shipped iter 5; film-grade finishing pass (vignette + deterministic grain) — iter 41
 - [x] Animated sun: surface noise shader + corona (iter 5); lens flare (iter 13); photospheric limb darkening + animated chromosphere rim (iter 39)
 - [x] Higher-res planet textures: 2K set + ring alpha (iter 10); Earth hero pass — 8K daymap, topology bump, specular oceans w/ sun glint (iter 35); terrain bump relief for Mars, Mercury, Moon (iter 37)
 - [x] Atmospheric scattering upgrade (day-side rim, sunset terminator band) — shipped iter 15; limb haze extended to all four giants (iter 40)
