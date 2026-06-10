@@ -175,6 +175,30 @@ export const PLANETS = [
     fact: 'More massive than Pluto. Its discovery forced astronomers to finally define "planet" — and Pluto lost the vote in 2006.',
   },
   {
+    id: 'sedna', name: 'Sedna', type: 'Trans-Neptunian object', color: 0xc46a4a,
+    radiusKm: 498,
+    elements: { a: 506, e: 0.855, i: 11.93, Om: 144.3, varpi: 95.6, L0: 93.4, period: 4163000 },
+    rotationHours: 10.3, tilt: 0,
+    info: {
+      'Radius': '~500 km', 'Orbital period': '~11,400 years',
+      'Distance from Sun': '76 – 936 AU', 'Surface': 'One of the reddest objects known',
+      'Next perihelion': '2076',
+    },
+    fact: 'Takes 11,400 years to orbit once — when Sedna last passed this close to the Sun, humans were inventing agriculture.',
+  },
+  {
+    id: 'arrokoth', name: 'Arrokoth', type: 'Kuiper Belt object', color: 0xb58a6a,
+    radiusKm: 18,
+    elements: { a: 44.58, e: 0.042, i: 2.45, Om: 159.0, varpi: 174.4, L0: 300.0, period: 107000 },
+    rotationHours: 15.9, tilt: 99,
+    info: {
+      'Dimensions': '36 × 20 km, two-lobed', 'Orbital period': '293 years',
+      'Distance from Sun': '44.6 AU', 'Visited': 'New Horizons, Jan 1, 2019',
+      'Shape': 'Two gently merged lobes ("snowman")',
+    },
+    fact: 'The most distant and most primitive world ever visited — two lobes that gently merged 4.6 billion years ago and froze in time.',
+  },
+  {
     id: 'makemake', name: 'Makemake', type: 'Dwarf planet', color: 0xc4a98e,
     radiusKm: 715,
     elements: { a: 45.43, e: 0.161, i: 29.0, Om: 79.6, varpi: 14.6, L0: 179.6, period: 112897 },
@@ -403,6 +427,55 @@ export const SPACECRAFT = [
       'Speed': '13.8 km/s',
     },
     fact: 'Gave humanity its first close look at Pluto\'s heart-shaped glacier, then flew past Arrokoth — the most distant world ever explored.',
+  },
+  {
+    id: 'cassini', name: 'Cassini (memorial)', type: 'Saturn orbiter, 2004–2017', kind: 'orbiter',
+    parent: 'saturn', orbitRadii: 2.9, periodDays: 16, inclination: 62, color: 0xd8c9a8,
+    info: {
+      'Launched': 'Oct 15, 1997', 'At Saturn': '2004 – 2017 (294 orbits)',
+      'Grand Finale': 'Burned up in Saturn, Sept 15, 2017',
+      'Legacy': 'Discovered Enceladus\'s geysers, landed Huygens on Titan',
+    },
+    fact: 'Deliberately plunged into Saturn so it could never contaminate Enceladus\'s ocean — sending science until its final breath. This marker honors where it flew.',
+  },
+  {
+    id: 'gps', name: 'GPS constellation', type: 'Navigation satellites', kind: 'constellation',
+    count: 31, orbitRadii: 2.7, periodDays: 0.4988, inclination: 55, color: 0xa8ffc8,
+    info: {
+      'Satellites': '31 active', 'Altitude': '20,200 km', 'Orbital period': '11 h 58 min',
+      'Inclination': '55°', 'Operator': 'US Space Force',
+    },
+    fact: 'GPS clocks run 38 microseconds fast per day from relativity — uncorrected, your map position would drift 10 km every day.',
+  },
+  {
+    id: 'geo', name: 'Geostationary ring', type: 'Communications satellites', kind: 'constellation',
+    count: 28, orbitRadii: 3.5, periodDays: 0.9973, inclination: 0.5, color: 0xffd0a0,
+    info: {
+      'Altitude': '35,786 km', 'Orbital period': '23 h 56 min — one sidereal day',
+      'Result': 'Each satellite hangs over one fixed spot on the equator',
+      'Idea credited to': 'Arthur C. Clarke, 1945',
+    },
+    fact: 'Orbiting exactly as fast as Earth turns, these satellites appear nailed to the sky — which is why TV dishes never have to move.',
+  },
+  {
+    id: 'pioneer10', name: 'Pioneer 10', type: 'Deep space probe', kind: 'deep',
+    color: 0xc8b8ff, distanceAU: 137, raDeg: 75, decDeg: 26,
+    info: {
+      'Launched': 'Mar 2, 1972', 'Distance': '~137 AU',
+      'Firsts': 'First through the asteroid belt, first past Jupiter',
+      'Last contact': 'Jan 23, 2003', 'Plaque': 'Carries a map to Earth',
+    },
+    fact: 'Carries a gold plaque showing a man, a woman, and directions to Earth — humanity\'s first message bottled into interstellar space.',
+  },
+  {
+    id: 'pioneer11', name: 'Pioneer 11', type: 'Deep space probe', kind: 'deep',
+    color: 0xc8b8ff, distanceAU: 117, raDeg: 282, decDeg: -8,
+    info: {
+      'Launched': 'Apr 5, 1973', 'Distance': '~117 AU',
+      'First': 'First spacecraft to fly past Saturn (1979)',
+      'Last contact': 'Nov 24, 1995', 'Plaque': 'Same map to Earth as Pioneer 10',
+    },
+    fact: 'Its 1979 Saturn flyby scouted the path that Voyager 2 would follow — and it discovered Saturn\'s F ring on the way through.',
   },
   {
     id: 'voyager1', name: 'Voyager 1', type: 'Interstellar probe', kind: 'deep',

@@ -15,12 +15,14 @@ export function buildNavigator(bodies, craft, onSelect) {
     },
     {
       title: 'Dwarfs, Asteroids & Comets',
-      ids: ['ceres', 'vesta', 'pluto', 'charon', 'eris', 'makemake', 'haumea', 'halley'],
+      ids: ['ceres', 'vesta', 'pluto', 'charon', 'eris', 'makemake', 'haumea',
+        'sedna', 'arrokoth', 'halley'],
     },
     {
       title: 'Spacecraft',
-      ids: ['iss', 'hubble', 'starlink', 'jwst', 'juno', 'parker', 'roadster',
-        'newhorizons', 'voyager1', 'voyager2'],
+      ids: ['iss', 'hubble', 'starlink', 'gps', 'geo', 'jwst', 'juno', 'cassini',
+        'parker', 'roadster', 'newhorizons', 'pioneer10', 'pioneer11',
+        'voyager1', 'voyager2'],
     },
   ];
   const items = new Map();
@@ -121,8 +123,8 @@ export function createLabels(bodies, craft, onSelect) {
   for (const [id, body] of bodies) {
     add(body, id === 'sun' ? 'label-sun' : body.data.parent ? 'label-moon' : 'label-planet');
   }
-  for (const [id, body] of craft) {
-    if (id !== 'starlink') add(body, 'label-craft');
+  for (const [, body] of craft) {
+    if (!body.isCloud) add(body, 'label-craft');
   }
 
   // priority for collision resolution: lower wins a contested spot

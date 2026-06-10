@@ -2,7 +2,7 @@
 
 **Status:** Living document — the improvement loop works against this.
 **Owner:** Jeff
-**Last updated:** 2026-06-10 (iteration 8)
+**Last updated:** 2026-06-10 (iteration 9)
 
 ## 1. Vision
 
@@ -98,12 +98,11 @@ a date picker alongside NOW.
 - [ ] Real lunar phase / eclipse shadows (stretch)
 
 **Comprehensiveness**
-- [ ] More spacecraft: ~~Juno~~ (shipped iter 4), Mars orbiters/rovers (Perseverance,
-      Curiosity as surface markers), Gaia, SOHO, Pioneer 10/11, Cassini
-      (memorial marker), Artemis assets
-- [ ] GPS + geostationary satellite rings around Earth
+- [ ] More spacecraft: ~~Juno~~ (iter 4), ~~Pioneer 10/11, Cassini memorial~~ (iter 9);
+      Mars orbiters/rovers, Gaia, SOHO, Artemis assets remain
+- [x] GPS + geostationary satellite rings around Earth — shipped iter 9
 - [ ] Named asteroids: ~~Vesta~~ (shipped iter 4); Pallas, Bennu, Apophis remain
-- [ ] More Kuiper objects: ~~Makemake, Haumea~~ (shipped iter 4); Arrokoth, Sedna remain
+- [x] More Kuiper objects: Makemake, Haumea (iter 4); Arrokoth, Sedna (iter 9)
 
 **UX & fun**
 - [x] Guided tour mode ("Grand Tour" — autoplay through highlights) — shipped iter 7 (17 stops, prev/next/exit, auto-advance 9s, exits on manual selection)

@@ -100,10 +100,11 @@ try {
   });
   check(`all ${integrity.count} objects have name/type/info/fact/update`,
     integrity.missing.length === 0, integrity.missing.join(','));
-  check('object count ≥ 42', integrity.count >= 42, `got ${integrity.count}`);
-  check('new objects present (Vesta, Makemake, Haumea, Juno)', await page.evaluate(() => {
+  check('object count ≥ 49', integrity.count >= 49, `got ${integrity.count}`);
+  check('roster complete (dwarfs, probes, constellations)', await page.evaluate(() => {
     const sx = window.__sx;
-    return ['vesta', 'makemake', 'haumea'].every((id) => sx.bodies.has(id)) && sx.craft.has('juno');
+    return ['vesta', 'makemake', 'haumea', 'sedna', 'arrokoth'].every((id) => sx.bodies.has(id))
+      && ['juno', 'cassini', 'gps', 'geo', 'pioneer10', 'pioneer11'].every((id) => sx.craft.has(id));
   }));
 
   const navOk = await page.evaluate(() => {
@@ -128,6 +129,9 @@ try {
   const halleyAU = await helioDistanceAU(page, 'halley');
   check(`Halley at ${halleyAU.toFixed(1)} AU (30–35.5, near aphelion in 2026)`,
     halleyAU > 30 && halleyAU < 35.5);
+  const sednaAU = await helioDistanceAU(page, 'sedna');
+  check(`Sedna at ${sednaAU.toFixed(1)} AU (76–95, approaching 2076 perihelion)`,
+    sednaAU > 76 && sednaAU < 95);
 
   // one full Earth year returns Earth to the same spot
   const drift = await page.evaluate(async () => {

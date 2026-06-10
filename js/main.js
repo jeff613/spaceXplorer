@@ -197,7 +197,9 @@ setupToggles({
   },
   'toggle-labels': (on) => labels.setVisible(on),
   'toggle-belt': (on) => belt.setVisible(on),
-  'toggle-starlink': (on) => { craft.get('starlink').mesh.visible = on; },
+  'toggle-starlink': (on) => {
+    for (const c of craft.values()) if (c.isCloud) c.mesh.visible = on;
+  },
 });
 
 window.addEventListener('resize', () => {
