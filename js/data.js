@@ -79,7 +79,8 @@ export const PLANETS = [
     fact: 'Venus spins backwards and so slowly that its day is longer than its year. Its CO₂ atmosphere makes it hotter than Mercury.',
   },
   {
-    id: 'earth', name: 'Earth', type: 'Planet', texture: '2k_earth_daymap.jpg', clouds: '2k_earth_clouds.jpg',
+    id: 'earth', name: 'Earth', type: 'Planet', texture: '8k_earth_daymap.jpg', clouds: '2k_earth_clouds.jpg',
+    bump: 'earth_topology.png', water: 'earth_water.png',
     nightLights: 'earthlights.jpg', atmosphere: 0x5fa8ff,
     radiusKm: 6371,
     elements: { a: 1.0, e: 0.0167, i: 0.0, Om: 0.0, varpi: 102.94, L0: 100.46, period: 365.25 },

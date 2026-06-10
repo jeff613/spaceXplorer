@@ -309,6 +309,29 @@ export function createPlanet(scene, data) {
   const mat = data.texture
     ? new THREE.MeshStandardMaterial({ map: loadTex(data.texture), roughness: 0.92, metalness: 0, envMapIntensity: 0.25 })
     : new THREE.MeshStandardMaterial({ color: data.color, roughness: 0.95, metalness: 0, envMapIntensity: 0.25 });
+  if (data.bump) {
+    const b = texLoader.load(`textures/${data.bump}`);
+    mat.bumpMap = b;
+    mat.bumpScale = 1.6;
+  }
+  if (data.water) {
+    // water mask (white = ocean) inverted into a roughness map: smooth
+    // glinting seas, matte land
+    const img = new Image();
+    img.onload = () => {
+      const c = document.createElement('canvas');
+      c.width = img.width; c.height = img.height;
+      const ctx = c.getContext('2d');
+      ctx.filter = 'invert(1)';
+      ctx.drawImage(img, 0, 0);
+      const rough = new THREE.CanvasTexture(c);
+      mat.roughnessMap = rough;
+      mat.roughness = 1.0;
+      mat.envMapIntensity = 0.5;
+      mat.needsUpdate = true;
+    };
+    img.src = `textures/${data.water}`;
+  }
   const mesh = new THREE.Mesh(geo, mat);
   mesh.name = data.id;
   tiltGroup.add(mesh);
