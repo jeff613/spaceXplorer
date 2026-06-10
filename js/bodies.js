@@ -19,10 +19,18 @@ function loadTex(file) {
 
 export function keplerPosition(el, days, target = new THREE.Vector3()) {
   const n = 360 / el.period;
-  const M = ((el.L0 - el.varpi + n * days) % 360) * DEG;
+  let M = ((el.L0 - el.varpi + n * days) % 360) * DEG;
+  if (M > Math.PI) M -= Math.PI * 2;
+  if (M < -Math.PI) M += Math.PI * 2;
   const e = el.e;
-  let E = M;
-  for (let k = 0; k < 7; k++) E = M + e * Math.sin(E);
+  // Newton-Raphson: fixed-point iteration diverges for near-parabolic
+  // orbits (Halley e=0.967, NEOWISE e=0.999)
+  let E = e > 0.8 ? Math.PI * Math.sign(M || 1) : M;
+  for (let k = 0; k < 20; k++) {
+    const d = (E - e * Math.sin(E) - M) / (1 - e * Math.cos(E));
+    E -= d;
+    if (Math.abs(d) < 1e-9) break;
+  }
 
   const xv = el.a * (Math.cos(E) - e);
   const yv = el.a * Math.sqrt(1 - e * e) * Math.sin(E);

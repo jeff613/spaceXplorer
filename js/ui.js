@@ -16,7 +16,7 @@ export function buildNavigator(bodies, craft, onSelect) {
     {
       title: 'Dwarfs, Asteroids & Comets',
       ids: ['ceres', 'vesta', 'pluto', 'charon', 'eris', 'makemake', 'haumea',
-        'sedna', 'arrokoth', 'halley', 'churyumov'],
+        'sedna', 'arrokoth', 'halley', 'churyumov', 'neowise'],
     },
     {
       title: 'Spacecraft',
@@ -96,6 +96,33 @@ export function showInfo(body) {
     row.querySelector('.info-val').textContent = v;
     rows.appendChild(row);
   }
+  // size comparison vs Earth, drawn to scale
+  const cmp = p.querySelector('.info-compare');
+  const rKm = body.data.radiusKm;
+  if (rKm && body.data.id !== 'earth') {
+    const ratio = rKm / 6371;
+    const big = Math.max(ratio, 1);
+    const scale = 26 / big; // largest disc gets 26px radius
+    const rA = Math.max(ratio * scale, 1.2);
+    const rB = Math.max(1 * scale, 1.2);
+    const cxA = 10 + rA;
+    const cxB = cxA + rA + rB + 24;
+    const label = ratio >= 1
+      ? `${ratio >= 10 ? Math.round(ratio) : ratio.toFixed(1)}× Earth's radius`
+      : `${(ratio).toFixed(ratio < 0.01 ? 3 : 2)}× Earth's radius`;
+    cmp.innerHTML = `
+      <svg width="270" height="64" viewBox="0 0 270 64">
+        <circle cx="${cxA}" cy="32" r="${rA.toFixed(1)}" fill="rgba(255,179,71,0.7)" />
+        <circle cx="${cxB}" cy="32" r="${rB.toFixed(1)}" fill="rgba(127,214,255,0.7)" />
+        <text x="${cxB + rB + 8}" y="36" fill="#8696a6" font-size="10" font-family="Chakra Petch">Earth</text>
+      </svg>
+      <div class="compare-label">${label}</div>`;
+    cmp.style.display = '';
+  } else {
+    cmp.innerHTML = '';
+    cmp.style.display = 'none';
+  }
+
   p.querySelector('.info-fact').textContent = body.data.fact || '';
   p.classList.add('open');
 }

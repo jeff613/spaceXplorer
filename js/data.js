@@ -224,6 +224,7 @@ export const PLANETS = [
 
 export const SUN = {
   id: 'sun', name: 'Sun', type: 'G-type star', texture: '2k_sun.jpg',
+  radiusKm: 696340,
   info: {
     'Radius': '696,340 km (109 × Earth)', 'Mass': '1.99 × 10³⁰ kg (99.86% of system)',
     'Surface temp': '5,505 °C', 'Core temp': '15 million °C', 'Age': '4.6 billion years',
@@ -364,6 +365,17 @@ export const COMETS = [
       'Lander': 'Philae — first soft landing on a comet',
     },
     fact: 'Rosetta chased it for ten years, orbited it for two, and dropped the Philae lander on it — the first time humanity ever landed on a comet.',
+  },
+  {
+    id: 'neowise', name: 'Comet NEOWISE', type: 'Long-period comet', color: 0xd8e8f0,
+    // perihelion July 3, 2020; won't return for ~6,800 years
+    elements: { a: 358, e: 0.99921, i: 128.9, Om: 61.0, varpi: 98.3, L0: 97.2, period: 2471000 },
+    info: {
+      'Nucleus': '~5 km', 'Orbital period': '~6,800 years',
+      'Last perihelion': 'July 3, 2020', 'Next return': 'Around the year 8800',
+      'Memory': 'Best naked-eye comet since Hale-Bopp',
+    },
+    fact: 'For a few weeks in July 2020 it hung over the northern twilight with a golden dust tail — and no one alive will ever see it again.',
   },
 ];
 

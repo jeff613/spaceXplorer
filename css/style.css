@@ -244,6 +244,16 @@ body.loaded #hud-header, body.loaded #nav-panel, body.loaded #time-bar { opacity
 .info-key { color: var(--ink-dim); white-space: nowrap; }
 .info-val { text-align: right; }
 
+.info-compare { margin-top: 14px; }
+
+.compare-label {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--amber);
+  margin-top: 2px;
+}
+
 .info-fact {
   margin-top: 16px;
   font-size: 13px;

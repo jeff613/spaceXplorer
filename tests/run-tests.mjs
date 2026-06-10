@@ -151,6 +151,8 @@ try {
   const halleyAU = await helioDistanceAU(page, 'halley');
   check(`Halley at ${halleyAU.toFixed(1)} AU (30–35.5, near aphelion in 2026)`,
     halleyAU > 30 && halleyAU < 35.5);
+  const neowiseAU = await helioDistanceAU(page, 'neowise');
+  check(`NEOWISE at ${neowiseAU.toFixed(1)} AU (outbound, 10-45)`, neowiseAU > 10 && neowiseAU < 45);
   const sednaAU = await helioDistanceAU(page, 'sedna');
   check(`Sedna at ${sednaAU.toFixed(1)} AU (76–95, approaching 2076 perihelion)`,
     sednaAU > 76 && sednaAU < 95);
@@ -194,6 +196,11 @@ try {
     };
   });
   check('info panel opens with MARS', sel.open && sel.name === 'Mars', sel.name);
+  const cmp = await page.evaluate(() => {
+    const el = document.querySelector('.info-compare');
+    return { visible: el.style.display !== 'none', label: el.querySelector('.compare-label')?.textContent ?? '' };
+  });
+  check('size comparison shows Mars vs Earth (0.53×)', cmp.visible && cmp.label.startsWith('0.53'), cmp.label);
   check('nav item marked active', sel.active === 'Mars', String(sel.active));
   check(`camera arrives near Mars (dist ${sel.camDist.toFixed(1)} < 25)`, sel.camDist < 25);
   check(`controls target locks Mars (${sel.targetDist.toFixed(2)} < 0.5)`, sel.targetDist < 0.5);

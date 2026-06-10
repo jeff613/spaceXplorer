@@ -2,7 +2,7 @@
 
 **Status:** Living document — the improvement loop works against this.
 **Owner:** Jeff
-**Last updated:** 2026-06-10 (iteration 15)
+**Last updated:** 2026-06-10 (iteration 16)
 
 ## 1. Vision
 
@@ -95,7 +95,7 @@ a date picker alongside NOW.
 - [x] Camera motion polish: FOV breathing on fly-to — shipped iter 12
 
 **Fidelity & realism**
-- [x] More comets: 67P/Churyumov–Gerasimenko with Rosetta history — shipped iter 11; NEOWISE remains
+- [x] More comets: 67P (iter 11), NEOWISE (iter 16, drove a Kepler solver upgrade to Newton-Raphson for near-parabolic orbits)
 - [x] Uranus rings (ε + faint bands), Neptune rings (Adams, Le Verrier) — shipped iter 6 (arcs approximated as faint full rings)
 - [ ] Jupiter's Great Red Spot orientation; gas giant band motion
 - [ ] Optional true-scale mode (educational toggle)
@@ -113,7 +113,7 @@ a date picker alongside NOW.
 - [x] Label overlap avoidance (collision-aware placement) — shipped iter 8 (priority: selected > Sun > planets > craft > moons)
 - [x] Time-reverse (negative speeds) and date picker (jump to any date —
       e.g., 1986 Halley apparition, 2061 return) — shipped iter 4
-- [ ] Object comparison cards (Earth vs. Jupiter size, etc.)
+- [x] Object comparison cards: to-scale size discs vs Earth in info panel — shipped iter 16
 - [x] Keyboard navigation (arrows cycle objects, ? help overlay) — shipped iter 8
 - [ ] Sound design (subtle, optional)
 - [ ] Mobile polish pass (touch targets, panel ergonomics)
