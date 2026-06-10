@@ -379,6 +379,35 @@ try {
     s.blur();
   });
 
+  // Enter selects the first match
+  await page.type('#nav-search', 'tit');
+  await page.keyboard.press('Enter');
+  await frames(page, 2);
+  check('Enter in search selects first match (Titan)', await page.evaluate(
+    () => window.__sx.selected()?.data.id === 'titan',
+  ));
+  await page.evaluate(() => {
+    const sx = window.__sx;
+    sx.deselect();
+    const sl = document.getElementById('nav-search');
+    sl.value = '';
+    sl.dispatchEvent(new Event('input'));
+    sl.blur();
+  });
+  await frames(page, 1);
+
+  // idle drift engages with nothing selected, disengages on input
+  const idle = await page.evaluate(async () => {
+    const sx = window.__sx;
+    sx.idleState.last = performance.now() - 30000;
+    await sx.frame(); await sx.frame();
+    const drifting = sx.controls.autoRotate;
+    window.dispatchEvent(new PointerEvent('pointerdown'));
+    await sx.frame(); await sx.frame();
+    return { drifting, stopped: !sx.controls.autoRotate };
+  });
+  check('idle camera drift engages and stops on input', idle.drifting && idle.stopped);
+
   await page.click('#toggle-orbits');
   const orbitsHidden = await page.evaluate(() => {
     let hidden = true;

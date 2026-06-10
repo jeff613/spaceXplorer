@@ -268,6 +268,14 @@ document.getElementById('nav-toggle').addEventListener('click', () => {
 
 // ─── Render loop ──────────────────────────────────────────────────────────
 
+// after ~25s of no input with nothing selected, drift cinematically
+const idleState = { last: performance.now() };
+const pokeIdle = () => { idleState.last = performance.now(); };
+for (const ev of ['pointerdown', 'wheel', 'keydown', 'touchstart']) {
+  window.addEventListener(ev, pokeIdle, { passive: true });
+}
+controls.autoRotateSpeed = 0.18;
+
 const clock = new THREE.Clock();
 
 function animate() {
@@ -279,6 +287,8 @@ function animate() {
   for (const body of bodies.values()) body.update(sim.days);
   for (const c of craft.values()) c.update(sim.days);
   belt.update(sim.days);
+
+  controls.autoRotate = !selected && performance.now() - idleState.last > 25000;
 
   updateCamera(dt);
   controls.update();
@@ -363,7 +373,7 @@ document.body.classList.add('loaded');
 
 // programmatic handle for the test suite (and console tinkering)
 window.__sx = {
-  bodies, craft, sim, camera, controls, scene, belt, tour, sound,
+  bodies, craft, sim, camera, controls, scene, belt, tour, sound, idleState,
   select, deselect, raycastAt,
   selected: () => selected,
   frame: () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))),

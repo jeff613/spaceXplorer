@@ -65,6 +65,17 @@ export function buildNavigator(bodies, craft, onSelect) {
     }
   });
 
+  // Enter selects the first visible match
+  search.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return;
+    const first = [...list.querySelectorAll('.nav-item')]
+      .find((el) => el.style.display !== 'none');
+    if (first) {
+      first.click();
+      search.blur();
+    }
+  });
+
   // flat selection order for keyboard cycling
   const order = groups.flatMap((g) => g.ids)
     .map((id) => bodies.get(id) || craft.get(id))
