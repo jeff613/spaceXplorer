@@ -14,8 +14,22 @@ function randDir(target) {
 }
 const DEG = Math.PI / 180;
 
-function loadTex(file) {
-  const t = texLoader.load(`textures/${file}`);
+function loadTex(file, mat, fallbackColor) {
+  // if a texture fails (offline, CDN hiccup) swap in a tinted 2x2 canvas
+  // instead of leaving the default white material — and keep USE_MAP defined
+  // so onBeforeCompile band/shadow patches never recompile mapless
+  const onError = mat ? () => {
+    const c = document.createElement('canvas');
+    c.width = c.height = 2;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = `#${(fallbackColor ?? 0x9aa0a8).toString(16).padStart(6, '0')}`;
+    ctx.fillRect(0, 0, 2, 2);
+    const ft = new THREE.CanvasTexture(c);
+    ft.colorSpace = THREE.SRGBColorSpace;
+    mat.map = ft;
+    mat.needsUpdate = true;
+  } : undefined;
+  const t = texLoader.load(`textures/${file}`, undefined, undefined, onError);
   t.colorSpace = THREE.SRGBColorSpace;
   return t;
 }
@@ -365,8 +379,9 @@ export function createPlanet(scene, data) {
     ? makeLumpyGeometry(displayRadius, data.id)
     : new THREE.SphereGeometry(displayRadius, 48, 24);
   const mat = data.texture
-    ? new THREE.MeshStandardMaterial({ map: loadTex(data.texture), roughness: 0.92, metalness: 0, envMapIntensity: 0.25 })
+    ? new THREE.MeshStandardMaterial({ roughness: 0.92, metalness: 0, envMapIntensity: 0.25 })
     : new THREE.MeshStandardMaterial({ color: data.color, roughness: 0.95, metalness: 0, envMapIntensity: 0.25 });
+  if (data.texture) mat.map = loadTex(data.texture, mat, data.color);
   if (data.bump) {
     const b = texLoader.load(`textures/${data.bump}`);
     mat.bumpMap = b;
@@ -626,8 +641,9 @@ export function createMoon(scene, data, parentBody) {
     ? makeLumpyGeometry(displayRadius, data.id)
     : new THREE.SphereGeometry(displayRadius, 32, 16);
   const mat = data.texture
-    ? new THREE.MeshStandardMaterial({ map: loadTex(data.texture), roughness: 0.96, metalness: 0, envMapIntensity: 0.25 })
+    ? new THREE.MeshStandardMaterial({ roughness: 0.96, metalness: 0, envMapIntensity: 0.25 })
     : new THREE.MeshStandardMaterial({ color: data.color, roughness: 0.96, metalness: 0, envMapIntensity: 0.25 });
+  if (data.texture) mat.map = loadTex(data.texture, mat, data.color);
   if (data.bump) {
     mat.bumpMap = texLoader.load(`textures/${data.bump}`);
     mat.bumpScale = data.bumpScale ?? 1.6;

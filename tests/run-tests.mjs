@@ -758,6 +758,25 @@ try {
   await page.keyboard.press('Escape');
   await frames(page, 2);
 
+  console.log('\n— Texture failure resilience');
+  const texPage = await browser.newPage();
+  await texPage.setRequestInterception(true);
+  texPage.on('request', (req) => {
+    if (req.url().includes('2k_jupiter')) req.abort();
+    else req.continue();
+  });
+  await texPage.goto(BASE, { waitUntil: 'networkidle0', timeout: 30000 });
+  await texPage.waitForFunction(
+    () => window.__sx?.bodies?.get('jupiter')?.mesh.material.map?.isCanvasTexture === true,
+    { timeout: 15000 },
+  );
+  check('failed planet texture falls back to tinted canvas (no white ball)',
+    await texPage.evaluate(() => {
+      const m = window.__sx.bodies.get('jupiter').mesh.material;
+      return m.map.isCanvasTexture && m.map.source.data.width === 2;
+    }));
+  await texPage.close();
+
   console.log('\n— Performance');
   const fps = await page.evaluate(async () => {
     let n = 0;
