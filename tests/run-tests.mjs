@@ -316,6 +316,8 @@ try {
     return {
       bennuLumpy: radiusSpread(sx.bodies.get('bennu').mesh) < 0.8,
       vestaLumpy: radiusSpread(sx.bodies.get('vesta').mesh) < 0.8,
+      phobosLumpy: radiusSpread(sx.bodies.get('phobos').mesh) < 0.8,
+      deimosLumpy: radiusSpread(sx.bodies.get('deimos').mesh) < 0.8,
       ceresCraters: !!sx.bodies.get('ceres').mesh.material.bumpMap,
       erisCraters: !!sx.bodies.get('eris').mesh.material.bumpMap,
       haumeaEgg: sx.bodies.get('haumea').mesh.scale.x === 1.5,

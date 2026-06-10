@@ -320,13 +320,13 @@ export const MOONS = [
     fact: 'The Moon drifts 3.8 cm farther from Earth every year. Twelve humans have walked on it — so far.',
   },
   {
-    id: 'phobos', name: 'Phobos', type: 'Moon of Mars', parent: 'mars', color: 0x8d8276,
+    id: 'phobos', lumpy: true, name: 'Phobos', type: 'Moon of Mars', parent: 'mars', color: 0x8d8276,
     radiusKm: 11.3, orbitRadii: 1.8, trueOrbitRadii: 2.76, period: 0.319,
     info: { 'Radius': '11 km', 'Orbital period': '7.7 hours', 'Fate': 'Crashing into Mars in ~50 Myr' },
     fact: 'Orbits Mars faster than Mars rotates — it rises in the west, sets in the east, and is slowly spiraling inward to its doom.',
   },
   {
-    id: 'deimos', name: 'Deimos', type: 'Moon of Mars', parent: 'mars', color: 0x9d9388,
+    id: 'deimos', lumpy: true, name: 'Deimos', type: 'Moon of Mars', parent: 'mars', color: 0x9d9388,
     radiusKm: 6.2, orbitRadii: 2.8, trueOrbitRadii: 6.92, period: 1.263,
     info: { 'Radius': '6 km', 'Orbital period': '30.3 hours', 'Shape': 'Lumpy captured asteroid' },
     fact: 'So small that from its surface you could reach escape velocity on a bicycle.',

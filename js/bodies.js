@@ -622,7 +622,9 @@ export function createMoon(scene, data, parentBody) {
   const radiiMult = TRUE_SCALE ? (data.trueOrbitRadii ?? data.orbitRadii) : data.orbitRadii;
   const orbitR = parentBody.displayRadius * radiiMult + displayRadius;
 
-  const geo = new THREE.SphereGeometry(displayRadius, 32, 16);
+  const geo = data.lumpy
+    ? makeLumpyGeometry(displayRadius, data.id)
+    : new THREE.SphereGeometry(displayRadius, 32, 16);
   const mat = data.texture
     ? new THREE.MeshStandardMaterial({ map: loadTex(data.texture), roughness: 0.96, metalness: 0, envMapIntensity: 0.25 })
     : new THREE.MeshStandardMaterial({ color: data.color, roughness: 0.96, metalness: 0, envMapIntensity: 0.25 });
