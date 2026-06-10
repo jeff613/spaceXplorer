@@ -1,0 +1,16 @@
+{
+  "name": "spacexplorer",
+  "version": "1.0.0",
+  "description": "An interactive 3D solar system explorer. No build step \u2014 plain ES modules with Three.js loaded from a CDN.",
+  "main": "index.js",
+  "scripts": {
+    "test": "node tests/run-tests.mjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "puppeteer-core": "^25.1.0"
+  },
+  "private": true
+}

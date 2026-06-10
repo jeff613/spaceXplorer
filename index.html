@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SPACEXPLORER — Interactive Solar System</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🪐</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Michroma&family=Chakra+Petch:wght@300;400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <canvas id="scene"></canvas>
+
+  <!-- floating object labels -->
+  <div id="label-layer"></div>
+
+  <!-- header -->
+  <header id="hud-header">
+    <h1>SPACE<span>XPLORER</span></h1>
+    <p>Interactive Solar System — drag to orbit · scroll to zoom · click anything</p>
+  </header>
+
+  <!-- object navigator -->
+  <aside id="nav-panel">
+    <button id="nav-toggle" title="Toggle navigator">☰</button>
+    <div id="nav-scroll">
+      <input type="search" id="nav-search" placeholder="Search objects…" autocomplete="off" />
+      <div id="nav-list"></div>
+      <div class="nav-group">View</div>
+      <label class="toggle"><input type="checkbox" id="toggle-orbits" checked /><span>Orbit lines</span></label>
+      <label class="toggle"><input type="checkbox" id="toggle-labels" checked /><span>Labels</span></label>
+      <label class="toggle"><input type="checkbox" id="toggle-belt" checked /><span>Asteroid &amp; Kuiper belts</span></label>
+      <label class="toggle"><input type="checkbox" id="toggle-starlink" checked /><span>Starlink</span></label>
+    </div>
+  </aside>
+
+  <!-- info panel -->
+  <section id="info-panel">
+    <button id="info-close" title="Close">×</button>
+    <h2 class="info-name"></h2>
+    <p class="info-type"></p>
+    <div class="info-rows"></div>
+    <p class="info-fact"></p>
+  </section>
+
+  <!-- time controls -->
+  <footer id="time-bar">
+    <button id="btn-reverse" title="Reverse time">⏴</button>
+    <button id="btn-play" title="Pause">❚❚</button>
+    <div id="speed-wrap">
+      <input type="range" id="speed-slider" min="0" max="100" value="50" />
+      <span id="speed-label"></span>
+    </div>
+    <span id="date-label"></span>
+    <input type="date" id="date-input" title="Jump to a date" />
+    <button id="btn-now" title="Jump to the present">NOW</button>
+  </footer>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

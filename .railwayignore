@@ -1,0 +1,7 @@
+node_modules/
+tests/
+.claude/
+package.json
+package-lock.json
+PRD.md
+README.md
