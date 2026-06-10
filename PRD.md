@@ -2,7 +2,7 @@
 
 **Status:** Living document — the improvement loop works against this.
 **Owner:** Jeff
-**Last updated:** 2026-06-10 (iteration 16)
+**Last updated:** 2026-06-10 (iteration 17)
 
 ## 1. Vision
 
@@ -115,7 +115,7 @@ a date picker alongside NOW.
       e.g., 1986 Halley apparition, 2061 return) — shipped iter 4
 - [x] Object comparison cards: to-scale size discs vs Earth in info panel — shipped iter 16
 - [x] Keyboard navigation (arrows cycle objects, ? help overlay) — shipped iter 8
-- [ ] Sound design (subtle, optional)
+- [x] Sound design: procedural ambient drone + soft select/deselect/tour blips, gesture-gated, mute toggle — shipped iter 17
 - [ ] Mobile polish pass (touch targets, panel ergonomics)
 
 **Reliability & performance**

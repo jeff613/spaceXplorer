@@ -387,6 +387,22 @@ try {
   });
   check(`no overlapping labels (${overlaps.visible} visible, ${overlaps.n} collisions)`, overlaps.n === 0);
 
+  console.log('\n— Sound');
+  const snd = await page.evaluate(async () => {
+    const sx = window.__sx;
+    // simulate the first user gesture that wakes the audio context
+    window.dispatchEvent(new PointerEvent('pointerdown'));
+    await new Promise((r) => setTimeout(r, 150));
+    const stateAfterGesture = sx.sound.context?.state ?? 'none';
+    document.getElementById('toggle-sound').click();
+    const mutedOff = sx.sound.enabled;
+    document.getElementById('toggle-sound').click();
+    return { stateAfterGesture, mutedOff, enabledBack: sx.sound.enabled };
+  });
+  check(`audio context runs after first gesture (${snd.stateAfterGesture})`,
+    snd.stateAfterGesture === 'running');
+  check('sound toggle mutes and unmutes', snd.mutedOff === false && snd.enabledBack === true);
+
   console.log('\n— Grand Tour');
   await page.click('#btn-tour');
   await frames(page, 2);

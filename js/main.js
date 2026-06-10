@@ -8,6 +8,7 @@ import { daysSinceJ2000 } from './data.js';
 import { buildSolarSystem } from './bodies.js';
 import { buildSpacecraft } from './spacecraft.js';
 import { createTour } from './tour.js';
+import { createSound } from './sound.js';
 import {
   buildNavigator, showInfo, hideInfo, createLabels, setupTimeControls, setupToggles,
 } from './ui.js';
@@ -64,6 +65,8 @@ let flight = null; // { t, fromPos, fromTarget }
 const followPos = new THREE.Vector3();
 const prevFollowPos = new THREE.Vector3();
 
+const sound = createSound();
+
 // manual selection anywhere exits an active tour
 const userSelect = (body) => { tour.stop(); select(body); };
 const navigator = buildNavigator(bodies, craft, userSelect);
@@ -71,6 +74,7 @@ const labels = createLabels(bodies, craft, userSelect);
 const tour = createTour(bodies, craft, select);
 
 function select(body, { instant = false } = {}) {
+  if (selected !== body) sound.select();
   selected = body;
   navigator.setActive(body.data.id);
   showInfo(body);
@@ -89,6 +93,7 @@ function select(body, { instant = false } = {}) {
 }
 
 function deselect() {
+  if (selected) sound.deselect();
   selected = null;
   flight = null;
   navigator.setActive(null);
@@ -213,6 +218,7 @@ setupToggles({
   'toggle-starlink': (on) => {
     for (const c of craft.values()) if (c.isCloud) c.mesh.visible = on;
   },
+  'toggle-sound': (on) => sound.setEnabled(on),
 });
 
 window.addEventListener('resize', () => {
@@ -262,7 +268,7 @@ document.body.classList.add('loaded');
 
 // programmatic handle for the test suite (and console tinkering)
 window.__sx = {
-  bodies, craft, sim, camera, controls, scene, belt, tour,
+  bodies, craft, sim, camera, controls, scene, belt, tour, sound,
   select, deselect, raycastAt,
   selected: () => selected,
   frame: () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))),
