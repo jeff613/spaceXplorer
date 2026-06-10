@@ -2,7 +2,7 @@
 
 **Status:** Living document — the improvement loop works against this.
 **Owner:** Jeff
-**Last updated:** 2026-06-10 (iteration 19)
+**Last updated:** 2026-06-10 (iteration 20)
 
 ## 1. Vision
 
@@ -120,7 +120,7 @@ a date picker alongside NOW.
 
 **Reliability & performance**
 - [x] FPS budget test in suite; perf regression gate — shipped iter 5
-- [ ] Visual regression snapshots for key views (groundwork done iter 19: fully seeded deterministic universe)
+- [x] Visual regression snapshots: Saturn + Earth views pixel-compared vs committed baselines (frozen epoch, 3% gate, UPDATE_SNAPSHOTS=1 to refresh) — shipped iter 20
 - [x] Mobile-viewport E2E tests (boot, overflow, nav collapse, touch select) — shipped iter 12
 - [x] Graceful degradation when WebGL is unavailable — shipped iter 13 (tested with a WebGL-disabled browser)
 

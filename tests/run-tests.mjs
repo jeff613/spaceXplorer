@@ -7,8 +7,11 @@
 
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import fs from 'node:fs';
 import path from 'node:path';
 import puppeteer from 'puppeteer-core';
+import pixelmatch from 'pixelmatch';
+import { PNG } from 'pngjs';
 
 const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const PORT = 8643;
@@ -571,6 +574,41 @@ try {
     tsChecks.moonOrbit > 58 && tsChecks.moonOrbit < 63);
   check('true scale: toggle reflects mode', tsChecks.toggleChecked);
   await ts.close();
+
+  console.log('\n— Visual regression (deterministic scene)');
+  const SNAP_DIR = path.join(ROOT, 'tests', 'snapshots');
+  fs.mkdirSync(SNAP_DIR, { recursive: true });
+  for (const view of ['saturn', 'earth']) {
+    const vp = await browser.newPage();
+    await vp.setViewport({ width: 1440, height: 900, deviceScaleFactor: 1 });
+    await vp.goto(`${BASE}/?focus=${view}`, { waitUntil: 'networkidle0', timeout: 30000 });
+    await vp.waitForFunction('window.__sx !== undefined', { timeout: 15000 });
+    await vp.evaluate(async () => {
+      const sx = window.__sx;
+      sx.sim.playing = false;
+      sx.sim.days = 9650; // frozen reference epoch
+      sx.select(sx.selected(), { instant: true });
+      for (let i = 0; i < 4; i++) await sx.frame();
+    });
+    const shot = PNG.sync.read(await vp.screenshot({ type: 'png' }));
+    await vp.close();
+    const base = path.join(SNAP_DIR, `${view}.png`);
+    if (!fs.existsSync(base) || process.env.UPDATE_SNAPSHOTS) {
+      fs.writeFileSync(base, PNG.sync.write(shot));
+      check(`snapshot baseline written for ${view} (first run)`, true);
+      continue;
+    }
+    const ref = PNG.sync.read(fs.readFileSync(base));
+    if (ref.width !== shot.width || ref.height !== shot.height) {
+      check(`snapshot ${view} size matches baseline`, false,
+        `${shot.width}x${shot.height} vs ${ref.width}x${ref.height}`);
+      continue;
+    }
+    const diffPx = pixelmatch(ref.data, shot.data, null, ref.width, ref.height, { threshold: 0.18 });
+    const ratio = diffPx / (ref.width * ref.height);
+    // animated sun granulation + star twinkle wiggle a few pixels — allow 3%
+    check(`snapshot ${view} within 3% of baseline (${(ratio * 100).toFixed(2)}%)`, ratio < 0.03);
+  }
 
   console.log('\n— Console cleanliness');
   check('zero console/page errors across all tests', consoleErrors.length === 0,
