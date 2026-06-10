@@ -268,6 +268,32 @@ try {
   });
   check('film finishing pass active with sim-time grain clock',
     film.enabled && film.simClock, JSON.stringify(film));
+  const comet = await page.evaluate(async () => {
+    const sx = window.__sx;
+    const h = sx.bodies.get('halley');
+    const coma = h.mesh.children.find((c) => c.name === 'coma');
+    const p = h.mesh.geometry.attributes.position;
+    let min = 1e9, max = 0;
+    for (let i = 0; i < p.count; i++) {
+      const r = Math.hypot(p.getX(i), p.getY(i), p.getZ(i));
+      min = Math.min(min, r); max = Math.max(max, r);
+    }
+    const save = sx.sim.days;
+    const days1986 = (Date.parse('1986-02-09T00:00Z') - Date.parse('2000-01-01T12:00Z')) / 86400000;
+    h.update(days1986);
+    const comaActive = coma.material.opacity;
+    h.update(save);
+    await sx.frame();
+    return {
+      dark: h.mesh.material.color.r < 0.4,
+      lumpy: min / max < 0.8,
+      comaActive: +comaActive.toFixed(2),
+      comaIdleNow: coma.material.opacity < 0.05,
+    };
+  });
+  check('comet nucleus is a dark lumpy body, coma swells at perihelion only',
+    comet.dark && comet.lumpy && comet.comaActive > 0.3 && comet.comaIdleNow,
+    JSON.stringify(comet));
 
   console.log('\n— Orbital accuracy (current date)');
   const earthAU = await helioDistanceAU(page, 'earth');

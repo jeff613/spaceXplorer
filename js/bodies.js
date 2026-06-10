@@ -591,14 +591,49 @@ export function createMoon(scene, data, parentBody) {
 
 export function createComet(scene, data) {
   const displayRadius = 0.45;
+  // real comet nuclei are blacker than coal (albedo ~0.04): a dark, seeded
+  // lumpy potato — never a bright sphere, which bloom turns into a white egg
+  const geo = new THREE.IcosahedronGeometry(displayRadius, 2);
+  let seed = 0;
+  for (const ch of data.id) seed = (seed * 31 + ch.charCodeAt(0)) >>> 0;
+  const nrand = mulberry32(seed);
+  const bump = new Map();
+  const pos = geo.attributes.position;
+  const v = new THREE.Vector3();
+  for (let i = 0; i < pos.count; i++) {
+    v.fromBufferAttribute(pos, i);
+    const key = `${v.x.toFixed(4)},${v.y.toFixed(4)},${v.z.toFixed(4)}`;
+    if (!bump.has(key)) bump.set(key, 0.72 + nrand() * 0.55);
+    v.multiplyScalar(bump.get(key));
+    pos.setXYZ(i, v.x, v.y, v.z);
+  }
+  geo.computeVertexNormals();
   const mesh = new THREE.Mesh(
-    new THREE.SphereGeometry(displayRadius, 18, 10),
-    new THREE.MeshStandardMaterial({ color: data.color, roughness: 1.0, metalness: 0 }),
+    geo,
+    new THREE.MeshStandardMaterial({ color: 0x4a443c, roughness: 1.0, metalness: 0, envMapIntensity: 0.15 }),
   );
   mesh.scale.set(1.25, 0.8, 0.95); // lumpy nucleus, not a billiard ball
   mesh.rotation.set(0.4, 0.9, 0.2);
   mesh.name = data.id;
   scene.add(mesh);
+
+  // coma: soft additive halo that swells as the comet nears the sun
+  const cc = document.createElement('canvas');
+  cc.width = cc.height = 128;
+  const cctx = cc.getContext('2d');
+  const cg = cctx.createRadialGradient(64, 64, 0, 64, 64, 64);
+  cg.addColorStop(0, 'rgba(210,228,255,0.5)');
+  cg.addColorStop(0.35, 'rgba(180,205,245,0.16)');
+  cg.addColorStop(1, 'rgba(160,190,240,0)');
+  cctx.fillStyle = cg;
+  cctx.fillRect(0, 0, 128, 128);
+  const coma = new THREE.Sprite(new THREE.SpriteMaterial({
+    map: new THREE.CanvasTexture(cc), blending: THREE.AdditiveBlending,
+    depthWrite: false, transparent: true, opacity: 0,
+  }));
+  coma.name = 'coma';
+  coma.raycast = () => {};
+  mesh.add(coma);
 
   // oversized invisible pick target — the nucleus is tiny
   const proxy = new THREE.Mesh(
@@ -632,6 +667,9 @@ export function createComet(scene, data) {
     update(days) {
       keplerPosition(data.elements, days, mesh.position);
       const d = mesh.position.length();
+      const activity = Math.max(0, Math.min(1, (tailStart - d) / tailStart));
+      coma.material.opacity = activity * 0.85;
+      coma.scale.setScalar(2 + activity * 14);
       tail.visible = d < tailStart;
       if (!tail.visible) return;
       dir.copy(mesh.position).normalize();
