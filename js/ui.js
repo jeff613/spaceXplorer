@@ -16,12 +16,13 @@ export function buildNavigator(bodies, craft, onSelect) {
     {
       title: 'Dwarfs, Asteroids & Comets',
       ids: ['ceres', 'vesta', 'pluto', 'charon', 'eris', 'makemake', 'haumea',
-        'sedna', 'arrokoth', 'halley'],
+        'sedna', 'arrokoth', 'halley', 'churyumov'],
     },
     {
       title: 'Spacecraft',
-      ids: ['iss', 'hubble', 'starlink', 'gps', 'geo', 'jwst', 'juno', 'cassini',
-        'parker', 'roadster', 'newhorizons', 'pioneer10', 'pioneer11',
+      ids: ['iss', 'hubble', 'starlink', 'gps', 'geo', 'jwst', 'gaia', 'soho',
+        'mro', 'perseverance', 'curiosity', 'juno', 'cassini', 'parker',
+        'roadster', 'newhorizons', 'pioneer10', 'pioneer11',
         'voyager1', 'voyager2'],
     },
   ];
@@ -148,7 +149,7 @@ export function createLabels(bodies, craft, onSelect) {
         body.mesh.getWorldPosition(tmp);
         const dist = camPos.distanceTo(tmp);
         // moons + small craft only get labels up close, to avoid clutter
-        const nearOnly = body.data.parent || body.data.kind === 'orbiter' || body.data.kind === 'l2';
+        const nearOnly = body.data.parent || ['orbiter', 'lagrange', 'surface'].includes(body.data.kind);
         if (nearOnly && dist > 110) { el.style.display = 'none'; continue; }
         tmp.project(camera);
         if (tmp.z > 1 || tmp.x < -1.05 || tmp.x > 1.05 || tmp.y < -1.05 || tmp.y > 1.05) {

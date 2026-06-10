@@ -100,12 +100,31 @@ try {
   });
   check(`all ${integrity.count} objects have name/type/info/fact/update`,
     integrity.missing.length === 0, integrity.missing.join(','));
-  check('object count ≥ 49', integrity.count >= 49, `got ${integrity.count}`);
-  check('roster complete (dwarfs, probes, constellations)', await page.evaluate(() => {
+  check('object count ≥ 55', integrity.count >= 55, `got ${integrity.count}`);
+  check('roster complete (dwarfs, probes, constellations, Mars fleet)', await page.evaluate(() => {
     const sx = window.__sx;
-    return ['vesta', 'makemake', 'haumea', 'sedna', 'arrokoth'].every((id) => sx.bodies.has(id))
-      && ['juno', 'cassini', 'gps', 'geo', 'pioneer10', 'pioneer11'].every((id) => sx.craft.has(id));
+    return ['vesta', 'makemake', 'haumea', 'sedna', 'arrokoth', 'churyumov']
+      .every((id) => sx.bodies.has(id))
+      && ['juno', 'cassini', 'gps', 'geo', 'pioneer10', 'pioneer11',
+        'mro', 'perseverance', 'curiosity', 'gaia', 'soho'].every((id) => sx.craft.has(id));
   }));
+  // rovers ride the planet's rotation; SOHO sits sunward of Earth
+  const marsFleet = await page.evaluate(() => {
+    const sx = window.__sx;
+    const mars = sx.bodies.get('mars');
+    const rover = sx.craft.get('perseverance');
+    const v = rover.mesh.position.constructor;
+    const roverW = new v(); rover.mesh.getWorldPosition(roverW);
+    const surfDist = roverW.distanceTo(mars.anchor.position) / mars.displayRadius;
+    const sohoW = new v(); sx.craft.get('soho').mesh.getWorldPosition(sohoW);
+    const earthLen = sx.bodies.get('earth').anchor.position.length();
+    return { surfDist, sohoInside: sohoW.length() < earthLen };
+  });
+  check(`Perseverance pinned to Mars surface (${marsFleet.surfDist.toFixed(2)} R)`,
+    marsFleet.surfDist > 0.95 && marsFleet.surfDist < 1.1);
+  check('SOHO sits sunward of Earth (L1)', marsFleet.sohoInside);
+  const cgAU = await helioDistanceAU(page, 'churyumov');
+  check(`67P at ${cgAU.toFixed(1)} AU (within 1.2–5.7 range)`, cgAU > 1.2 && cgAU < 5.7);
 
   const navOk = await page.evaluate(() => {
     const items = document.querySelectorAll('.nav-item');

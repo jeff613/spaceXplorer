@@ -354,6 +354,17 @@ export const COMETS = [
     },
     fact: 'The only comet visible to the naked eye that can appear twice in a human lifetime. Records of it go back to 240 BC.',
   },
+  {
+    id: 'churyumov', name: '67P/Churyumov–Gerasimenko', type: 'Periodic comet', color: 0xb8d0d8,
+    // perihelion Nov 2, 2021
+    elements: { a: 3.463, e: 0.641, i: 7.04, Om: 50.18, varpi: 62.96, L0: 347.3, period: 2484 },
+    info: {
+      'Nucleus': '4.3 × 4.1 km, duck-shaped', 'Orbital period': '6.8 years',
+      'Last perihelion': '2021', 'Visited': 'Rosetta orbited it 2014–2016',
+      'Lander': 'Philae — first soft landing on a comet',
+    },
+    fact: 'Rosetta chased it for ten years, orbited it for two, and dropped the Philae lander on it — the first time humanity ever landed on a comet.',
+  },
 ];
 
 // ─── Spacecraft & man-made objects ────────────────────────────────────────
@@ -388,13 +399,58 @@ export const SPACECRAFT = [
     fact: 'Carries three LEGO figurines (Jupiter, Juno and Galileo) and skims 4,200 km above Jupiter\'s clouds through lethal radiation belts.',
   },
   {
-    id: 'jwst', name: 'JWST', type: 'Space telescope', kind: 'l2',
+    id: 'mro', name: 'MRO', type: 'Mars orbiter', kind: 'orbiter', parent: 'mars',
+    orbitRadii: 1.55, periodDays: 0.0786, inclination: 93, color: 0xffc8a8,
+    info: {
+      'Launched': 'Aug 12, 2005', 'Orbit': 'Sun-synchronous polar, 255 × 320 km',
+      'Camera': 'HiRISE — reads Mars at 30 cm/pixel', 'Data returned': 'More than all other deep-space missions combined',
+    },
+    fact: 'Its HiRISE camera is so sharp it has photographed rovers, landers, crashed probes — and avalanches in the act of falling.',
+  },
+  {
+    id: 'perseverance', name: 'Perseverance', type: 'Mars rover', kind: 'surface',
+    parent: 'mars', lat: 18.4, lon: 77.7, color: 0xe8f0f8,
+    info: {
+      'Landed': 'Feb 18, 2021 — Jezero Crater', 'Mission': 'Caching samples for return to Earth',
+      'Sidekick': 'Ingenuity, the first Mars helicopter', 'Power': 'Nuclear (MMRTG)',
+    },
+    fact: 'Carries 43 sample tubes and brought a helicopter to another planet. Its microphones recorded the first sounds ever heard from Mars.',
+  },
+  {
+    id: 'curiosity', name: 'Curiosity', type: 'Mars rover', kind: 'surface',
+    parent: 'mars', lat: -5.4, lon: 137.8, color: 0xd8d0c0,
+    info: {
+      'Landed': 'Aug 6, 2012 — Gale Crater', 'Landing': 'Sky-crane rocket hover',
+      'Distance driven': '> 30 km', 'Status': 'Still climbing Mount Sharp',
+    },
+    fact: 'Sings "Happy Birthday" to itself every August 6th by vibrating its sample-analysis unit — alone, on another planet.',
+  },
+  {
+    id: 'jwst', name: 'JWST', type: 'Space telescope', kind: 'lagrange', factor: 1.06,
     color: 0xffd27a,
     info: {
       'Launched': 'Dec 25, 2021', 'Location': 'Sun–Earth L2, 1.5 million km out',
       'Mirror': '6.5 m, gold-coated beryllium', 'Operating temp': '−233 °C',
     },
     fact: 'Parked at L2 where Earth shields it from the Sun, it sees infrared light from the first galaxies ever formed.',
+  },
+  {
+    id: 'gaia', name: 'Gaia', type: 'Astrometry observatory', kind: 'lagrange', factor: 1.045,
+    color: 0xc8b8ff,
+    info: {
+      'Launched': 'Dec 19, 2013', 'Location': 'Sun–Earth L2',
+      'Mission': 'Mapped 1.8 billion stars in 3D', 'Precision': 'Could spot a coin on the Moon',
+    },
+    fact: 'Built the largest, most precise 3D map of our galaxy ever made — charting the positions and motions of nearly two billion stars.',
+  },
+  {
+    id: 'soho', name: 'SOHO', type: 'Solar observatory', kind: 'lagrange', factor: 0.94,
+    color: 0xffe08a,
+    info: {
+      'Launched': 'Dec 2, 1995', 'Location': 'Sun–Earth L1, 1.5 million km sunward',
+      'Mission': 'Staring at the Sun nonstop for 30 years', 'Bonus': 'Greatest comet hunter ever: 5,000+ found',
+    },
+    fact: 'Meant to last two years, it has watched the Sun for three decades — and accidentally became history\'s greatest comet discoverer.',
   },
   {
     id: 'roadster', name: 'Tesla Roadster', type: 'Electric car (yes, really)', kind: 'helio',

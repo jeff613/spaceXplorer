@@ -2,7 +2,7 @@
 
 **Status:** Living document — the improvement loop works against this.
 **Owner:** Jeff
-**Last updated:** 2026-06-10 (iteration 10)
+**Last updated:** 2026-06-10 (iteration 11)
 
 ## 1. Vision
 
@@ -91,15 +91,15 @@ a date picker alongside NOW.
 - [ ] Camera motion polish (inertia, FOV easing on fly-to)
 
 **Fidelity & realism**
-- [ ] More comets (67P, NEOWISE) with correct apparitions
+- [x] More comets: 67P/Churyumov–Gerasimenko with Rosetta history — shipped iter 11; NEOWISE remains
 - [x] Uranus rings (ε + faint bands), Neptune rings (Adams, Le Verrier) — shipped iter 6 (arcs approximated as faint full rings)
 - [ ] Jupiter's Great Red Spot orientation; gas giant band motion
 - [ ] Optional true-scale mode (educational toggle)
 - [ ] Real lunar phase / eclipse shadows (stretch)
 
 **Comprehensiveness**
-- [ ] More spacecraft: ~~Juno~~ (iter 4), ~~Pioneer 10/11, Cassini memorial~~ (iter 9);
-      Mars orbiters/rovers, Gaia, SOHO, Artemis assets remain
+- [x] More spacecraft: Juno (iter 4); Pioneers, Cassini memorial (iter 9);
+      MRO, Perseverance, Curiosity, Gaia, SOHO (iter 11). Artemis assets remain (future)
 - [x] GPS + geostationary satellite rings around Earth — shipped iter 9
 - [ ] Named asteroids: ~~Vesta~~ (shipped iter 4); Pallas, Bennu, Apophis remain
 - [x] More Kuiper objects: Makemake, Haumea (iter 4); Arrokoth, Sedna (iter 9)

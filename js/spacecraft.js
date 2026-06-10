@@ -73,7 +73,9 @@ export function buildSpacecraft(scene, bodies) {
           mesh.rotation.y = -a;
         },
       });
-    } else if (data.kind === 'l2') {
+    } else if (data.kind === 'lagrange') {
+      // L1/L2 sit on the Sun–Earth line; factor <1 = sunward L1, >1 = L2
+      // (display-exaggerated)
       const mesh = makeDot(data.color, 0.22);
       mesh.name = data.id;
       scene.add(mesh);
@@ -81,10 +83,26 @@ export function buildSpacecraft(scene, bodies) {
       craft.set(data.id, {
         data, mesh, pick, displayRadius: 0.7,
         update() {
-          // L2 sits on the Sun–Earth line, beyond Earth (display-exaggerated)
-          mesh.position.copy(earth.anchor.position).multiplyScalar(1.06);
+          mesh.position.copy(earth.anchor.position).multiplyScalar(data.factor);
         },
       });
+    } else if (data.kind === 'surface') {
+      // rover pinned to the parent's surface at lat/lon — added as a child
+      // of the spinning mesh so it rides the planet's rotation
+      const parent = bodies.get(data.parent);
+      const mesh = makeDot(data.color, 0.12);
+      mesh.name = data.id;
+      const lat = data.lat * DEG;
+      const lon = data.lon * DEG;
+      const r = parent.displayRadius * 1.01;
+      mesh.position.set(
+        r * Math.cos(lat) * Math.cos(lon),
+        r * Math.sin(lat),
+        -r * Math.cos(lat) * Math.sin(lon),
+      );
+      parent.mesh.add(mesh);
+      const pick = addPickProxy(mesh, 0.7);
+      craft.set(data.id, { data, mesh, pick, displayRadius: 0.45, update() {} });
     } else if (data.kind === 'helio') {
       const mesh = makeDot(data.color, 0.3);
       mesh.name = data.id;
