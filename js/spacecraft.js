@@ -254,9 +254,19 @@ function craftMesh(data) {
     case 'gaia': return makeProbe({ dish: 0.14, scale: 0.8 });
     case 'soho': return makeProbe({ dish: 0.1, panels: 2, scale: 0.8 });
     case 'parker': return makeParker();
-    case 'roadster': return makeRoadster();
+    case 'roadster': {
+      // the car is modeled at ~0.3 units; bring it up to kit scale so a
+      // focused close-up fills the frame like every other craft
+      const r = makeRoadster();
+      r.scale.setScalar(6);
+      return r;
+    }
     case 'perseverance':
-    case 'curiosity': return makeRover();
+    case 'curiosity': {
+      const r = makeRover();
+      r.scale.setScalar(4);
+      return r;
+    }
     case 'juno': return makeProbe({ dish: 0.16, panels: 3 });
     case 'cassini': return makeProbe({ dish: 0.22 });
     case 'mro': return makeProbe({ dish: 0.18, panels: 2, scale: 0.7 });
@@ -275,6 +285,7 @@ function addPickProxy(mesh, radius) {
     new THREE.SphereGeometry(radius, 8, 4),
     new THREE.MeshBasicMaterial({ visible: false }),
   );
+  proxy.name = 'pickproxy';
   mesh.add(proxy);
   return proxy;
 }

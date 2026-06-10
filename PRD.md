@@ -2,7 +2,7 @@
 
 **Status:** Living document — the improvement loop works against this.
 **Owner:** Jeff
-**Last updated:** 2026-06-13 (iteration 41)
+**Last updated:** 2026-06-13 (iteration 42)
 
 ## 1. Vision
 
@@ -54,7 +54,7 @@ Ganymede, Callisto, Titan, Enceladus, Rhea, Iapetus, Miranda, Titania,
 Oberon, Triton, Charon · Halley's Comet (dynamic anti-sunward tail) ·
 asteroid belt · Kuiper belt · starfield.
 
-**Man-made:** all spacecraft are detailed PBR miniatures with image-based lighting and distance-faded glints — P0 orb fix iter 29 (iter 14 base) — ISS · Hubble · JWST at L2 · Starlink shell
+**Man-made:** all spacecraft are detailed PBR miniatures with image-based lighting and distance-faded glints — P0 orb fix iter 29 (iter 14 base); Roadster/rover close-up scale fix + speck-size test gate iter 42 — ISS · Hubble · JWST at L2 · Starlink shell
 (700 sats) · Juno (polar Jupiter orbit) · Tesla Roadster · Parker Solar
 Probe · New Horizons · Voyager 1 · Voyager 2.
 

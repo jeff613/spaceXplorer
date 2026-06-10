@@ -151,6 +151,28 @@ try {
   check(`focused craft shows model not orb (glint ${orbCheck.glintOpacity.toFixed(2)} < 0.05)`,
     orbCheck.glintOpacity >= 0 && orbCheck.glintOpacity < 0.05);
   check(`craft models have real detail (${orbCheck.meshCount} parts ≥ 8)`, orbCheck.meshCount >= 8);
+  const craftSizes = await page.evaluate(async () => {
+    const THREE = await import('three');
+    const sx = window.__sx;
+    const visibleSize = (root) => {
+      root.updateWorldMatrix(true, true);
+      const box = new THREE.Box3();
+      const tmp = new THREE.Box3();
+      root.traverse((o) => {
+        if (o.isMesh && o.name !== 'pickproxy' && o.material?.visible !== false) {
+          box.union(tmp.setFromObject(o));
+        }
+      });
+      const s = new THREE.Vector3();
+      box.getSize(s);
+      return +Math.max(s.x, s.y, s.z).toFixed(2);
+    };
+    return ['iss', 'roadster', 'perseverance', 'hubble', 'jwst'].map(
+      (id) => [id, visibleSize(sx.craft.get(id).mesh)],
+    );
+  });
+  check('no craft renders speck-sized when focused (all ≥ 0.5 units)',
+    craftSizes.every(([, s]) => s >= 0.5), JSON.stringify(craftSizes));
   // L-point craft fly halo orbits — near, but not exactly on, the Sun-Earth line
   const halo = await page.evaluate(() => {
     const sx = window.__sx;
