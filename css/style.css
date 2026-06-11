@@ -97,6 +97,13 @@ body.loaded #hud-header, body.loaded #nav-panel, body.loaded #time-bar { opacity
 #ipo-countdown.live #ipo-label { color: var(--amber); }
 #ipo-countdown.live #ipo-clock { color: var(--amber); text-shadow: 0 0 14px rgba(255, 179, 71, 0.5); }
 
+#ipo-countdown.celebrate { animation: spcx-pulse 1.2s ease-in-out 5; }
+
+@keyframes spcx-pulse {
+  0%, 100% { box-shadow: none; transform: scale(1); }
+  50% { box-shadow: 0 0 26px rgba(255, 179, 71, 0.65); transform: scale(1.06); }
+}
+
 /* ── Navigator ──────────────────────────────────────────────────────── */
 
 #nav-panel {

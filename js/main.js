@@ -261,7 +261,7 @@ function updateCamera(dt) {
 
 // ─── UI wiring ────────────────────────────────────────────────────────────
 
-const timeUI = setupTimeControls(sim);
+const timeUI = setupTimeControls(sim, sound);
 
 setupToggles({
   'toggle-orbits': (on) => {
