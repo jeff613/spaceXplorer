@@ -102,6 +102,10 @@ const sound = createSound();
 // manual selection anywhere exits an active tour
 const userSelect = (body) => { tour.stop(); select(body); };
 const navigator = buildNavigator(bodies, craft, userSelect);
+document.getElementById('btn-random').addEventListener('click', () => {
+  const order = navigator.order.filter((b) => b !== selected);
+  userSelect(order[Math.floor(Math.random() * order.length)]);
+});
 const labels = createLabels(bodies, craft, userSelect);
 const tour = createTour(bodies, craft, select, sim);
 const transfer = createTransfer(scene, bodies, sim);
@@ -153,6 +157,13 @@ function deselect() {
 }
 
 document.getElementById('info-close').addEventListener('click', deselect);
+for (const [btnId, step] of [['info-prev', -1], ['info-next', 1]]) {
+  document.getElementById(btnId).addEventListener('click', () => {
+    const order = navigator.order;
+    const i = selected ? order.indexOf(selected) : -1;
+    userSelect(order[(i + step + order.length) % order.length]);
+  });
+}
 
 const helpOverlay = () => document.getElementById('help-overlay');
 document.getElementById('btn-help').addEventListener('click', () => {

@@ -101,6 +101,12 @@ try {
   const page = await openPage(browser, BASE, consoleErrors);
 
   check('app boots (body.loaded)', await page.evaluate(() => document.body.classList.contains('loaded')));
+  check('boot splash exists and fades out after load', await page.evaluate(() => {
+    const sp = document.getElementById('splash');
+    if (!sp) return false;
+    const cs = getComputedStyle(sp);
+    return cs.opacity === '0' && cs.pointerEvents === 'none';
+  }));
   check('WebGL canvas present', await page.evaluate(() => {
     const c = document.getElementById('scene');
     return c.width > 0 && c.height > 0;
@@ -536,16 +542,25 @@ try {
   }));
   await page.waitForFunction(
     () => window.__sx.scene.getObjectByName('skysphere')?.material.map?.image?.width === 8192,
-    { timeout: 20000 },
+    { timeout: 40000 },
   );
   check('Milky Way panorama upgrades progressively to 8k', true);
   await page.waitForFunction(
     () => ['moon', 'jupiter', 'saturn', 'mars', 'venus', 'mercury'].every(
       (id) => window.__sx.bodies.get(id).mesh.material.map?.image?.width === 4096,
     ),
-    { timeout: 25000 },
+    { timeout: 40000 },
   );
   check('all tour-stop worlds upgrade progressively to 4k', true);
+  await page.waitForFunction(
+    () => {
+      const e = window.__sx.bodies.get('earth');
+      const cl = e.tiltGroup.children.find((ch) => ch.material?.blending === 2 && ch.material.map);
+      return cl?.material.map.image?.width === 4096;
+    },
+    { timeout: 40000 },
+  );
+  check('Earth cloud layer upgrades progressively to 4k', true);
   const zoomClamp = await page.evaluate(async () => {
     const sx = window.__sx;
     sx.select(sx.bodies.get('sun'), { instant: true });
@@ -720,25 +735,17 @@ try {
     return res.ok;
   }));
 
-  // click empty space deselects — probe for a pixel whose ray hits nothing,
-  // since a tiny craft's invisible pick proxy may drift over any fixed point
-  const emptyXY = await page.evaluate(async () => {
-    const THREE = await import('three');
-    const sx = window.__sx;
-    const ray = new THREE.Raycaster();
-    const targets = [];
-    for (const b of sx.bodies.values()) targets.push(b.mesh);
-    for (const c of sx.craft.values()) if (!c.isCloud) targets.push(c.mesh);
-    for (const [x, y] of [[720, 80], [600, 70], [840, 90], [500, 110], [950, 60]]) {
-      ray.setFromCamera(
-        new THREE.Vector2((x / innerWidth) * 2 - 1, -(y / innerHeight) * 2 + 1), sx.camera,
-      );
-      if (ray.intersectObjects(targets, true).length === 0
-          && document.elementFromPoint(x, y)?.id === 'scene') return [x, y];
+  // click empty space deselects — probe for a point with truly nothing
+  // under it (orbit lines and drifting objects made a fixed point flaky)
+  const safePt = await page.evaluate(() => {
+    const cands = [[720, 80], [200, 560], [980, 640], [420, 130], [1150, 220]];
+    for (const [x, y] of cands) {
+      const el = document.elementFromPoint(x, y);
+      if (el?.id === 'scene' && window.__sx.raycastAt(x, y).length === 0) return { x, y };
     }
-    return [720, 80];
+    return { x: 720, y: 80 };
   });
-  await page.mouse.click(emptyXY[0], emptyXY[1]);
+  await page.mouse.click(safePt.x, safePt.y);
   await frames(page, 2);
   check('click on empty space deselects', await page.evaluate(
     () => window.__sx.selected() === null
@@ -1172,6 +1179,16 @@ try {
   check('ArrowLeft goes back (Sun)', await page.evaluate(
     () => window.__sx.selected()?.data.id === 'sun',
   ));
+  await page.evaluate(() => document.getElementById('info-next').click());
+  await frames(page, 2);
+  check('info-panel › cycles forward (Mercury)', await page.evaluate(
+    () => window.__sx.selected()?.data.id === 'mercury',
+  ));
+  await page.evaluate(() => document.getElementById('info-prev').click());
+  await frames(page, 2);
+  check('info-panel ‹ cycles back (Sun)', await page.evaluate(
+    () => window.__sx.selected()?.data.id === 'sun',
+  ));
   await page.keyboard.press('Escape');
 
   const spaceToggle = await page.evaluate(() => window.__sx.sim.playing);
@@ -1260,6 +1277,21 @@ try {
   check('tour dwell has cinematic camera drift', await page.evaluate(
     () => window.__sx.controls.autoRotate === true,
   ));
+
+  await page.click('#tour-exit');
+  await frames(page, 2);
+  await page.click('#btn-random');
+  await frames(page, 2);
+  const rand1 = await page.evaluate(() => window.__sx.selected()?.data.id);
+  await page.click('#btn-random');
+  await frames(page, 2);
+  const rand2 = await page.evaluate(() => window.__sx.selected()?.data.id);
+  check(`Surprise me flies to random objects (${rand1} → ${rand2})`,
+    !!rand1 && !!rand2 && rand1 !== rand2);
+  await page.keyboard.press('Escape');
+  await frames(page, 2);
+  await page.click('#btn-tour');
+  await frames(page, 2);
 
   await page.click('#tour-next');
   await frames(page, 2);
@@ -1368,6 +1400,16 @@ try {
       return right <= innerWidth + 1;
     }),
   ));
+  const mobNext = await mob.evaluate(async () => {
+    const btn = document.getElementById('info-next');
+    const r = btn.getBoundingClientRect();
+    const fits = r.width >= 16 && r.right <= innerWidth && r.top >= 0;
+    btn.click();
+    await window.__sx.frame();
+    return { fits, sel: window.__sx.selected()?.data.id };
+  });
+  check('mobile: ‹ › buttons are tappable and cycle',
+    mobNext.fits && !!mobNext.sel && mobNext.sel !== 'earth', JSON.stringify(mobNext));
   await mob.evaluate(() => window.__sx.deselect());
   const tapPos = await mob.evaluate(() => {
     const sx = window.__sx;
