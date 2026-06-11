@@ -82,6 +82,22 @@ try {
   const consoleErrors = [];
 
   console.log('\n— Boot & data integrity');
+  {
+    // every image referenced in source must exist on disk and must not be
+    // excluded from deploys (iter 72 found 2k stars excluded while in use)
+    const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
+    const src = ['js/data.js', 'js/bodies.js', 'js/spacecraft.js', 'js/main.js', 'index.html']
+      .map((f) => fs.readFileSync(path.join(root, f), 'utf8')).join('\n');
+    const refs = [...new Set([...src.matchAll(/'([\w-]+\.(?:jpg|png))'/g)].map((m) => m[1]))];
+    const missing = refs.filter((f) => !fs.existsSync(path.join(root, 'textures', f))
+      && !fs.existsSync(path.join(root, f)));
+    const ignore = fs.existsSync(path.join(root, '.railwayignore'))
+      ? fs.readFileSync(path.join(root, '.railwayignore'), 'utf8') : '';
+    const excluded = refs.filter((f) => ignore.includes(f));
+    check(`all ${refs.length} referenced images exist and deploy`,
+      missing.length === 0 && excluded.length === 0,
+      JSON.stringify({ missing, excluded }));
+  }
   const page = await openPage(browser, BASE, consoleErrors);
 
   check('app boots (body.loaded)', await page.evaluate(() => document.body.classList.contains('loaded')));
