@@ -51,9 +51,12 @@ export function buildNavigator(bodies, craft, onSelect) {
   }
 
   // live filter
+  // ticker easter egg: SPCX finds the only SpaceX hardware on a permanent solar orbit
+  const ALIASES = { spcx: 'tesla roadster' };
   const search = document.getElementById('nav-search');
   search.addEventListener('input', () => {
-    const q = search.value.trim().toLowerCase();
+    const raw = search.value.trim().toLowerCase();
+    const q = ALIASES[raw] ?? raw;
     for (const { el, items: gi } of headers) {
       let any = false;
       for (const it of gi) {

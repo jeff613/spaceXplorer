@@ -874,6 +874,22 @@ try {
   });
   check('T-0 celebration is one-shot per page load', !cel.refired);
 
+  // ticker easter egg: searching SPCX surfaces and selects the Roadster
+  const egg = await page.evaluate(async () => {
+    const search = document.getElementById('nav-search');
+    search.value = 'SPCX';
+    search.dispatchEvent(new Event('input'));
+    search.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    await window.__sx.frame();
+    const sel = window.__sx.selected()?.data.id;
+    search.value = '';
+    search.dispatchEvent(new Event('input'));
+    window.__sx.deselect();
+    await window.__sx.frame();
+    return sel;
+  });
+  check('SPCX ticker easter egg selects the Roadster', egg === 'roadster', `got ${egg}`);
+
   console.log('\n— Numeric stability under stress');
   const stable = await page.evaluate(async () => {
     const sx = window.__sx;
