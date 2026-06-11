@@ -295,7 +295,7 @@ body.loaded #hud-header, body.loaded #nav-panel, body.loaded #time-bar { opacity
 
 /* ── Grand tour ─────────────────────────────────────────────────────── */
 
-#btn-tour {
+#btn-tour, #btn-random {
   width: 100%;
   background: rgba(255, 179, 71, 0.08);
   border: 1px solid rgba(255, 179, 71, 0.35);
@@ -311,9 +311,22 @@ body.loaded #hud-header, body.loaded #nav-panel, body.loaded #time-bar { opacity
   transition: all 0.15s;
 }
 
+#btn-tour { margin-bottom: 6px; }
+
 #btn-tour:hover, #btn-tour.on {
   background: rgba(255, 179, 71, 0.18);
   border-color: var(--amber);
+}
+
+#btn-random {
+  background: rgba(127, 214, 255, 0.06);
+  border-color: var(--panel-edge);
+  color: var(--cyan);
+}
+
+#btn-random:hover {
+  background: rgba(127, 214, 255, 0.15);
+  border-color: var(--cyan);
 }
 
 #tour-banner {
@@ -553,6 +566,7 @@ body.loaded #hud-header, body.loaded #nav-panel, body.loaded #time-bar { opacity
 
   #nav-panel { width: 200px; }
   #nav-panel.collapsed { transform: translateX(-200px); }
+  #btn-tour, #btn-random { padding: 14px 10px; }
   .nav-item { padding: 9px 8px; font-size: 14px; }
   .toggle { padding: 7px 8px; font-size: 13px; }
   #btn-play, #btn-now, #btn-reverse, #btn-realtime { padding: 9px 15px; }
