@@ -955,13 +955,18 @@ function createKuiperBelt(scene) {
 
 export function createStarfield(scene) {
   // real Milky Way panorama (ESO-style survey photo) as the deep backdrop
-  const sky = new THREE.Mesh(
-    new THREE.SphereGeometry(4600, 64, 32),
-    new THREE.MeshBasicMaterial({
-      map: loadTex('8k_stars_milky_way.jpg'), side: THREE.BackSide,
-      color: 0xf4f6fa, depthWrite: false,
-    }),
-  );
+  const skyMat = new THREE.MeshBasicMaterial({
+    map: loadTex('2k_stars_milky_way.jpg'), side: THREE.BackSide,
+    color: 0xf4f6fa, depthWrite: false,
+  });
+  // progressive: 2K paints instantly, the 8K panorama swaps in when ready
+  texLoader.load('textures/8k_stars_milky_way.jpg', (hi) => {
+    hi.colorSpace = THREE.SRGBColorSpace;
+    skyMat.map = hi;
+    skyMat.needsUpdate = true;
+  });
+  const sky = new THREE.Mesh(new THREE.SphereGeometry(4600, 64, 32), skyMat);
+  sky.name = 'skysphere';
   // the galactic plane is inclined ~60° to the ecliptic — tilt the panorama
   // so the Milky Way band sweeps diagonally across the sky like the real one
   sky.rotation.set(60 * DEG, 0, 12 * DEG);

@@ -403,6 +403,11 @@ try {
     return e.data.texture.startsWith('2k') && e.data.textureHi.startsWith('8k')
       && e.mesh.material.map.image.width === 8192;
   }));
+  await page.waitForFunction(
+    () => window.__sx.scene.getObjectByName('skysphere')?.material.map?.image?.width === 8192,
+    { timeout: 20000 },
+  );
+  check('Milky Way panorama upgrades progressively to 8k', true);
   const neb = await page.evaluate(() => {
     const g = window.__sx.scene.getObjectByName('nebulae');
     return {

@@ -2,7 +2,7 @@
 
 **Status:** Living document — the improvement loop works against this.
 **Owner:** Jeff
-**Last updated:** 2026-06-13 (iteration 57)
+**Last updated:** 2026-06-13 (iteration 58)
 
 ## 1. Vision
 
@@ -87,7 +87,8 @@ a date picker alongside NOW.
 - Graceful degradation: WebGL-less browsers get a fallback message; failed
   texture loads fall back to tinted materials, never white balls (iter 51).
 - Fast first paint: heavyweight textures load progressively — Earth paints
-  at 2K immediately, 8K swaps in when downloaded (iter 56).
+  at 2K immediately, 8K swaps in when downloaded (iter 56); Milky Way
+  panorama likewise (iter 58). ~6.5MB moved off the critical path.
 
 ## 6. Roadmap (prioritized backlog)
 
