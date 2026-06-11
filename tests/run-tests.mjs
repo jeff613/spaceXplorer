@@ -254,6 +254,15 @@ try {
     });
     return ok;
   }));
+  // P0-7: the Roadster is a real model — curved body, spoked wheels, Starman —
+  // not the old 8-part brick
+  check('Roadster is a detailed model with Starman (≥ 40 parts)', await page.evaluate(() => {
+    let n = 0;
+    window.__sx.craft.get('roadster').mesh.traverse((o) => {
+      if (o.isMesh && o.name !== 'pickproxy') n++;
+    });
+    return n >= 40;
+  }));
   // L-point craft fly halo orbits — near, but not exactly on, the Sun-Earth line
   const halo = await page.evaluate(() => {
     const sx = window.__sx;
