@@ -267,12 +267,12 @@ try {
     JSON.stringify(transits[1]));
   const bumps = await page.evaluate(() => {
     const sx = window.__sx;
-    return ['earth', 'mars', 'mercury', 'moon'].map((id) => {
+    return ['earth', 'mars', 'mercury', 'moon', 'pluto'].map((id) => {
       const m = sx.bodies.get(id).mesh.material;
       return !!m.bumpMap && m.bumpScale > 0;
     });
   });
-  check('terrain bump maps on Earth, Mars, Mercury, Moon', bumps.every(Boolean), JSON.stringify(bumps));
+  check('terrain bump maps on Earth, Mars, Mercury, Moon, Pluto', bumps.every(Boolean), JSON.stringify(bumps));
   const sunfx = await page.evaluate(async () => {
     const sx = window.__sx;
     await sx.frame();

@@ -220,7 +220,7 @@ export const PLANETS = [
     fact: 'On Friday, April 13, 2029, two billion people will be able to watch an asteroid cross the sky with the naked eye — and Earth\'s gravity will permanently bend its orbit.',
   },
   {
-    id: 'pluto', name: 'Pluto', type: 'Dwarf planet', texture: 'plutomap1k.jpg',
+    id: 'pluto', name: 'Pluto', type: 'Dwarf planet', texture: 'plutomap1k.jpg', bump: 'plutobump1k.jpg', bumpScale: 1.2,
     radiusKm: 1188.3,
     elements: { a: 39.48, e: 0.2488, i: 17.14, Om: 110.30, varpi: 224.07, L0: 238.93, period: 90560 },
     rotationHours: -153.3, tilt: 122.5,
