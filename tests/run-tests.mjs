@@ -142,6 +142,57 @@ try {
   check(`Perseverance pinned to Mars surface (${marsFleet.surfDist.toFixed(2)} R)`,
     marsFleet.surfDist > 0.95 && marsFleet.surfDist < 1.1);
   check('SOHO sits sunward of Earth (L1)', marsFleet.sohoInside);
+  // SpaceX launch sites: pinned to Earth's surface, riding its rotation
+  const sites = await page.evaluate(async () => {
+    const sx = window.__sx;
+    const earth = sx.bodies.get('earth');
+    const ids = ['starbase', 'lc39a', 'slc4e'];
+    if (!ids.every((id) => sx.craft.has(id))) return null;
+    const v = earth.anchor.position.constructor;
+    const w = new v();
+    const radii = ids.map((id) => {
+      sx.craft.get(id).mesh.getWorldPosition(w);
+      return +(w.distanceTo(earth.anchor.position) / earth.displayRadius).toFixed(3);
+    });
+    // advance sim time a quarter-day: the pad must move with the spin
+    // but keep its surface radius
+    const save = sx.sim.days;
+    const before = new v();
+    sx.craft.get('starbase').mesh.getWorldPosition(before);
+    before.sub(earth.anchor.position);
+    earth.update(save + 0.25);
+    const after = new v();
+    sx.craft.get('starbase').mesh.getWorldPosition(after);
+    after.sub(earth.anchor.position);
+    earth.update(save);
+    await sx.frame();
+    return {
+      radii,
+      moved: before.distanceTo(after) / earth.displayRadius,
+      radiusAfter: after.length() / earth.displayRadius,
+    };
+  });
+  check(`SpaceX launch sites pinned to Earth surface (${sites ? sites.radii.join(', ') : 'missing'} R)`,
+    sites !== null && sites.radii.every((r) => r > 0.95 && r < 1.1));
+  check(`launch sites ride Earth's rotation (moved ${(sites?.moved ?? 0).toFixed(2)} R, radius ${(sites?.radiusAfter ?? 0).toFixed(2)} R)`,
+    sites !== null && sites.moved > 0.5 && sites.radiusAfter > 0.95 && sites.radiusAfter < 1.1);
+  const sitePanel = await page.evaluate(async () => {
+    const sx = window.__sx;
+    if (!sx.craft.has('starbase')) return null;
+    sx.select(sx.craft.get('starbase'));
+    for (let i = 0; i < 3; i++) await sx.frame();
+    const out = {
+      open: document.getElementById('info-panel').classList.contains('open'),
+      name: document.querySelector('.info-name').textContent,
+      type: document.querySelector('.info-type').textContent,
+    };
+    sx.deselect();
+    await sx.frame();
+    return out;
+  });
+  check('selecting Starbase opens its Launch site panel',
+    sitePanel !== null && sitePanel.open && sitePanel.name === 'Starbase'
+    && sitePanel.type === 'Launch site', JSON.stringify(sitePanel));
   // LRO must circle the Moon, not the Earth
   const lro = await page.evaluate(() => {
     const sx = window.__sx;
