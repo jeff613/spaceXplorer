@@ -88,7 +88,7 @@ try {
     const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
     const src = ['js/data.js', 'js/bodies.js', 'js/spacecraft.js', 'js/main.js', 'index.html']
       .map((f) => fs.readFileSync(path.join(root, f), 'utf8')).join('\n');
-    const refs = [...new Set([...src.matchAll(/'([\w-]+\.(?:jpg|png))'/g)].map((m) => m[1]))];
+    const refs = [...new Set([...src.matchAll(/'((?:textures\/)?[\w-]+\.(?:jpg|png|json))'/g)].map((m) => m[1]))];
     const missing = refs.filter((f) => !fs.existsSync(path.join(root, 'textures', f))
       && !fs.existsSync(path.join(root, f)));
     const ignore = fs.existsSync(path.join(root, '.railwayignore'))
@@ -833,6 +833,47 @@ try {
     () => !window.__sx.craft.get('starlink').mesh.visible,
   ));
   await page.click('#toggle-starlink');
+
+  // Starlink renders the baked CelesTrak snapshot (tests/bake-starlink.mjs)
+  console.log('\n— Starlink constellation');
+  const snapPath = path.join(ROOT, 'textures', 'starlink-shells.json');
+  let snap = null;
+  try { snap = JSON.parse(fs.readFileSync(snapPath, 'utf8')); } catch { /* checked below */ }
+  check('starlink snapshot JSON parses, is dated, under 200 KB',
+    snap !== null && /^\d{4}-\d{2}-\d{2}$/.test(snap.snapshot)
+      && fs.statSync(snapPath).size < 200 * 1024);
+  await page.waitForFunction(
+    () => window.__sx.craft.get('starlink').mesh.geometry.attributes.position.count > 0,
+    { timeout: 5000 },
+  );
+  const baked = snap.shells.reduce((n, sh) => n + sh.sats.length, 0);
+  const slLats = await page.evaluate(() => {
+    // latitudes in the cloud's own orbital frame (geometry local space)
+    const pos = window.__sx.craft.get('starlink').mesh.geometry.attributes.position;
+    const lats = [];
+    for (let i = 0; i < pos.count; i++) {
+      const x = pos.getX(i); const y = pos.getY(i); const z = pos.getZ(i);
+      lats.push((Math.asin(Math.abs(y) / Math.hypot(x, y, z)) * 180) / Math.PI);
+    }
+    return lats;
+  });
+  check(`starlink instance count matches baked snapshot (${baked})`,
+    slLats.length === baked, `got ${slLats.length}`);
+  // instances fill in shell order, so JSON index ranges map 1:1 to the cloud
+  let at = 0; let inBand = 0; let aboveBand = 0; let atEdge = 0; let polar = 0;
+  for (const sh of snap.shells) {
+    for (let i = at; i < at + sh.sats.length; i++) {
+      if (sh.incDeg <= 55) {
+        inBand++;
+        if (slLats[i] > 55) aboveBand++;
+        else if (slLats[i] > 50) atEdge++;
+      } else if (slLats[i] > 70) polar++;
+    }
+    at += sh.sats.length;
+  }
+  check(`53° band stays below |lat| 55° (${inBand} sats)`, aboveBand === 0, `${aboveBand} above`);
+  check('band edge populated (|lat| 50–55°)', atEdge > 0, `${atEdge} sats`);
+  check('polar shells reach beyond |lat| 70°', polar > 0, `${polar} sats`);
 
   await page.click('#toggle-labels');
   check('label toggle hides label layer', await page.evaluate(
