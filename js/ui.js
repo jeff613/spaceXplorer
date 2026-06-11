@@ -232,7 +232,7 @@ export function createLabels(bodies, craft, onSelect) {
 
 // ─── Time controls ────────────────────────────────────────────────────────
 
-export function setupTimeControls(sim) {
+export function setupTimeControls(sim, sound) {
   const playBtn = document.getElementById('btn-play');
   const nowBtn = document.getElementById('btn-now');
   const reverseBtn = document.getElementById('btn-reverse');
@@ -292,6 +292,8 @@ export function setupTimeControls(sim) {
   const ipoLabel = document.getElementById('ipo-label');
   const ipoClock = document.getElementById('ipo-clock');
   const pad2 = (n) => String(n).padStart(2, '0');
+  let prevDelta = null;
+  let celebrated = false;
 
   return {
     updateDate() {
@@ -308,6 +310,15 @@ export function setupTimeControls(sim) {
       ipoLabel.textContent = live ? 'SPCX ★ TRADING ON NASDAQ' : 'SPCX IPO · NASDAQ';
       ipoClock.textContent = (live ? 'T+' : 'T−') + clock;
       ipoBadge.classList.toggle('live', live);
+
+      // one-time flourish when sim time crosses T-0 while you're watching
+      if (prevDelta !== null && prevDelta > 0 && delta <= 0 && !celebrated) {
+        celebrated = true;
+        ipoBadge.classList.add('celebrate');
+        sound?.celebrate();
+        setTimeout(() => ipoBadge.classList.remove('celebrate'), 6000);
+      }
+      prevDelta = delta;
     },
   };
 }

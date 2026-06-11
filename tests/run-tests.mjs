@@ -857,6 +857,7 @@ try {
       label: document.getElementById('ipo-label').textContent,
       clock: document.getElementById('ipo-clock').textContent,
       live: document.getElementById('ipo-countdown').classList.contains('live'),
+      celebrate: document.getElementById('ipo-countdown').classList.contains('celebrate'),
     });
     sx.sim.days = (Date.UTC(2026, 5, 12, 13, 0) - J2000) / 86400000; // T−30 min
     await sx.frame();
@@ -875,6 +876,27 @@ try {
   check(`IPO badge flips to trading post-open (${ipo.after.clock})`,
     ipo.after.live && ipo.after.clock === 'T+00:30:00'
     && ipo.after.label.includes('TRADING ON NASDAQ'));
+
+  check('first T-0 crossing fires the celebration', ipo.after.celebrate);
+  // a second crossing must stay silent — the flourish is one-shot per load
+  const cel = await page.evaluate(async () => {
+    const sx = window.__sx;
+    const J2000 = Date.UTC(2000, 0, 1, 12);
+    const wasPlaying = sx.sim.playing;
+    sx.sim.playing = false;
+    const badge = document.getElementById('ipo-countdown');
+    badge.classList.remove('celebrate');
+    sx.sim.days = (Date.UTC(2026, 5, 12, 13, 29, 55) - J2000) / 86400000;
+    await sx.frame();
+    sx.sim.days = (Date.UTC(2026, 5, 12, 13, 30, 5) - J2000) / 86400000;
+    await sx.frame();
+    const refired = badge.classList.contains('celebrate');
+    sx.sim.playing = wasPlaying;
+    document.getElementById('btn-now').click();
+    await sx.frame();
+    return { refired };
+  });
+  check('T-0 celebration is one-shot per page load', !cel.refired);
 
   console.log('\n— Numeric stability under stress');
   const stable = await page.evaluate(async () => {

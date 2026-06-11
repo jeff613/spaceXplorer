@@ -86,5 +86,6 @@ export function createSound() {
     select() { blip(720, 480); },
     deselect() { blip(420, 300, 0.1, 0.05); },
     tour() { blip(520, 780, 0.22, 0.06); },
+    celebrate() { blip(440, 880, 0.4, 0.09); },
   };
 }
