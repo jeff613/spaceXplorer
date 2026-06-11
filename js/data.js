@@ -68,7 +68,7 @@ export const PLANETS = [
     fact: 'Mercury\'s day-night temperature swing of 600 °C is the most extreme in the solar system — yet ice hides in its permanently shadowed polar craters.',
   },
   {
-    id: 'venus', name: 'Venus', type: 'Planet', texture: '2k_venus_atmosphere.jpg', atmosphere: 0xe8cf9a,
+    id: 'venus', name: 'Venus', type: 'Planet', texture: '2k_venus_atmosphere.jpg', textureHi: '4k_venus_atmosphere.jpg', atmosphere: 0xe8cf9a,
     radiusKm: 6051.8,
     elements: { a: 0.723, e: 0.0068, i: 3.39, Om: 76.68, varpi: 131.53, L0: 181.98, period: 224.7 },
     rotationHours: -5832.5, visualSpinHours: -96, tilt: 177.4,
@@ -94,7 +94,7 @@ export const PLANETS = [
     fact: 'The only known world with liquid surface water and life. Roughly 8,000 active satellites orbit it — most of them Starlink.',
   },
   {
-    id: 'mars', name: 'Mars', type: 'Planet', texture: '2k_mars.jpg', atmosphere: 0xd89a72,
+    id: 'mars', name: 'Mars', type: 'Planet', texture: '2k_mars.jpg', textureHi: '4k_mars.jpg', atmosphere: 0xd89a72,
     bump: 'marsbump1k.jpg', bumpScale: 2.4,
     radiusKm: 3389.5,
     elements: { a: 1.524, e: 0.0934, i: 1.85, Om: 49.56, varpi: 336.04, L0: 355.45, period: 686.98 },
