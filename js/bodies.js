@@ -382,6 +382,15 @@ export function createPlanet(scene, data) {
     ? new THREE.MeshStandardMaterial({ roughness: 0.92, metalness: 0, envMapIntensity: 0.25 })
     : new THREE.MeshStandardMaterial({ color: data.color, roughness: 0.95, metalness: 0, envMapIntensity: 0.25 });
   if (data.texture) mat.map = loadTex(data.texture, mat, data.color);
+  if (data.textureHi) {
+    // progressive: the low-res map paints immediately, hi-res swaps in
+    // whenever it finishes downloading
+    texLoader.load(`textures/${data.textureHi}`, (hi) => {
+      hi.colorSpace = THREE.SRGBColorSpace;
+      mat.map = hi;
+      mat.needsUpdate = true;
+    });
+  }
   if (data.bump) {
     const b = texLoader.load(`textures/${data.bump}`);
     mat.bumpMap = b;

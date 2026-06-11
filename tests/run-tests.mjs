@@ -394,6 +394,15 @@ try {
   });
   check('prefers-reduced-motion disables camera drift', rmDrift === false);
   await rmPage.close();
+  await page.waitForFunction(
+    () => window.__sx.bodies.get('earth').mesh.material.map?.image?.width === 8192,
+    { timeout: 20000 },
+  );
+  check('Earth daymap upgrades progressively (2k paint, 8k swap)', await page.evaluate(() => {
+    const e = window.__sx.bodies.get('earth');
+    return e.data.texture.startsWith('2k') && e.data.textureHi.startsWith('8k')
+      && e.mesh.material.map.image.width === 8192;
+  }));
   const neb = await page.evaluate(() => {
     const g = window.__sx.scene.getObjectByName('nebulae');
     return {
