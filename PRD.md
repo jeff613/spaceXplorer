@@ -2,7 +2,7 @@
 
 **Status:** Living document — the improvement loop works against this.
 **Owner:** Jeff
-**Last updated:** 2026-06-13 (iteration 86)
+**Last updated:** 2026-06-13 (iteration 87)
 
 ## 1. Vision
 

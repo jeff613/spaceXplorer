@@ -101,6 +101,10 @@ const sound = createSound();
 // manual selection anywhere exits an active tour
 const userSelect = (body) => { tour.stop(); select(body); };
 const navigator = buildNavigator(bodies, craft, userSelect);
+document.getElementById('btn-random').addEventListener('click', () => {
+  const order = navigator.order.filter((b) => b !== selected);
+  userSelect(order[Math.floor(Math.random() * order.length)]);
+});
 const labels = createLabels(bodies, craft, userSelect);
 const tour = createTour(bodies, craft, select);
 

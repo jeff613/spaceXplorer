@@ -960,6 +960,21 @@ try {
     () => window.__sx.controls.autoRotate === true,
   ));
 
+  await page.click('#tour-exit');
+  await frames(page, 2);
+  await page.click('#btn-random');
+  await frames(page, 2);
+  const rand1 = await page.evaluate(() => window.__sx.selected()?.data.id);
+  await page.click('#btn-random');
+  await frames(page, 2);
+  const rand2 = await page.evaluate(() => window.__sx.selected()?.data.id);
+  check(`Surprise me flies to random objects (${rand1} → ${rand2})`,
+    !!rand1 && !!rand2 && rand1 !== rand2);
+  await page.keyboard.press('Escape');
+  await frames(page, 2);
+  await page.click('#btn-tour');
+  await frames(page, 2);
+
   await page.click('#tour-next');
   await frames(page, 2);
   check('tour next advances to Mercury', await page.evaluate(
