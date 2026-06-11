@@ -141,6 +141,33 @@ try {
   });
   check(`Perseverance pinned to Mars surface (${marsFleet.surfDist.toFixed(2)} R)`,
     marsFleet.surfDist > 0.95 && marsFleet.surfDist < 1.1);
+  // P0-3: rovers must stand on their wheels (local up = surface normal) and
+  // read as tiny surface miniatures, not orbiter-sized boxes
+  const roverPose = await page.evaluate(async () => {
+    const THREE = await import('three');
+    const sx = window.__sx;
+    const mars = sx.bodies.get('mars');
+    return ['perseverance', 'curiosity'].map((id) => {
+      const c = sx.craft.get(id);
+      c.mesh.updateWorldMatrix(true, true);
+      const pos = c.mesh.getWorldPosition(new THREE.Vector3());
+      const normal = pos.clone()
+        .sub(mars.mesh.getWorldPosition(new THREE.Vector3())).normalize();
+      const up = new THREE.Vector3(0, 1, 0)
+        .applyQuaternion(c.mesh.getWorldQuaternion(new THREE.Quaternion()));
+      const box = new THREE.Box3();
+      const tmp = new THREE.Box3();
+      c.mesh.traverse((o) => {
+        if (o.isMesh && o.name !== 'pickproxy') box.union(tmp.setFromObject(o));
+      });
+      const s = box.getSize(new THREE.Vector3());
+      return { id, upDot: +up.dot(normal).toFixed(3), size: +Math.max(s.x, s.y, s.z).toFixed(3) };
+    });
+  });
+  check('rovers stand upright on the surface (up ∥ local normal)',
+    roverPose.every((r) => r.upDot > 0.999), JSON.stringify(roverPose));
+  check('rovers are surface miniatures (0.15–0.45 units, < ⅓ Mars radius)',
+    roverPose.every((r) => r.size > 0.15 && r.size < 0.45), JSON.stringify(roverPose));
   check('SOHO sits sunward of Earth (L1)', marsFleet.sohoInside);
   // LRO must circle the Moon, not the Earth
   const lro = await page.evaluate(() => {
@@ -211,7 +238,9 @@ try {
       box.getSize(s);
       return +Math.max(s.x, s.y, s.z).toFixed(2);
     };
-    return ['iss', 'roadster', 'perseverance', 'hubble', 'jwst', 'parker'].map(
+    // rovers are deliberately smaller (surface miniatures) — sized against
+    // Mars in the rover pose check above
+    return ['iss', 'roadster', 'hubble', 'jwst', 'parker'].map(
       (id) => [id, visibleSize(sx.craft.get(id).mesh)],
     );
   });
