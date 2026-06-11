@@ -984,6 +984,12 @@ try {
   });
   check(`mobile: info panel is a bottom sheet (top ${sheet.top.toFixed(0)} > 50% vh, full width)`,
     sheet.top > sheet.vh * 0.5 && sheet.width >= sheet.vw - 2);
+  check('mobile: info values stay within the viewport', await mob.evaluate(
+    () => [...document.querySelectorAll('#info-panel .info-row')].every((r) => {
+      const right = r.lastElementChild?.getBoundingClientRect().right ?? 0;
+      return right <= innerWidth + 1;
+    }),
+  ));
   await mob.evaluate(() => window.__sx.deselect());
   const tapPos = await mob.evaluate(() => {
     const sx = window.__sx;
@@ -996,6 +1002,14 @@ try {
     () => window.__sx.selected()?.data.id === 'sun',
   ));
   await mob.close();
+
+  const badFocus = await browser.newPage();
+  await badFocus.goto(`${BASE}/?focus=doesnotexist`, { waitUntil: 'networkidle0', timeout: 30000 });
+  await badFocus.waitForFunction('window.__sx !== undefined', { timeout: 15000 });
+  check('invalid ?focus deep link boots cleanly with nothing selected',
+    await badFocus.evaluate(() => document.body.classList.contains('loaded')
+      && window.__sx.selected() === null));
+  await badFocus.close();
 
   console.log('\n— WebGL fallback');
   const noGl = await puppeteer.launch({
