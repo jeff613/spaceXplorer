@@ -71,6 +71,33 @@ export function keplerPosition(el, days, target = new THREE.Vector3()) {
   return target.set(x * s, z * s, -y * s);
 }
 
+// ─── Temporal anti-aliasing for fast motion ───────────────────────────────
+// Positions are exact functions of sim time, but the render loop samples
+// them once per frame. At high speeds the per-frame step exceeds a large
+// fraction of a short period (ISS laps every 93 min; Earth spins daily), so
+// the sampled phase lands at effectively random spots — objects strobe and
+// teleport instead of sweeping. Each fast motion gets its own clock: while
+// the playback step would move its phase more than MAX_PHASE_STEP radians,
+// the displayed clock advances at that cap (smooth and direction-true); the
+// moment steps are small again (slower speed, pause, date teleport) it
+// snaps back to exact sim time. stepDays is the playback step the render
+// loop took this frame — direct update(days) calls stay exact.
+
+const MAX_PHASE_STEP = 0.25; // rad of phase per rendered frame
+
+export function makeSmoothClock(periodDays) {
+  const maxStepDays = Math.abs(periodDays) * MAX_PHASE_STEP / (Math.PI * 2);
+  let shown = null;
+  return (days, stepDays) => {
+    if (shown !== null && Math.abs(stepDays) > maxStepDays) {
+      shown += Math.sign(stepDays) * maxStepDays;
+    } else {
+      shown = days; // exact: small step, paused, date jump, or direct call
+    }
+    return shown;
+  };
+}
+
 function makeOrbitLine(el, color = 0x3a4a5a, opacity = 0.45) {
   const pts = [];
   const tmp = new THREE.Vector3();
@@ -226,10 +253,11 @@ export function createSun(scene) {
   flare.raycast = () => {}; // never intercept clicks
   light.add(flare);
 
+  const spinClock = makeSmoothClock(25.4);
   return {
     data: SUN, mesh, displayRadius: SUN_DISPLAY_RADIUS,
-    update(days) {
-      mesh.rotation.y = (days / 25.4) * Math.PI * 2;
+    update(days, stepDays) {
+      mesh.rotation.y = (spinClock(days, stepDays) / 25.4) * Math.PI * 2;
       // granulation churns in real time, even when the sim is paused
       mat.uniforms.time.value = performance.now() / 1000;
       rimMat.uniforms.time.value = mat.uniforms.time.value;
@@ -545,16 +573,19 @@ export function createPlanet(scene, data) {
   const orbitLine = makeOrbitLine(data.elements);
   scene.add(orbitLine);
 
+  const spinHours = data.visualSpinHours ?? data.rotationHours;
+  const spinClock = makeSmoothClock(spinHours / 24);
   const body = {
     data, mesh, anchor, tiltGroup, orbitLine, displayRadius, rings, atmosphere,
-    update(days) {
+    update(days, stepDays) {
       keplerPosition(data.elements, days, anchor.position);
       // visualSpinHours: what we render can outpace the body's true day
       // (Venus shows its cloud deck, which super-rotates in ~4 days)
-      mesh.rotation.y = (days * 24 / (data.visualSpinHours ?? data.rotationHours)) * Math.PI * 2;
+      const spinDays = spinClock(days, stepDays);
+      mesh.rotation.y = (spinDays * 24 / spinHours) * Math.PI * 2;
       const sh = mat.userData.shader;
       if (sh) {
-        if (sh.uniforms.uDays) sh.uniforms.uDays.value = days % 10000;
+        if (sh.uniforms.uDays) sh.uniforms.uDays.value = spinDays % 10000;
         if (sh.uniforms.uPlanetPos) {
           sh.uniforms.uPlanetPos.value.copy(anchor.position);
           sh.uniforms.uRingNormal.value.set(0, 1, 0).applyQuaternion(tiltGroup.quaternion);
@@ -770,13 +801,15 @@ export function createMoon(scene, data, parentBody) {
   const pw = new THREE.Vector3();
   const mw = new THREE.Vector3();
   const sunDir = new THREE.Vector3();
+  const orbitClock = makeSmoothClock(data.period);
   return {
     data, mesh, anchor: mesh, orbitLine, displayRadius, parent: parentBody,
-    update(days) {
+    update(days, stepDays) {
+      const t = orbitClock(days, stepDays);
       // ecliptic longitude maps to scene angle as a = -lambda (z = -y_ecl)
       const a = data.meanLongitude0 !== undefined
-        ? -(data.meanLongitude0 + (360 / data.period) * days) * DEG
-        : phase + (days / data.period) * Math.PI * 2;
+        ? -(data.meanLongitude0 + (360 / data.period) * t) * DEG
+        : phase + (t / data.period) * Math.PI * 2;
       const inc = (data.orbitInclination || 0) * DEG;
       mesh.position.set(
         Math.cos(a) * orbitR,
@@ -965,8 +998,8 @@ function attachEclipse(target, getOccluder) {
     mat.userData.eclipseShader = shader;
   };
   const baseUpdate = target.update;
-  target.update = (days) => {
-    baseUpdate(days);
+  target.update = (days, stepDays) => {
+    baseUpdate(days, stepDays);
     const sh = mat.userData.eclipseShader;
     if (sh) {
       const occ = getOccluder();
@@ -1209,8 +1242,8 @@ export function buildSolarSystem(scene) {
     const pluto = bodies.get('pluto');
     const charon = bodies.get('charon');
     const charonUpdate = charon.update;
-    charon.update = (days) => {
-      charonUpdate(days);
+    charon.update = (days, stepDays) => {
+      charonUpdate(days, stepDays);
       pluto.mesh.position.copy(charon.mesh.position).multiplyScalar(-0.109);
     };
   }

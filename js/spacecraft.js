@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { SPACECRAFT, scaleDistance, TRUE_SCALE, mulberry32 } from './data.js';
-import { keplerPosition } from './bodies.js';
+import { keplerPosition, makeSmoothClock } from './bodies.js';
 
 const DEG = Math.PI / 180;
 const rand = mulberry32(48151623);
@@ -346,10 +346,11 @@ export function buildSpacecraft(scene, bodies) {
       parent.anchor.add(plane);
       const pick = addPickProxy(mesh, 1.0);
       const phase = rand() * Math.PI * 2;
+      const orbitClock = makeSmoothClock(data.periodDays);
       craft.set(data.id, {
         data, mesh, pick, displayRadius,
-        update(days) {
-          const a = phase + (days / data.periodDays) * Math.PI * 2;
+        update(days, stepDays) {
+          const a = phase + (orbitClock(days, stepDays) / data.periodDays) * Math.PI * 2;
           mesh.position.set(Math.cos(a) * orbitR, 0, Math.sin(a) * orbitR);
           mesh.rotation.y = -a;
         },
@@ -420,9 +421,16 @@ export function buildSpacecraft(scene, bodies) {
       );
       orbitLine.userData.isOrbit = true;
       scene.add(orbitLine);
+      // eccentric orbits sweep fastest at perihelion (Parker: ~33× its mean
+      // rate) — shorten the clock's period by that factor so the cap holds
+      const e = data.elements.e;
+      const periBoost = Math.pow(1 + e, 2) / Math.pow(1 - e * e, 1.5);
+      const orbitClock = makeSmoothClock(data.elements.period / periBoost);
       craft.set(data.id, {
         data, mesh, pick, orbitLine, displayRadius,
-        update(days) { keplerPosition(data.elements, days, mesh.position); },
+        update(days, stepDays) {
+          keplerPosition(data.elements, orbitClock(days, stepDays), mesh.position);
+        },
       });
     } else if (data.kind === 'deep') {
       const mesh = craftMesh(data);
@@ -491,12 +499,14 @@ function buildStarlink(earth, data) {
   const inc = data.inclination * DEG;
   const cosI = Math.cos(inc), sinI = Math.sin(inc);
   const w = (Math.PI * 2) / data.periodDays;
+  const orbitClock = makeSmoothClock(data.periodDays); // shared by the cloud
 
   return {
     data, mesh: points, displayRadius: earth.displayRadius * 1.8, isCloud: true,
-    update(days) {
+    update(days, stepDays) {
+      const t = orbitClock(days, stepDays);
       for (let i = 0; i < N; i++) {
-        const a = phase[i] + days * w;
+        const a = phase[i] + t * w;
         const xo = Math.cos(a) * orbitR;
         const zo = Math.sin(a) * orbitR;
         // incline, then rotate plane by RAAN

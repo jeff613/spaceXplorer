@@ -855,6 +855,63 @@ try {
   });
   check('positions stay finite after +3000 days of fast-forward', stable);
 
+  console.log('\n— Smooth motion at max sim speed (P0-2)');
+  // at 100 days/s a frame step exceeds whole orbits of short-period objects
+  // (ISS: 93 min) — the displayed phase must sweep smoothly, never strobe
+  const smooth = await page.evaluate(async () => {
+    const sx = window.__sx;
+    const slider = document.getElementById('speed-slider');
+    slider.value = 100; // 100 days/s — max
+    slider.dispatchEvent(new Event('input'));
+    if (!sx.sim.playing) document.getElementById('btn-play').click();
+    const iss = sx.craft.get('iss');
+    const wrap = (a) => Math.atan2(Math.sin(a), Math.cos(a));
+    const angleOf = (m) => Math.atan2(m.position.z, m.position.x);
+    const targets = {
+      iss: () => angleOf(iss.mesh),
+      phobos: () => angleOf(sx.bodies.get('phobos').mesh),
+      spin: () => sx.bodies.get('earth').mesh.rotation.y,
+    };
+    const steps = { iss: [], phobos: [], spin: [] };
+    await new Promise((res) => {
+      let prev = null;
+      let n = 0;
+      const tick = () => {
+        const cur = Object.fromEntries(Object.entries(targets).map(([k, f]) => [k, f()]));
+        if (prev) for (const k in cur) steps[k].push(wrap(cur[k] - prev[k]));
+        prev = cur;
+        if (++n < 40) requestAnimationFrame(tick); else res();
+      };
+      requestAnimationFrame(tick);
+    });
+    const stat = (a) => ({
+      max: +Math.max(...a.map(Math.abs)).toFixed(3),
+      flips: a.slice(1).filter((v, i) => Math.sign(v) !== Math.sign(a[i])).length,
+    });
+    // pausing must snap the displayed phase back to exact sim time
+    document.getElementById('btn-play').click(); // pause
+    await sx.frame(); await sx.frame();
+    const shownA = angleOf(iss.mesh);
+    iss.update(sx.sim.days); // direct call bypasses playback smoothing — exact
+    const resync = Math.abs(wrap(angleOf(iss.mesh) - shownA));
+    document.getElementById('btn-play').click(); // resume
+    slider.value = 50;
+    slider.dispatchEvent(new Event('input'));
+    document.getElementById('btn-now').click();
+    return {
+      iss: stat(steps.iss), phobos: stat(steps.phobos), spin: stat(steps.spin),
+      resync: +resync.toFixed(5),
+    };
+  });
+  check(`ISS sweeps, never strobes, at max speed (max step ${smooth.iss.max} rad ≤ 0.3, ${smooth.iss.flips} reversals)`,
+    smooth.iss.max <= 0.3 && smooth.iss.flips === 0, JSON.stringify(smooth.iss));
+  check(`Phobos sweeps, never strobes, at max speed (max step ${smooth.phobos.max} rad ≤ 0.3)`,
+    smooth.phobos.max <= 0.3 && smooth.phobos.flips === 0, JSON.stringify(smooth.phobos));
+  check(`Earth spin stays continuous at max speed (max step ${smooth.spin.max} rad ≤ 0.3)`,
+    smooth.spin.max <= 0.3 && smooth.spin.flips === 0, JSON.stringify(smooth.spin));
+  check(`pause resyncs displayed phase to exact sim time (off by ${smooth.resync} rad)`,
+    smooth.resync < 1e-6);
+
   console.log('\n— Keyboard, help & labels');
   await page.keyboard.press('ArrowRight');
   await frames(page, 2);
