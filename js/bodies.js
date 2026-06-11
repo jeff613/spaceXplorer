@@ -627,6 +627,22 @@ function makeMoonColorMap(data) {
       ctx.fillStyle = `rgba(235,180,90,${0.05 + nrand() * 0.08})`;
       ctx.fillRect(0, y, W, 6 + nrand() * 18);
     }
+  } else if (data.style === 'ganymede') {
+    // two-tone terrain: dark ancient regions amid lighter grooved bands
+    for (let i = 0; i < 26; i++) {
+      splat(nrand() * W, nrand() * H, 18 + nrand() * 40, 'rgba(96,86,74,0.4)');
+    }
+    for (let i = 0; i < 30; i++) {
+      splat(nrand() * W, nrand() * H, 8 + nrand() * 20, 'rgba(196,186,172,0.3)');
+    }
+  } else if (data.style === 'callisto') {
+    // the most cratered world known: bright impact speckles on dark crust
+    for (let i = 0; i < 40; i++) {
+      splat(nrand() * W, nrand() * H, 6 + nrand() * 16, 'rgba(58,50,44,0.45)');
+    }
+    for (let i = 0; i < 90; i++) {
+      splat(nrand() * W, nrand() * H, 1.5 + nrand() * 4, 'rgba(228,222,210,0.6)');
+    }
   } else if (data.style === 'charon') {
     for (let i = 0; i < 50; i++) {
       splat(nrand() * W, nrand() * H, 5 + nrand() * 14,

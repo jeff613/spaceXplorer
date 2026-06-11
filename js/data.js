@@ -344,13 +344,13 @@ export const MOONS = [
     fact: 'Beneath its cracked ice shell lies a salty ocean with twice the water of all Earth\'s oceans — a prime candidate for life.',
   },
   {
-    id: 'ganymede', name: 'Ganymede', type: 'Moon of Jupiter', parent: 'jupiter', color: 0x9b8d7d,
+    id: 'ganymede', style: 'ganymede', name: 'Ganymede', type: 'Moon of Jupiter', parent: 'jupiter', color: 0x9b8d7d,
     radiusKm: 2634.1, orbitRadii: 3.5, trueOrbitRadii: 15.3, period: 7.15,
     info: { 'Radius': '2,634 km', 'Orbital period': '7.2 days', 'Claim': 'Largest moon in the solar system' },
     fact: 'Bigger than the planet Mercury, and the only moon known to generate its own magnetic field.',
   },
   {
-    id: 'callisto', name: 'Callisto', type: 'Moon of Jupiter', parent: 'jupiter', color: 0x6f6a60,
+    id: 'callisto', style: 'callisto', name: 'Callisto', type: 'Moon of Jupiter', parent: 'jupiter', color: 0x6f6a60,
     radiusKm: 2410.3, orbitRadii: 4.4, trueOrbitRadii: 26.9, period: 16.69,
     info: { 'Radius': '2,410 km', 'Orbital period': '16.7 days', 'Surface': 'Most cratered in the system' },
     fact: 'Its ancient surface has barely changed in 4 billion years — a fossil record of the early solar system.',
