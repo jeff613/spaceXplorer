@@ -840,6 +840,60 @@ try {
   ));
   await page.click('#toggle-labels');
 
+  console.log('\n— Mars transfer window');
+  await page.click('#toggle-transfer');
+  await frames(page, 2);
+  const tw = await page.evaluate(() => {
+    const sx = window.__sx;
+    const st = sx.transfer.state();
+    return {
+      arc: !!sx.scene.getObjectByName('transfer-arc'),
+      caption: document.getElementById('transfer-caption').classList.contains('show'),
+      text: document.getElementById('transfer-caption').textContent,
+      dep: st.depDate,
+      arr: st.arrDate,
+      span: +(st.arr - st.dep).toFixed(0),
+    };
+  });
+  check(`transfer toggle draws arc + caption (${tw.text})`,
+    tw.arc && tw.caption && tw.text.includes(tw.dep) && tw.text.includes(tw.arr));
+  check(`next launch window departs Nov 2026 – Jan 2027 (${tw.dep})`,
+    tw.dep >= '2026-11-01' && tw.dep <= '2027-01-31');
+  check(`transfer time ≈ 8.5 months (${tw.span} days in 230–290)`,
+    tw.span > 230 && tw.span < 290);
+  // jump mid-window: the Starship fleet must be riding the arc
+  const fleet = await page.evaluate(async () => {
+    const sx = window.__sx;
+    const st = sx.transfer.state();
+    const wasPlaying = sx.sim.playing;
+    sx.sim.playing = false;
+    sx.sim.days = (st.dep + st.arr) / 2;
+    await sx.frame();
+    const pos = sx.scene.getObjectByName('transfer-arc').geometry.attributes.position;
+    const V = sx.camera.position.constructor;
+    const ships = sx.transfer.ships().map((s) => {
+      const w = new V();
+      s.getWorldPosition(w);
+      let min = 1e9;
+      for (let i = 0; i < pos.count; i++) {
+        min = Math.min(min, w.distanceTo(new V(pos.getX(i), pos.getY(i), pos.getZ(i))));
+      }
+      return { finite: Number.isFinite(w.x + w.y + w.z), offArc: +min.toFixed(2) };
+    });
+    document.getElementById('btn-now').click();
+    sx.sim.playing = wasPlaying;
+    await sx.frame();
+    return ships;
+  });
+  check(`fleet of 3 rides the arc mid-transfer (off-arc ${fleet.map((f) => f.offArc).join(', ')})`,
+    fleet.length === 3 && fleet.every((f) => f.finite && f.offArc < 1.5));
+  await page.click('#toggle-transfer');
+  await frames(page, 1);
+  check('transfer toggle OFF removes arc and caption', await page.evaluate(
+    () => !window.__sx.scene.getObjectByName('transfer-arc')
+      && !document.getElementById('transfer-caption').classList.contains('show'),
+  ));
+
   console.log('\n— Time controls');
   const t = await page.evaluate(async () => {
     const sx = window.__sx;
