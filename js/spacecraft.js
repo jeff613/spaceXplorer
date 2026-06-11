@@ -170,23 +170,152 @@ function makeParker() { // white heat shield facing a small bus
   return g;
 }
 
-function makeRoadster() { // cherry-red car, headed for the asteroid belt
+function makeRoadster() { // 2008 Tesla Roadster + Starman, Feb 2018 press-photo style
+  // +x = nose, +y = up, ~0.3 units long (kit footprint preserved)
   const g = new THREE.Group();
-  const red = new THREE.MeshStandardMaterial({ color: 0xc41e2f, metalness: 0.7, roughness: 0.3 });
-  const body = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.05, 0.13), red);
-  g.add(body);
-  const cabin = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.045, 0.11),
-    new THREE.MeshStandardMaterial({ color: 0x202830, metalness: 0.4, roughness: 0.2 }));
-  cabin.position.set(-0.01, 0.045, 0);
-  g.add(cabin);
-  const wheelGeo = new THREE.CylinderGeometry(0.035, 0.035, 0.02, 18);
-  const dark = new THREE.MeshStandardMaterial({ color: 0x14161a, roughness: 0.9 });
-  for (const [x, z] of [[-0.1, 0.07], [0.1, 0.07], [-0.1, -0.07], [0.1, -0.07]]) {
-    const w = new THREE.Mesh(wheelGeo, dark);
-    w.rotation.x = Math.PI / 2;
-    w.position.set(x, -0.03, z);
+  const paint = new THREE.MeshStandardMaterial({
+    color: 0xb01225, metalness: 0.8, roughness: 0.22, envMapIntensity: 1.3,
+  });
+  const trim = new THREE.MeshStandardMaterial({ color: 0x111317, roughness: 0.85, metalness: 0.2 });
+  const tubMat = new THREE.MeshStandardMaterial({ color: 0x1a1d22, roughness: 0.9 });
+  const glass = new THREE.MeshStandardMaterial({
+    color: 0x16222e, metalness: 0.1, roughness: 0.25, envMapIntensity: 0.35,
+    transparent: true, opacity: 0.3, side: THREE.DoubleSide,
+  });
+  const rimMat = new THREE.MeshStandardMaterial({ color: 0x9aa0a8, metalness: 0.8, roughness: 0.4 });
+  // slightly off-white matte (see makeParker) — a pure-white suit blooms
+  const suit = new THREE.MeshStandardMaterial({
+    color: 0xd8d4ca, roughness: 0.8, metalness: 0.05, envMapIntensity: 0.5,
+  });
+
+  // body: extruded side profile — tapered nose, cowl, cut-down doors, rear deck
+  const sp = new THREE.Shape();
+  sp.moveTo(-0.135, 0.004);
+  sp.quadraticCurveTo(-0.148, 0.02, -0.138, 0.04); // rounded kamm tail
+  sp.quadraticCurveTo(-0.115, 0.052, -0.085, 0.046); // rear deck hump
+  sp.quadraticCurveTo(-0.05, 0.036, -0.02, 0.034); // cut-down to the door line
+  sp.lineTo(0.02, 0.034); // door top
+  sp.quadraticCurveTo(0.05, 0.048, 0.08, 0.042); // cowl
+  sp.quadraticCurveTo(0.12, 0.032, 0.142, 0.016); // hood sloping to the nose
+  sp.quadraticCurveTo(0.15, 0.008, 0.142, 0.002); // nose tip
+  sp.closePath();
+  const bodyGeo = new THREE.ExtrudeGeometry(sp, {
+    depth: 0.096, bevelEnabled: true, bevelThickness: 0.012, bevelSize: 0.01,
+    bevelSegments: 4, curveSegments: 16,
+  });
+  bodyGeo.translate(0, 0, -0.048); // center the width
+  g.add(new THREE.Mesh(bodyGeo, paint));
+
+  // fender bulges over the wheels
+  const fenderGeo = new THREE.SphereGeometry(1, 16, 12);
+  for (const x of [0.092, -0.092]) {
+    for (const z of [0.054, -0.054]) {
+      const f = new THREE.Mesh(fenderGeo, paint);
+      f.scale.set(0.05, 0.022, 0.016);
+      f.position.set(x, 0.022, z);
+      g.add(f);
+    }
+  }
+
+  // wheels: visible dark-grey tire, silver rim ring + 5 spokes over a black barrel
+  const tireMat = new THREE.MeshStandardMaterial({ color: 0x282b30, roughness: 0.85 });
+  const tireGeo = new THREE.CylinderGeometry(0.0305, 0.0305, 0.022, 24);
+  const barrelGeo = new THREE.CylinderGeometry(0.017, 0.017, 0.018, 16);
+  const hubGeo = new THREE.CylinderGeometry(0.005, 0.005, 0.025, 8);
+  const ringGeo = new THREE.TorusGeometry(0.0165, 0.0035, 8, 24);
+  const spokeGeo = new THREE.BoxGeometry(0.0055, 0.026, 0.0045);
+  spokeGeo.translate(0, 0.0065, 0); // radiate hub → rim
+  const barrelMat = new THREE.MeshStandardMaterial({ color: 0x0c0e10, roughness: 0.9 });
+  for (const [x, z] of [[0.092, 0.058], [0.092, -0.058], [-0.092, 0.058], [-0.092, -0.058]]) {
+    const w = new THREE.Group();
+    for (const [geo, m] of [[tireGeo, tireMat], [barrelGeo, barrelMat], [hubGeo, rimMat]]) {
+      const part = new THREE.Mesh(geo, m);
+      part.rotation.x = Math.PI / 2;
+      w.add(part);
+    }
+    const face = Math.sign(z) * 0.0115;
+    const ring = new THREE.Mesh(ringGeo, rimMat);
+    ring.position.z = face;
+    w.add(ring);
+    for (let i = 0; i < 5; i++) {
+      const s = new THREE.Mesh(spokeGeo, rimMat);
+      s.rotation.z = (i / 5) * Math.PI * 2;
+      s.position.z = face;
+      w.add(s);
+    }
+    w.position.set(x, -0.007, z);
     g.add(w);
   }
+
+  // open cockpit: black interior tub, two reclined seats, dash
+  const tub = new THREE.Mesh(new THREE.BoxGeometry(0.085, 0.02, 0.082), tubMat);
+  tub.position.set(-0.005, 0.026, 0);
+  g.add(tub);
+  for (const z of [-0.028, 0.028]) {
+    const seat = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.034, 0.03), tubMat);
+    seat.position.set(-0.048, 0.04, z);
+    seat.rotation.z = 0.28; // reclined
+    g.add(seat);
+  }
+  const dash = new THREE.Mesh(new THREE.BoxGeometry(0.018, 0.012, 0.08), tubMat);
+  dash.position.set(0.04, 0.036, 0);
+  g.add(dash);
+
+  // raked tinted windshield + tiny side mirrors
+  const ws = new THREE.Mesh(new THREE.BoxGeometry(0.0025, 0.032, 0.078), glass);
+  ws.position.set(0.032, 0.052, 0);
+  ws.rotation.z = 0.5;
+  g.add(ws);
+  for (const z of [-0.062, 0.062]) {
+    const mir = new THREE.Mesh(new THREE.BoxGeometry(0.005, 0.009, 0.012), trim);
+    mir.position.set(0.038, 0.048, z);
+    g.add(mir);
+  }
+
+  // headlight hints on the nose
+  const lightMat = new THREE.MeshStandardMaterial({ color: 0xe2e8ec, metalness: 0.3, roughness: 0.4 });
+  for (const z of [-0.037, 0.037]) {
+    const hl = new THREE.Mesh(new THREE.SphereGeometry(1, 10, 8), lightMat);
+    hl.scale.set(0.008, 0.009, 0.017);
+    hl.position.set(0.138, 0.021, z);
+    g.add(hl);
+  }
+
+  // steering wheel (left-hand drive) + column
+  const sw = new THREE.Mesh(new THREE.TorusGeometry(0.013, 0.0022, 8, 20), trim);
+  sw.position.set(0.012, 0.044, -0.028);
+  sw.rotation.set(0, Math.PI / 2, 0);
+  sw.rotateX(-0.35); // raked toward the driver
+  g.add(sw);
+  const col = new THREE.Mesh(new THREE.CylinderGeometry(0.0025, 0.0025, 0.022, 8), tubMat);
+  col.position.set(0.025, 0.042, -0.028);
+  col.rotation.z = Math.PI / 2 - 0.35;
+  g.add(col);
+
+  // STARMAN — white-suited figure in the left seat, left arm on the door
+  const limb = (a, b, r) => {
+    const va = new THREE.Vector3(...a), vb = new THREE.Vector3(...b);
+    const m = new THREE.Mesh(new THREE.CapsuleGeometry(r, va.distanceTo(vb), 4, 10), suit);
+    m.position.copy(va).add(vb).multiplyScalar(0.5);
+    m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), vb.sub(va).normalize());
+    g.add(m);
+  };
+  limb([-0.05, 0.03, -0.028], [-0.038, 0.056, -0.028], 0.012); // torso, reclined
+  limb([-0.038, 0.054, -0.04], [-0.018, 0.044, -0.058], 0.005); // L upper arm
+  limb([-0.018, 0.044, -0.058], [0.012, 0.042, -0.056], 0.005); // L forearm on door
+  limb([-0.038, 0.054, -0.016], [-0.002, 0.046, -0.022], 0.005); // R arm to the wheel
+  limb([-0.048, 0.03, -0.034], [-0.012, 0.036, -0.034], 0.0055); // L thigh
+  limb([-0.048, 0.03, -0.022], [-0.012, 0.036, -0.022], 0.0055); // R thigh
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.0115, 14, 12), suit);
+  head.position.set(-0.033, 0.073, -0.028);
+  g.add(head);
+  const visor = new THREE.Mesh(new THREE.SphereGeometry(0.0095, 12, 10),
+    new THREE.MeshStandardMaterial({ color: 0x0e1014, metalness: 0.5, roughness: 0.2 }));
+  visor.scale.set(0.75, 0.8, 0.9);
+  visor.position.set(-0.027, 0.073, -0.028);
+  g.add(visor);
+
+  g.rotation.set(-0.14, 0.55, 0.16); // rakish press-photo attitude
   return g;
 }
 
