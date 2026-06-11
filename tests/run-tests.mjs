@@ -161,6 +161,24 @@ try {
   });
   check(`Danuri orbits the Moon (${danuri.toFixed(2)} lunar radii, 1.4–2.5)`,
     danuri > 1.4 && danuri < 2.5);
+  const recede = await page.evaluate(async () => {
+    const sx = window.__sx;
+    const v1 = sx.craft.get('voyager1');
+    const save = sx.sim.days;
+    const auAt = (days) => {
+      v1.update(days);
+      const len = v1.mesh.position.length();
+      return Math.pow(len / 62, 1 / 0.55); // displayLenToAU
+    };
+    const now = auAt(save);
+    const tenYears = auAt(save + 3650);
+    v1.update(save);
+    await sx.frame();
+    return { now: +now.toFixed(1), tenYears: +tenYears.toFixed(1) };
+  });
+  check(`Voyager 1 recedes with sim time (${recede.now}→${recede.tenYears} AU over 10 y)`,
+    recede.tenYears - recede.now > 30 && recede.tenYears - recede.now < 42,
+    JSON.stringify(recede));
   check('Tiangong present', await page.evaluate(() => window.__sx.craft.has('tiangong')));
   // P0 (user): craft must read as models, not glowing orbs — when focused,
   // the visibility glint must be faded out and the model must have detail

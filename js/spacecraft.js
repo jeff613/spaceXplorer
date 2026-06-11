@@ -428,9 +428,18 @@ export function buildSpacecraft(scene, bodies) {
       );
       trail.userData.isOrbit = true;
       scene.add(trail);
+      // distances were entered for mid-2026 (J2000 + 9657 days); the real
+      // probes keep receding, so they drift outward with sim time
+      const trailPos = trail.geometry.attributes.position;
       craft.set(data.id, {
         data, mesh, pick, orbitLine: trail, displayRadius: 2.5,
-        update() {},
+        update(days) {
+          const au = Math.max(6, data.distanceAU
+            + (data.speedAUyr ?? 0) * ((days - 9657) / 365.25));
+          mesh.position.copy(dir).multiplyScalar(scaleDistance(au));
+          trailPos.setXYZ(1, mesh.position.x, mesh.position.y, mesh.position.z);
+          trailPos.needsUpdate = true;
+        },
       });
     } else if (data.kind === 'constellation') {
       craft.set(data.id, buildStarlink(earth, data));

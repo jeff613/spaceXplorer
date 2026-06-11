@@ -620,7 +620,7 @@ export const SPACECRAFT = [
   },
   {
     id: 'newhorizons', name: 'New Horizons', type: 'Deep space probe', kind: 'deep',
-    color: 0xffe9a8, distanceAU: 62, raDeg: 289, decDeg: -20.5,
+    color: 0xffe9a8, distanceAU: 62, speedAUyr: 2.95, raDeg: 289, decDeg: -20.5,
     info: {
       'Launched': 'Jan 19, 2006', 'Distance': '~62 AU',
       'Pluto flyby': 'July 14, 2015', 'Arrokoth flyby': 'Jan 1, 2019',
@@ -659,7 +659,7 @@ export const SPACECRAFT = [
   },
   {
     id: 'pioneer10', name: 'Pioneer 10', type: 'Deep space probe', kind: 'deep',
-    color: 0xc8b8ff, distanceAU: 137, raDeg: 75, decDeg: 26,
+    color: 0xc8b8ff, distanceAU: 137, speedAUyr: 2.52, raDeg: 75, decDeg: 26,
     info: {
       'Launched': 'Mar 2, 1972', 'Distance': '~137 AU',
       'Firsts': 'First through the asteroid belt, first past Jupiter',
@@ -669,7 +669,7 @@ export const SPACECRAFT = [
   },
   {
     id: 'pioneer11', name: 'Pioneer 11', type: 'Deep space probe', kind: 'deep',
-    color: 0xc8b8ff, distanceAU: 117, raDeg: 282, decDeg: -8,
+    color: 0xc8b8ff, distanceAU: 117, speedAUyr: 2.37, raDeg: 282, decDeg: -8,
     info: {
       'Launched': 'Apr 5, 1973', 'Distance': '~117 AU',
       'First': 'First spacecraft to fly past Saturn (1979)',
@@ -679,7 +679,7 @@ export const SPACECRAFT = [
   },
   {
     id: 'voyager1', name: 'Voyager 1', type: 'Interstellar probe', kind: 'deep',
-    color: 0x9fe8ff, distanceAU: 167, raDeg: 262, decDeg: 12,
+    color: 0x9fe8ff, distanceAU: 167, speedAUyr: 3.58, raDeg: 262, decDeg: 12,
     info: {
       'Launched': 'Sep 5, 1977', 'Distance': '~167 AU (25 billion km)',
       'Speed': '17 km/s', 'Status': 'Interstellar space since 2012',
@@ -689,7 +689,7 @@ export const SPACECRAFT = [
   },
   {
     id: 'voyager2', name: 'Voyager 2', type: 'Interstellar probe', kind: 'deep',
-    color: 0x9fe8ff, distanceAU: 139, raDeg: 303, decDeg: -59,
+    color: 0x9fe8ff, distanceAU: 139, speedAUyr: 3.16, raDeg: 303, decDeg: -59,
     info: {
       'Launched': 'Aug 20, 1977', 'Distance': '~139 AU (21 billion km)',
       'Speed': '15 km/s', 'Status': 'Interstellar space since 2018',
