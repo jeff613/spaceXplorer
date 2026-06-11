@@ -101,6 +101,12 @@ try {
   const page = await openPage(browser, BASE, consoleErrors);
 
   check('app boots (body.loaded)', await page.evaluate(() => document.body.classList.contains('loaded')));
+  check('boot splash exists and fades out after load', await page.evaluate(() => {
+    const sp = document.getElementById('splash');
+    if (!sp) return false;
+    const cs = getComputedStyle(sp);
+    return cs.opacity === '0' && cs.pointerEvents === 'none';
+  }));
   check('WebGL canvas present', await page.evaluate(() => {
     const c = document.getElementById('scene');
     return c.width > 0 && c.height > 0;

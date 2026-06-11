@@ -3,7 +3,7 @@
 Maintained by the improvement loop. Newest first. "Iter" numbers refer to
 loop iterations (see PRD.md).
 
-## Unreleased (develop, iters 42–88)
+## Unreleased (develop, iters 42–90)
 
 ### Visual quality
 - Comet hero pass: coal-dark lumpy nuclei, perihelion-driven coma (43)
@@ -28,7 +28,7 @@ loop iterations (see PRD.md).
 ### UX, reliability, accessibility
 - Cinematic camera drift during Grand Tour dwells (50); tour curated to 21
   stops (61)
-- Surprise me: fly to a random object (87); info-panel ‹ › cycling for touch users (88); Space bar play/pause (57); zoom floor prevents clipping inside bodies (59)
+- Surprise me: fly to a random object (87); info-panel ‹ › cycling for touch users (88, mobile-gated 89); CSS boot splash for slow connections (90); Space bar play/pause (57); zoom floor prevents clipping inside bodies (59)
 - aria-labels on all controls (54); prefers-reduced-motion support (55)
 - Texture-failure fallback (51); asset-integrity deploy gate (73);
   invalid-deep-link and mobile value-bounds gates (76)
