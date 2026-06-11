@@ -6,12 +6,6 @@ import {
 
 const texLoader = new THREE.TextureLoader();
 const rand = mulberry32(20260610);
-function randDir(target) {
-  const u = rand() * 2 - 1;
-  const t = rand() * Math.PI * 2;
-  const sxy = Math.sqrt(1 - u * u);
-  return target.set(sxy * Math.cos(t), u, sxy * Math.sin(t));
-}
 const DEG = Math.PI / 180;
 
 function loadTex(file, mat, fallbackColor) {
@@ -894,43 +888,120 @@ export function createComet(scene, data) {
   const orbitLine = makeOrbitLine(data.elements, 0x8a7a4a, 0.4);
   scene.add(orbitLine);
 
-  // tail: a fixed pool of points stretched anti-sunward, growing near perihelion
-  const N = 240;
-  const positions = new Float32Array(N * 3);
-  const jitter = [];
-  for (let i = 0; i < N; i++) jitter.push(randDir(new THREE.Vector3()));
-  const tailGeo = new THREE.BufferGeometry();
-  tailGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-  const tail = new THREE.Points(tailGeo, new THREE.PointsMaterial({
-    color: data.color, size: 1.6, sizeAttenuation: false,
-    transparent: true, opacity: 0.55, depthWrite: false,
-    blending: THREE.AdditiveBlending,
-  }));
-  scene.add(tail);
+  // Tails: two particle fans stretched anti-sunward, growing near perihelion.
+  // - dust tail: broad warm fan that curves back along the orbit (dust lags)
+  // - ion tail: narrower, longer, faint blue, dead straight anti-sunward
+  // Soft round shader sprites with per-particle size/fade so the tail reads
+  // as a smudge that dissolves at the tip — never a beam of square pixels.
+  const makeTailPoints = (count, colorHex, seedSalt) => {
+    let seed = 0;
+    for (const ch of data.id) seed = (seed * 31 + ch.charCodeAt(0)) >>> 0;
+    const nrand = mulberry32(seed ^ seedSalt);
+    const positions = new Float32Array(count * 3);
+    const sizes = new Float32Array(count);
+    const fades = new Float32Array(count);
+    const params = new Float32Array(count * 3); // f along tail, ux/uy on unit disc
+    for (let i = 0; i < count; i++) {
+      const f = nrand() ** 1.6; // denser near the nucleus
+      const ang = nrand() * Math.PI * 2;
+      const rad = Math.sqrt(nrand());
+      params[i * 3] = f;
+      params[i * 3 + 1] = Math.cos(ang) * rad;
+      params[i * 3 + 2] = Math.sin(ang) * rad;
+      sizes[i] = (1.0 + 2.4 * f) * (0.7 + 0.6 * nrand()); // grows as it diffuses
+      fades[i] = (1 - f) ** 1.5 * (0.4 + 0.35 * nrand()); // dies smoothly at the tip
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    geo.setAttribute('aSize', new THREE.BufferAttribute(sizes, 1));
+    geo.setAttribute('aFade', new THREE.BufferAttribute(fades, 1));
+    const mat = new THREE.ShaderMaterial({
+      uniforms: {
+        uColor: { value: new THREE.Color(colorHex) },
+        uOpacity: { value: 0 },
+      },
+      vertexShader: `
+        attribute float aSize;
+        attribute float aFade;
+        varying float vFade;
+        void main() {
+          vFade = aFade;
+          vec4 mv = modelViewMatrix * vec4(position, 1.0);
+          gl_PointSize = min(aSize * (340.0 / -mv.z), 56.0);
+          gl_Position = projectionMatrix * mv;
+        }`,
+      fragmentShader: `
+        uniform vec3 uColor;
+        uniform float uOpacity;
+        varying float vFade;
+        void main() {
+          float r = length(gl_PointCoord - 0.5) * 2.0;
+          float glow = pow(smoothstep(1.0, 0.0, r), 1.6);
+          gl_FragColor = vec4(uColor, glow * vFade * uOpacity);
+        }`,
+      transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+    });
+    const pts = new THREE.Points(geo, mat);
+    pts.frustumCulled = false; // positions move every frame; skip stale bounds
+    pts.raycast = () => {};
+    scene.add(pts);
+    return { pts, positions, params, count };
+  };
+  const dust = makeTailPoints(420, 0xffeccd, 0x7e57a11);
+  const ion = makeTailPoints(200, 0x7fa8ff, 0x10ca7a1);
 
   const dir = new THREE.Vector3();
+  const vel = new THREE.Vector3();
+  const lat1 = new THREE.Vector3();
+  const lat2 = new THREE.Vector3();
+  const ahead = new THREE.Vector3();
   const tailStart = scaleDistance(6); // tail only inside ~6 AU
 
   return {
-    data, mesh, orbitLine, displayRadius,
+    data, mesh, orbitLine, displayRadius, dustTail: dust.pts, ionTail: ion.pts,
     update(days) {
       keplerPosition(data.elements, days, mesh.position);
       const d = mesh.position.length();
       const activity = Math.max(0, Math.min(1, (tailStart - d) / tailStart));
       coma.material.opacity = activity * 0.85;
       coma.scale.setScalar(2 + activity * 14);
-      tail.visible = d < tailStart;
-      if (!tail.visible) return;
-      dir.copy(mesh.position).normalize();
+      const visible = d < tailStart;
+      dust.pts.visible = visible;
+      ion.pts.visible = visible;
+      if (!visible) return;
+      dir.copy(mesh.position).normalize(); // anti-sunward
+      // orbital velocity direction → the dust tail curves away from it
+      keplerPosition(data.elements, days + 2, ahead);
+      vel.copy(ahead).sub(mesh.position).normalize();
+      lat1.copy(vel).addScaledVector(dir, -vel.dot(dir));
+      if (lat1.lengthSq() < 1e-8) lat1.set(0, 1, 0).addScaledVector(dir, -dir.y);
+      lat1.normalize();
+      lat2.crossVectors(dir, lat1);
       const len = (tailStart - d) * 0.55 + 4;
-      for (let i = 0; i < N; i++) {
-        const f = (i / N) ** 1.4; // denser near the nucleus
-        const spread = f * len * 0.10;
-        positions[i * 3] = mesh.position.x + dir.x * f * len + jitter[i].x * spread;
-        positions[i * 3 + 1] = mesh.position.y + dir.y * f * len + jitter[i].y * spread;
-        positions[i * 3 + 2] = mesh.position.z + dir.z * f * len + jitter[i].z * spread;
-      }
-      tailGeo.attributes.position.needsUpdate = true;
+      const ionLen = len * 1.45;
+      // brightness fades smoothly to nothing as the comet recedes
+      dust.pts.material.uniforms.uOpacity.value = Math.min(1, activity ** 0.7 * 0.85 + 0.15);
+      ion.pts.material.uniforms.uOpacity.value = Math.min(1, activity ** 0.7 * 0.55 + 0.08);
+      const place = (t, length, spread0, spread1, curve) => {
+        const { positions, params, count } = t;
+        for (let i = 0; i < count; i++) {
+          const f = params[i * 3];
+          const ux = params[i * 3 + 1];
+          const uy = params[i * 3 + 2];
+          const along = f * length;
+          const sp = length * (spread0 + spread1 * f); // cone, not a line
+          const lag = curve * f * f * length; // quadratic arc away from motion
+          positions[i * 3] = mesh.position.x + dir.x * along - vel.x * lag
+            + (lat1.x * ux + lat2.x * uy) * sp;
+          positions[i * 3 + 1] = mesh.position.y + dir.y * along - vel.y * lag
+            + (lat1.y * ux + lat2.y * uy) * sp;
+          positions[i * 3 + 2] = mesh.position.z + dir.z * along - vel.z * lag
+            + (lat1.z * ux + lat2.z * uy) * sp;
+        }
+        t.pts.geometry.attributes.position.needsUpdate = true;
+      };
+      place(dust, len, 0.035, 0.22, 0.30); // broad curved dust fan
+      place(ion, ionLen, 0.012, 0.05, 0); // straight narrow ion streak
     },
   };
 }

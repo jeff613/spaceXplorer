@@ -361,6 +361,45 @@ try {
   check('comet nucleus is a dark lumpy body, coma swells at perihelion only',
     comet.dark && comet.lumpy && comet.comaActive > 0.3 && comet.comaIdleNow,
     JSON.stringify(comet));
+  // tails are a fan, not a beam: dust spreads laterally and curves off-axis,
+  // ion stays a narrower streak that reaches further anti-sunward
+  const tails = await page.evaluate(async () => {
+    const sx = window.__sx;
+    const h = sx.bodies.get('halley');
+    const save = sx.sim.days;
+    const days1986 = (Date.parse('1986-02-09T00:00Z') - Date.parse('2000-01-01T12:00Z')) / 86400000;
+    h.update(days1986);
+    const p = h.mesh.position;
+    const len = Math.hypot(p.x, p.y, p.z);
+    const ax = p.x / len, ay = p.y / len, az = p.z / len; // anti-sunward axis
+    const measure = (pts) => {
+      const a = pts.geometry.attributes.position.array;
+      const n = a.length / 3;
+      let lat = 0, maxAlong = 0;
+      for (let i = 0; i < n; i++) {
+        const dx = a[i * 3] - p.x, dy = a[i * 3 + 1] - p.y, dz = a[i * 3 + 2] - p.z;
+        const along = dx * ax + dy * ay + dz * az;
+        lat += Math.hypot(dx - ax * along, dy - ay * along, dz - az * along);
+        maxAlong = Math.max(maxAlong, along);
+      }
+      return {
+        meanLat: +(lat / n).toFixed(2), maxAlong: +maxAlong.toFixed(1),
+        visible: pts.visible, opacity: +pts.material.uniforms.uOpacity.value.toFixed(2),
+      };
+    };
+    const dust = measure(h.dustTail), ion = measure(h.ionTail);
+    h.update(save);
+    await sx.frame();
+    return { dust, ion };
+  });
+  check('comet dust tail at perihelion: visible broad fan with lateral spread',
+    tails.dust.visible && tails.dust.opacity > 0.3 && tails.dust.meanLat > 1.5,
+    JSON.stringify(tails.dust));
+  check('comet ion tail at perihelion: visible, narrower than dust, reaches further',
+    tails.ion.visible && tails.ion.opacity > 0.2
+      && tails.ion.meanLat < tails.dust.meanLat
+      && tails.ion.maxAlong > tails.dust.maxAlong,
+    JSON.stringify(tails));
   const rocks = await page.evaluate(() => {
     const sx = window.__sx;
     const radiusSpread = (mesh) => {
