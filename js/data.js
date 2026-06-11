@@ -362,7 +362,7 @@ export const MOONS = [
     fact: 'The only moon with a thick atmosphere, and the only world besides Earth with rivers, lakes and rain — of liquid methane.',
   },
   {
-    id: 'enceladus', name: 'Enceladus', type: 'Moon of Saturn', parent: 'saturn', color: 0xeef4f8,
+    id: 'enceladus', geysers: true, name: 'Enceladus', type: 'Moon of Saturn', parent: 'saturn', color: 0xeef4f8,
     radiusKm: 252.1, orbitRadii: 2.5, trueOrbitRadii: 4.09, period: 1.37,
     info: { 'Radius': '252 km', 'Orbital period': '1.4 days', 'Albedo': 'Most reflective body in the system' },
     fact: 'Ice geysers at its south pole jet ocean water into space, feeding Saturn\'s E ring — a free sample of an alien sea.',

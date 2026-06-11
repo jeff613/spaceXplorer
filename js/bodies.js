@@ -696,6 +696,24 @@ export function createMoon(scene, data, parentBody) {
   }
   const mesh = new THREE.Mesh(geo, mat);
   if (data.atmosphere) mesh.add(makeAtmosphere(displayRadius, data.atmosphere));
+  if (data.geysers) {
+    // south-polar ice plumes (Enceladus feeding the E ring): nested additive
+    // cones, apex on the pole, fanning into space
+    const plume = new THREE.Group();
+    plume.name = 'plume';
+    for (const [r, h, op] of [[0.30, 1.6, 0.10], [0.16, 1.1, 0.16]]) {
+      const cg = new THREE.ConeGeometry(displayRadius * r, displayRadius * h, 16, 1, true);
+      cg.translate(0, -displayRadius * h / 2, 0); // apex at group origin
+      const cone = new THREE.Mesh(cg, new THREE.MeshBasicMaterial({
+        color: 0xcfe6ff, transparent: true, opacity: op,
+        blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide,
+      }));
+      cone.raycast = () => {};
+      plume.add(cone);
+    }
+    plume.position.y = -displayRadius * 0.98;
+    mesh.add(plume);
+  }
   mesh.name = data.id;
   // most moons orbit their planet's equator; Earth's Moon hugs the ecliptic
   const orbitGroup = data.ecliptic ? parentBody.anchor : parentBody.tiltGroup;

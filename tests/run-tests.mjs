@@ -343,6 +343,11 @@ try {
   });
   check('major moons have color identity, Titan has haze shell',
     moonStyle.colorMaps && moonStyle.titanAtmosphere, JSON.stringify(moonStyle));
+  check('Enceladus jets its south-polar plume', await page.evaluate(() => {
+    const p = window.__sx.bodies.get('enceladus').mesh.children
+      .find((ch) => ch.name === 'plume');
+    return !!p && p.children.length >= 2 && p.position.y < 0;
+  }));
   const binary = await page.evaluate(async () => {
     const sx = window.__sx;
     await sx.frame();
