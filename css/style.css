@@ -407,7 +407,7 @@ body.loaded #hud-header, body.loaded #nav-panel, body.loaded #time-bar { opacity
 
 #date-input:hover { border-color: var(--amber); color: var(--amber); }
 
-#btn-play, #btn-now, #btn-reverse, #btn-realtime {
+#btn-play, #btn-now, #btn-reverse {
   background: none;
   border: 1px solid var(--panel-edge);
   color: var(--cyan);
@@ -420,7 +420,7 @@ body.loaded #hud-header, body.loaded #nav-panel, body.loaded #time-bar { opacity
   transition: all 0.15s;
 }
 
-#btn-play:hover, #btn-now:hover, #btn-reverse:hover, #btn-realtime:hover { border-color: var(--amber); color: var(--amber); }
+#btn-play:hover, #btn-now:hover, #btn-reverse:hover { border-color: var(--amber); color: var(--amber); }
 
 #speed-wrap { display: flex; align-items: center; gap: 10px; }
 
@@ -569,7 +569,7 @@ body.loaded #hud-header, body.loaded #nav-panel, body.loaded #time-bar { opacity
   #btn-tour, #btn-random { padding: 14px 10px; }
   .nav-item { padding: 9px 8px; font-size: 14px; }
   .toggle { padding: 7px 8px; font-size: 13px; }
-  #btn-play, #btn-now, #btn-reverse, #btn-realtime { padding: 9px 15px; }
+  #btn-play, #btn-now, #btn-reverse { padding: 9px 15px; }
 
   #tour-banner { bottom: auto; top: 60px; }
   #btn-help { display: none; }
