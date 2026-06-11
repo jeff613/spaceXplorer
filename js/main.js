@@ -171,6 +171,10 @@ window.addEventListener('keydown', (e) => {
   }
   if (typing) return;
   if (e.key === '?') helpOverlay().classList.toggle('open');
+  if (e.key === ' ') {
+    e.preventDefault(); // don't scroll — toggle time like a video player
+    document.getElementById('btn-play').click();
+  }
   if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
     e.preventDefault();
     const order = navigator.order;

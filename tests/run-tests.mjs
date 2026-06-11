@@ -744,6 +744,15 @@ try {
   ));
   await page.keyboard.press('Escape');
 
+  const spaceToggle = await page.evaluate(() => window.__sx.sim.playing);
+  await page.keyboard.press(' ');
+  await frames(page, 2);
+  check('Space toggles play/pause', await page.evaluate(
+    (was) => window.__sx.sim.playing === !was, spaceToggle,
+  ));
+  await page.keyboard.press(' ');
+  await frames(page, 2);
+
   await page.keyboard.press('?');
   check('? opens help overlay', await page.evaluate(
     () => document.getElementById('help-overlay').classList.contains('open'),
