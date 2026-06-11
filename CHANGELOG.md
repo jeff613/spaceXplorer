@@ -9,6 +9,18 @@ loop iterations (see PRD.md).
 - True-scale mode: spacecraft are now proportionate miniatures (ISS was
   rendering at ~4.8× Earth's radius); fly-to framing and glint fade-out
   made scale-aware so craft are visible and frameable
+- Fast playback no longer strobes: per-motion smooth clocks cap displayed
+  sweep at 0.25 rad/frame (temporal aliasing of short-period objects),
+  snapping back to exact sim time when in range
+- Mars rovers: real rocker-bogie miniatures, surface-normal aligned and
+  ground-level (were unrotated half-buried boxes), sized to Mars, fly-to
+  framed against the planet
+- Asteroid belt: 2200 lit instanced rocks (4 draw calls) + far dust layer,
+  replacing flat square sprites; deterministic, FPS unchanged
+- Earth: ocean roughness floored at 0.35 — mirror seas were reflecting the
+  IBL room's rectangular light panels as white squares
+- Comet tails: curved dust fan + straight blue ion tail as soft shader
+  sprites with tip falloff, replacing the fixed-pixel square "beam"
 
 ### Visual quality
 - Comet hero pass: coal-dark lumpy nuclei, perihelion-driven coma (43)
