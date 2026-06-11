@@ -627,6 +627,20 @@ function makeMoonColorMap(data) {
       ctx.fillStyle = `rgba(235,180,90,${0.05 + nrand() * 0.08})`;
       ctx.fillRect(0, y, W, 6 + nrand() * 18);
     }
+  } else if (data.style === 'iapetus') {
+    // the yin-yang moon: coal-dark leading hemisphere, bright trailing one,
+    // ragged boundary, and the equatorial ridge
+    ctx.fillStyle = '#2e2820';
+    ctx.fillRect(0, 0, W / 2, H);
+    ctx.fillStyle = '#d8d2c4';
+    ctx.fillRect(W / 2, 0, W / 2, H);
+    for (let i = 0; i < 60; i++) {
+      const y = nrand() * H;
+      const x = W / 2 + (nrand() - 0.5) * 70;
+      splat(x, y, 6 + nrand() * 14, nrand() < 0.5 ? 'rgba(46,40,32,0.8)' : 'rgba(216,210,196,0.8)');
+    }
+    ctx.fillStyle = 'rgba(20,16,12,0.55)';
+    ctx.fillRect(0, H / 2 - 2, W, 4);
   } else if (data.style === 'ganymede') {
     // two-tone terrain: dark ancient regions amid lighter grooved bands
     for (let i = 0; i < 26; i++) {

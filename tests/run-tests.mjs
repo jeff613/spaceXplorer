@@ -338,9 +338,8 @@ try {
   const moonStyle = await page.evaluate(() => {
     const sx = window.__sx;
     return {
-      colorMaps: ['io', 'europa', 'ganymede', 'callisto', 'titan', 'triton', 'charon'].every(
-        (id) => !!sx.bodies.get(id).mesh.material.map,
-      ),
+      colorMaps: ['io', 'europa', 'ganymede', 'callisto', 'titan', 'iapetus', 'triton', 'charon']
+        .every((id) => !!sx.bodies.get(id).mesh.material.map),
       titanAtmosphere: sx.bodies.get('titan').mesh.children.some(
         (ch) => ch.material?.uniforms?.atmColor,
       ),

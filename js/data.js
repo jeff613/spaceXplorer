@@ -374,7 +374,7 @@ export const MOONS = [
     fact: 'Saturn\'s second-largest moon — a dirty snowball three-quarters ice, possibly with its own faint ring system.',
   },
   {
-    id: 'iapetus', name: 'Iapetus', type: 'Moon of Saturn', parent: 'saturn', color: 0x7a6f5e,
+    id: 'iapetus', style: 'iapetus', name: 'Iapetus', type: 'Moon of Saturn', parent: 'saturn', color: 0x7a6f5e,
     radiusKm: 734.5, orbitRadii: 5.0, trueOrbitRadii: 61.1, period: 79.3,
     info: { 'Radius': '735 km', 'Orbital period': '79 days', 'Feature': '20 km equatorial ridge' },
     fact: 'The yin-yang moon: one hemisphere is coal-black, the other snow-white, with a mysterious mountain ridge wrapping its equator.',
