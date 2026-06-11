@@ -522,6 +522,16 @@ export const SPACECRAFT = [
     fact: 'Photographed the Apollo landing sites clearly enough to see the astronauts\' foot trails — still there, half a century later.',
   },
   {
+    id: 'tgo', name: 'ExoMars TGO', type: 'Mars orbiter (ESA/Roscosmos)', kind: 'orbiter', parent: 'mars',
+    orbitRadii: 1.35, periodDays: 0.083, inclination: 74, color: 0xd8c8f0,
+    info: {
+      'Launched': 'Mar 14, 2016', 'Orbit': 'Circular, ~400 km',
+      'Mission': 'Sniffs the atmosphere for trace gases like methane',
+      'Bonus job': 'Relays most rover data back to Earth',
+    },
+    fact: 'The solar system\'s methane detective - and the data courier that carries Perseverance\'s and Curiosity\'s discoveries home.',
+  },
+  {
     id: 'marsexpress', name: 'Mars Express', type: 'Mars orbiter (ESA)', kind: 'orbiter', parent: 'mars',
     orbitRadii: 2.4, periodDays: 0.31, inclination: 86, color: 0xa8d8ff,
     info: {

@@ -282,6 +282,7 @@ function craftMesh(data) {
     }
     case 'juno': return makeProbe({ dish: 0.16, panels: 3 });
     case 'cassini': return makeProbe({ dish: 0.22 });
+    case 'tgo': return makeProbe({ dish: 0.13, panels: 2, scale: 0.6 });
     case 'marsexpress': return makeProbe({ dish: 0.16, panels: 2, scale: 0.65 });
     case 'mro': return makeProbe({ dish: 0.18, panels: 2, scale: 0.7 });
     case 'voyager1':
