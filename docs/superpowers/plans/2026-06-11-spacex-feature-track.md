@@ -353,9 +353,9 @@ const SPACEX_STOPS = [
 In rough priority order; each gets its own plan doc when reached:
 1. **Dragon + Starship PBR miniatures** — ✅ merged 2026-06-11 (8c03cfb; also fixed a pre-existing pick-proxy click bug in main.js)
 2. **Launch site markers** (Starbase, LC-39A, SLC-4E) — ✅ merged 2026-06-11 (fdac436)
-3. **Real Starlink TLEs** (CelesTrak snapshot baked to JSON; no runtime API) — in progress, subagent on feature/spacex-starlink
-4. **Mars transfer window visualizer** (animated Starship fleet on the transfer arc) — in progress, subagent on feature/spacex-transfer
-5. **Falcon 9 launch spectacle** (surface-scale animation — biggest, riskiest, last)
+3. **Real Starlink TLEs** — ✅ merged 2026-06-11 (e3af645; 10,545 sats / 12 shells baked from CelesTrak 2026-06-10 into a 12 KB JSON, rebake via tests/bake-starlink.mjs)
+4. **Mars transfer window visualizer** — ✅ merged 2026-06-11 (depart 2026-11-04 / arrive 2027-07-26 from the sim's own ephemeris; View toggle, default off)
+5. **Falcon 9 launch spectacle** — in progress, subagent on feature/spacex-f9 (▶ Launch replay from the pad info panel: ascent, stage sep, boostback, pad landing)
 
 Note for parallel suite runs: tests/run-tests.mjs now honors a `PORT` env override — every concurrent agent must use a unique port (a stale server on the default 8643 once served the wrong worktree's code).
 
