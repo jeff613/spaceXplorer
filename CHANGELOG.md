@@ -21,6 +21,15 @@ loop iterations (see PRD.md).
   IBL room's rectangular light panels as white squares
 - Comet tails: curved dust fan + straight blue ion tail as soft shader
   sprites with tip falloff, replacing the fixed-pixel square "beam"
+- Tesla Roadster rebuilt as the real thing: curved cherry-red body, spoked
+  wheels, cockpit, and Starman in the left seat (~60 meshes, was a brick)
+- "Surprise me" button integrated into the HUD language (cyan sibling of
+  Grand Tour; it previously had no styling at all)
+- Time bar: slider's leftmost is now exactly real time and the redundant
+  1× button is gone; default stays 1 day/s
+- Fly-to on orbiters can no longer arrive with the parent planet blocking
+  the view: arrival bearing blends radially out until the sightline clears
+  the parent by 1.15× its radius (ISS was occluded on 5/16 bearings)
 
 ### Visual quality
 - Comet hero pass: coal-dark lumpy nuclei, perihelion-driven coma (43)
