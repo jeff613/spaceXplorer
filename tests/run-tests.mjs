@@ -1092,6 +1092,16 @@ try {
       return right <= innerWidth + 1;
     }),
   ));
+  const mobNext = await mob.evaluate(async () => {
+    const btn = document.getElementById('info-next');
+    const r = btn.getBoundingClientRect();
+    const fits = r.width >= 16 && r.right <= innerWidth && r.top >= 0;
+    btn.click();
+    await window.__sx.frame();
+    return { fits, sel: window.__sx.selected()?.data.id };
+  });
+  check('mobile: ‹ › buttons are tappable and cycle',
+    mobNext.fits && !!mobNext.sel && mobNext.sel !== 'earth', JSON.stringify(mobNext));
   await mob.evaluate(() => window.__sx.deselect());
   const tapPos = await mob.evaluate(() => {
     const sx = window.__sx;
