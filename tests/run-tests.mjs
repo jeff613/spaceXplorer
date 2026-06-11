@@ -434,12 +434,12 @@ try {
   );
   check('Milky Way panorama upgrades progressively to 8k', true);
   await page.waitForFunction(
-    () => ['moon', 'jupiter', 'saturn', 'mars', 'venus'].every(
+    () => ['moon', 'jupiter', 'saturn', 'mars', 'venus', 'mercury'].every(
       (id) => window.__sx.bodies.get(id).mesh.material.map?.image?.width === 4096,
     ),
     { timeout: 25000 },
   );
-  check('Moon, Jupiter, Saturn, Mars, Venus upgrade progressively to 4k', true);
+  check('all tour-stop worlds upgrade progressively to 4k', true);
   const zoomClamp = await page.evaluate(async () => {
     const sx = window.__sx;
     sx.select(sx.bodies.get('sun'), { instant: true });

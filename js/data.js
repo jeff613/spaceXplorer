@@ -55,7 +55,7 @@ export function daysSinceJ2000(date = new Date()) {
 
 export const PLANETS = [
   {
-    id: 'mercury', name: 'Mercury', type: 'Planet', texture: '2k_mercury.jpg',
+    id: 'mercury', name: 'Mercury', type: 'Planet', texture: '2k_mercury.jpg', textureHi: '4k_mercury.jpg',
     bump: 'mercurybump.jpg', bumpScale: 2.0,
     radiusKm: 2439.7,
     elements: { a: 0.387, e: 0.2056, i: 7.0, Om: 48.33, varpi: 77.46, L0: 252.25, period: 87.97 },
