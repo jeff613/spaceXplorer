@@ -14,7 +14,7 @@ import pixelmatch from 'pixelmatch';
 import { PNG } from 'pngjs';
 
 const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
-const PORT = 8643;
+const PORT = Number(process.env.PORT ?? 8643); // override when worktrees test in parallel
 const BASE = `http://127.0.0.1:${PORT}`;
 const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 
@@ -125,7 +125,7 @@ try {
     return ['vesta', 'pallas', 'bennu', 'apophis', 'makemake', 'haumea', 'sedna', 'arrokoth', 'churyumov']
       .every((id) => sx.bodies.has(id))
       && ['juno', 'cassini', 'gps', 'geo', 'pioneer10', 'pioneer11',
-        'mro', 'perseverance', 'curiosity', 'gaia', 'soho'].every((id) => sx.craft.has(id));
+        'mro', 'perseverance', 'curiosity', 'gaia', 'soho', 'dragon', 'starship'].every((id) => sx.craft.has(id));
   }));
   // rovers ride the planet's rotation; SOHO sits sunward of Earth
   const marsFleet = await page.evaluate(() => {
@@ -180,6 +180,23 @@ try {
     recede.tenYears - recede.now > 30 && recede.tenYears - recede.now < 42,
     JSON.stringify(recede));
   check('Tiangong present', await page.evaluate(() => window.__sx.craft.has('tiangong')));
+  // SpaceX fleet must circle Earth in the LEO display band
+  const spacex = await page.evaluate(() => {
+    const sx = window.__sx;
+    const out = {};
+    for (const id of ['dragon', 'starship']) {
+      if (!sx.craft.has(id)) { out[id] = -1; continue; }
+      const v = sx.craft.get(id).mesh.position.constructor;
+      const w = new v(); sx.craft.get(id).mesh.getWorldPosition(w);
+      const earthW = new v(); sx.bodies.get('earth').mesh.getWorldPosition(earthW);
+      out[id] = w.distanceTo(earthW) / sx.bodies.get('earth').displayRadius;
+    }
+    return out;
+  });
+  check(`Crew Dragon orbits Earth (${spacex.dragon.toFixed(2)} Earth radii, 1.2–2.0)`,
+    spacex.dragon > 1.2 && spacex.dragon < 2.0);
+  check(`Starship orbits Earth (${spacex.starship.toFixed(2)} Earth radii, 1.2–2.0)`,
+    spacex.starship > 1.2 && spacex.starship < 2.0);
   // P0 (user): craft must read as models, not glowing orbs — when focused,
   // the visibility glint must be faded out and the model must have detail
   const orbCheck = await page.evaluate(async () => {
@@ -211,7 +228,7 @@ try {
       box.getSize(s);
       return +Math.max(s.x, s.y, s.z).toFixed(2);
     };
-    return ['iss', 'roadster', 'perseverance', 'hubble', 'jwst', 'parker'].map(
+    return ['iss', 'roadster', 'perseverance', 'hubble', 'jwst', 'parker', 'dragon', 'starship'].map(
       (id) => [id, visibleSize(sx.craft.get(id).mesh)],
     );
   });
@@ -652,13 +669,30 @@ try {
     return res.ok;
   }));
 
-  // click empty space deselects
-  await page.mouse.click(720, 80);
+  // click empty space deselects — probe for a pixel whose ray hits nothing,
+  // since a tiny craft's invisible pick proxy may drift over any fixed point
+  const emptyXY = await page.evaluate(async () => {
+    const THREE = await import('three');
+    const sx = window.__sx;
+    const ray = new THREE.Raycaster();
+    const targets = [];
+    for (const b of sx.bodies.values()) targets.push(b.mesh);
+    for (const c of sx.craft.values()) if (!c.isCloud) targets.push(c.mesh);
+    for (const [x, y] of [[720, 80], [600, 70], [840, 90], [500, 110], [950, 60]]) {
+      ray.setFromCamera(
+        new THREE.Vector2((x / innerWidth) * 2 - 1, -(y / innerHeight) * 2 + 1), sx.camera,
+      );
+      if (ray.intersectObjects(targets, true).length === 0
+          && document.elementFromPoint(x, y)?.id === 'scene') return [x, y];
+    }
+    return [720, 80];
+  });
+  await page.mouse.click(emptyXY[0], emptyXY[1]);
   await frames(page, 2);
   check('click on empty space deselects', await page.evaluate(
     () => window.__sx.selected() === null
       && !document.getElementById('info-panel').classList.contains('open'),
-  ));
+  ), await page.evaluate(() => `selected=${window.__sx.selected()?.data.id}`));
 
   // click directly on a planet selects it
   await page.evaluate(() => window.__sx.select(window.__sx.bodies.get('earth')));
