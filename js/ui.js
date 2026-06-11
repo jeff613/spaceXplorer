@@ -285,10 +285,29 @@ export function setupTimeControls(sim) {
     sim.days = (Date.UTC(y, m - 1, d, 12) - J2000) / 86400000;
   });
 
+  // SPCX IPO: Nasdaq market open, June 12 2026, 9:30 ET (13:30 UTC).
+  // Runs on sim time like everything else — time-travel moves the clock.
+  const IPO_MS = Date.UTC(2026, 5, 12, 13, 30);
+  const ipoBadge = document.getElementById('ipo-countdown');
+  const ipoLabel = document.getElementById('ipo-label');
+  const ipoClock = document.getElementById('ipo-clock');
+  const pad2 = (n) => String(n).padStart(2, '0');
+
   return {
     updateDate() {
-      const d = new Date(J2000 + sim.days * 86400000);
+      const simMs = J2000 + sim.days * 86400000;
+      const d = new Date(simMs);
       dateLabel.textContent = d.toISOString().slice(0, 10) + '  ' + d.toISOString().slice(11, 16) + ' UTC';
+
+      const delta = IPO_MS - simMs;
+      const s = Math.abs(delta) / 1000;
+      const days = Math.floor(s / 86400);
+      const clock = `${days > 0 ? days.toLocaleString('en-US') + 'd ' : ''}`
+        + `${pad2(Math.floor((s % 86400) / 3600))}:${pad2(Math.floor((s % 3600) / 60))}:${pad2(Math.floor(s % 60))}`;
+      const live = delta <= 0;
+      ipoLabel.textContent = live ? 'SPCX ★ TRADING ON NASDAQ' : 'SPCX IPO · NASDAQ';
+      ipoClock.textContent = (live ? 'T+' : 'T−') + clock;
+      ipoBadge.classList.toggle('live', live);
     },
   };
 }
