@@ -206,6 +206,14 @@ try {
     return jw.distanceTo(linePoint);
   });
   check(`JWST halo-orbits L2 (offset ${halo.toFixed(2)} in 0.1–0.8)`, halo > 0.1 && halo < 0.8);
+  check('Mars Express orbits Mars (ESA)', await page.evaluate(() => {
+    const sx = window.__sx;
+    if (!sx.craft.has('marsexpress')) return false;
+    const v = sx.craft.get('marsexpress').mesh.position.constructor;
+    const me = new v(); sx.craft.get('marsexpress').mesh.getWorldPosition(me);
+    return me.distanceTo(sx.bodies.get('mars').anchor.position)
+      < sx.bodies.get('mars').displayRadius * 4;
+  }));
   check('Akatsuki orbits Venus', await page.evaluate(() => {
     const sx = window.__sx;
     if (!sx.craft.has('akatsuki')) return false;

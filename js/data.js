@@ -512,6 +512,15 @@ export const SPACECRAFT = [
     fact: 'Photographed the Apollo landing sites clearly enough to see the astronauts\' foot trails — still there, half a century later.',
   },
   {
+    id: 'marsexpress', name: 'Mars Express', type: 'Mars orbiter (ESA)', kind: 'orbiter', parent: 'mars',
+    orbitRadii: 2.4, periodDays: 0.31, inclination: 86, color: 0xa8d8ff,
+    info: {
+      'Launched': 'Jun 2, 2003', 'Orbit': 'Elliptical polar, 298 x 10,107 km',
+      'Agency': 'ESA - its first planetary mission', 'Status': 'Still operating after 20+ years',
+    },
+    fact: 'Europe\'s first trip to another planet found buried water ice and a hidden lake under Mars\'s south pole - and it is still working two decades on.',
+  },
+  {
     id: 'mro', name: 'MRO', type: 'Mars orbiter', kind: 'orbiter', parent: 'mars',
     orbitRadii: 1.55, periodDays: 0.0786, inclination: 93, color: 0xffc8a8,
     info: {
