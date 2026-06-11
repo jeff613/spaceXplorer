@@ -9,6 +9,7 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { daysSinceJ2000, TRUE_SCALE } from './data.js';
 import { buildSolarSystem } from './bodies.js';
 import { buildSpacecraft } from './spacecraft.js';
+import { createTransfer } from './transfer.js';
 import { createTour } from './tour.js';
 import { createSound } from './sound.js';
 import {
@@ -103,6 +104,7 @@ const userSelect = (body) => { tour.stop(); select(body); };
 const navigator = buildNavigator(bodies, craft, userSelect);
 const labels = createLabels(bodies, craft, userSelect);
 const tour = createTour(bodies, craft, select, sim);
+const transfer = createTransfer(scene, bodies, sim);
 
 // the selected body's orbit glows amber so its path stands out
 function setOrbitHighlight(body, on) {
@@ -272,6 +274,7 @@ setupToggles({
   'toggle-starlink': (on) => {
     for (const c of craft.values()) if (c.isCloud) c.mesh.visible = on;
   },
+  'toggle-transfer': (on) => transfer.setEnabled(on),
   'toggle-sound': (on) => sound.setEnabled(on),
   'toggle-truescale': (on) => {
     const u = new URL(location.href);
@@ -316,6 +319,7 @@ function animate() {
   for (const body of bodies.values()) body.update(sim.days);
   for (const c of craft.values()) c.update(sim.days);
   belt.update(sim.days);
+  transfer.update(sim.days);
 
   // cinematic drift while the tour dwells; otherwise only after long idle —
   // suppressed entirely for prefers-reduced-motion users
@@ -415,7 +419,7 @@ document.body.classList.add('loaded');
 
 // programmatic handle for the test suite (and console tinkering)
 window.__sx = {
-  bodies, craft, sim, camera, controls, scene, belt, tour, sound, idleState, finishing,
+  bodies, craft, sim, camera, controls, scene, belt, tour, transfer, sound, idleState, finishing,
   select, deselect, raycastAt,
   selected: () => selected,
   frame: () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))),

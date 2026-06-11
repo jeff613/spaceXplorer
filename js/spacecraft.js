@@ -234,7 +234,7 @@ function makeDragon() { // white gumdrop capsule, PICA-X heatshield, trunk with 
   return g;
 }
 
-function makeStarship() { // stainless hull, domed nose, four flaps, tiled belly
+export function makeStarship() { // stainless hull, domed nose, four flaps, tiled belly
   const g = new THREE.Group();
   // mid-gray steel — brighter and the bloom turns the hull into a glowing tube
   const steel = new THREE.MeshStandardMaterial({ color: 0x8f969c, metalness: 0.9, roughness: 0.45, envMapIntensity: 0.9 });
