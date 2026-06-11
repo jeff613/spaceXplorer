@@ -113,7 +113,9 @@ export function showInfo(body) {
   p.querySelector('.info-live').innerHTML = `
     <div class="info-row"><span class="info-key" id="live-dist-key"></span><span class="info-val" id="live-dist"></span></div>
     <div class="info-row"><span class="info-key">Light travel time</span><span class="info-val" id="live-light"></span></div>
-    <div class="info-row" id="live-extra-row" style="display:none"><span class="info-key" id="live-extra-key"></span><span class="info-val" id="live-extra"></span></div>`;
+    <div class="info-row" id="live-extra-row" style="display:none"><span class="info-key" id="live-extra-key"></span><span class="info-val" id="live-extra"></span></div>
+    <div class="info-row" id="live-extra2-row" style="display:none"><span class="info-key" id="live-extra2-key"></span><span class="info-val" id="live-extra2"></span></div>
+    <div class="info-row" id="live-extra3-row" style="display:none"><span class="info-key" id="live-extra3-key"></span><span class="info-val" id="live-extra3"></span></div>`;
 
   // size comparison vs Earth, drawn to scale
   const cmp = p.querySelector('.info-compare');
@@ -342,6 +344,7 @@ export function setupToggles(handlers) {
 
 const _ra = new THREE.Vector3();
 const _rb = new THREE.Vector3();
+const _rc = new THREE.Vector3();
 
 function realAU(worldPos, target) {
   const len = worldPos.length();
@@ -355,7 +358,7 @@ function fmtLight(seconds) {
   return `${(seconds / 3600).toFixed(1)} hours`;
 }
 
-export function updateLiveStats(body, earth) {
+export function updateLiveStats(body, earth, mars, sim) {
   const distEl = document.getElementById('live-dist');
   if (!distEl || !body) return;
   body.mesh.getWorldPosition(_ra);
@@ -390,6 +393,36 @@ export function updateLiveStats(body, earth) {
     extraRow.style.display = '';
   } else if (extraRow) {
     extraRow.style.display = 'none';
+  }
+
+  // Where is Starman? The Roadster gets live speed, Mars range, and the
+  // running count of how many times it has out-driven its warranty.
+  const extra2 = document.getElementById('live-extra2-row');
+  const extra3 = document.getElementById('live-extra3-row');
+  if (body.data.id === 'roadster' && mars && sim) {
+    // heliocentric speed from vis-viva (a = 1.325 AU, its orbital element)
+    const rAU = _ra.length();
+    const k = 0.01720209895; // Gaussian gravitational constant, AU^1.5/day
+    const vKms = k * Math.sqrt(Math.max(0, 2 / rAU - 1 / 1.325)) * 149597870.7 / 86400;
+    document.getElementById('live-extra-key').textContent = 'Speed (now)';
+    document.getElementById('live-extra').textContent =
+      `${(vKms * 3600).toLocaleString('en-US', { maximumFractionDigits: 0 })} km/h`;
+    extraRow.style.display = '';
+    realAU(mars.anchor.position, _rc);
+    document.getElementById('live-extra2-key').textContent = 'Distance from Mars (now)';
+    document.getElementById('live-extra2').textContent = `${_ra.distanceTo(_rc).toFixed(2)} AU`;
+    extra2.style.display = '';
+    // odometer estimate: mean orbital speed × time since the FH demo launch
+    const simMs = J2000 + sim.days * 86400000;
+    const days = Math.max(0, (simMs - Date.UTC(2018, 1, 6, 20, 45)) / 86400000);
+    const warranties = days * (2 * Math.PI * 1.325 * 149597870.7 / 557) / 1.609344 / 36000;
+    document.getElementById('live-extra3-key').textContent = 'Warranty exceeded (est.)';
+    document.getElementById('live-extra3').textContent =
+      `${Math.floor(warranties).toLocaleString('en-US')}× the 36,000-mile plan`;
+    extra3.style.display = '';
+  } else {
+    if (extra2) extra2.style.display = 'none';
+    if (extra3) extra3.style.display = 'none';
   }
 
   const km = dAU * 149597870;

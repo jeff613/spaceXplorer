@@ -331,7 +331,7 @@ function animate() {
   updateCamera(dt);
   controls.update();
   timeUI.updateDate();
-  if (selected) updateLiveStats(selected, bodies.get('earth'));
+  if (selected) updateLiveStats(selected, bodies.get('earth'), bodies.get('mars'), sim);
 
   // glints are far-visibility beacons — fade them out up close so the
   // actual spacecraft model is what you see

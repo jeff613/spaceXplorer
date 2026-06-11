@@ -833,7 +833,6 @@ try {
       label: document.getElementById('ipo-label').textContent,
       clock: document.getElementById('ipo-clock').textContent,
       live: document.getElementById('ipo-countdown').classList.contains('live'),
-      celebrate: document.getElementById('ipo-countdown').classList.contains('celebrate'),
     });
     sx.sim.days = (Date.UTC(2026, 5, 12, 13, 0) - J2000) / 86400000; // T−30 min
     await sx.frame();
@@ -853,26 +852,31 @@ try {
     ipo.after.live && ipo.after.clock === 'T+00:30:00'
     && ipo.after.label.includes('TRADING ON NASDAQ'));
 
-  check('first T-0 crossing fires the celebration', ipo.after.celebrate);
-  // a second crossing must stay silent — the flourish is one-shot per load
-  const cel = await page.evaluate(async () => {
+  // celebration must be asserted on a fresh page: earlier suite tests
+  // (e.g. the +1 sidereal year jump) already crossed T-0 on the main page
+  const celPage = await openPage(browser, BASE, consoleErrors);
+  const cel = await celPage.evaluate(async () => {
     const sx = window.__sx;
     const J2000 = Date.UTC(2000, 0, 1, 12);
-    const wasPlaying = sx.sim.playing;
     sx.sim.playing = false;
     const badge = document.getElementById('ipo-countdown');
+    sx.sim.days = (Date.UTC(2026, 5, 12, 13, 29, 55) - J2000) / 86400000;
+    await sx.frame();
+    sx.sim.days = (Date.UTC(2026, 5, 12, 13, 30, 5) - J2000) / 86400000;
+    await sx.frame();
+    const fired = badge.classList.contains('celebrate');
+    // cross again — must stay silent, the flourish is one-shot per load
     badge.classList.remove('celebrate');
     sx.sim.days = (Date.UTC(2026, 5, 12, 13, 29, 55) - J2000) / 86400000;
     await sx.frame();
     sx.sim.days = (Date.UTC(2026, 5, 12, 13, 30, 5) - J2000) / 86400000;
     await sx.frame();
     const refired = badge.classList.contains('celebrate');
-    sx.sim.playing = wasPlaying;
-    document.getElementById('btn-now').click();
-    await sx.frame();
-    return { refired };
+    return { fired, refired };
   });
-  check('T-0 celebration is one-shot per page load', !cel.refired);
+  await celPage.close();
+  check('T-0 crossing fires one-time celebration', cel.fired && !cel.refired,
+    JSON.stringify(cel));
 
   // ticker easter egg: searching SPCX surfaces and selects the Roadster
   const egg = await page.evaluate(async () => {
@@ -889,6 +893,38 @@ try {
     return sel;
   });
   check('SPCX ticker easter egg selects the Roadster', egg === 'roadster', `got ${egg}`);
+
+  // Where is Starman: roadster-only live rows with physically plausible values
+  const starman = await page.evaluate(async () => {
+    const sx = window.__sx;
+    sx.select(sx.craft.get('roadster'));
+    await sx.frame();
+    const num = (id) => parseFloat(document.getElementById(id).textContent.replace(/,/g, ''));
+    const out = {
+      speedKmh: num('live-extra'),
+      speedKey: document.getElementById('live-extra-key').textContent,
+      marsAU: num('live-extra2'),
+      warranties: num('live-extra3'),
+      visible: ['live-extra-row', 'live-extra2-row', 'live-extra3-row']
+        .every((id) => document.getElementById(id).style.display !== 'none'),
+    };
+    sx.deselect();
+    await sx.frame();
+    // rows must hide again for other bodies
+    sx.select(sx.bodies.get('mars'));
+    await sx.frame();
+    out.hiddenAfter = document.getElementById('live-extra3-row').style.display === 'none';
+    sx.deselect();
+    await sx.frame();
+    return out;
+  });
+  check(`Starman speed plausible (${starman.speedKmh.toLocaleString('en-US')} km/h)`,
+    starman.visible && starman.speedKey === 'Speed (now)'
+    && starman.speedKmh > 60000 && starman.speedKmh < 140000);
+  check(`Starman Mars distance finite (${starman.marsAU} AU)`,
+    Number.isFinite(starman.marsAU) && starman.marsAU > 0 && starman.marsAU < 5);
+  check(`Starman warranty counter sane (${starman.warranties}×)`,
+    starman.warranties > 100000 && starman.warranties < 140000 && starman.hiddenAfter);
 
   console.log('\n— Numeric stability under stress');
   const stable = await page.evaluate(async () => {
