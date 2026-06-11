@@ -2,7 +2,7 @@
 
 **Status:** Living document — the improvement loop works against this.
 **Owner:** Jeff
-**Last updated:** 2026-06-13 (iteration 54)
+**Last updated:** 2026-06-13 (iteration 55)
 
 ## 1. Vision
 
@@ -82,7 +82,8 @@ a date picker alongside NOW.
 - Orbital positions within a few percent of published ephemerides for the
   current epoch (display compression aside).
 - Mobile: usable with touch, readable HUD, no overlap disasters.
-- Accessibility: every icon-only control carries an aria-label (iter 54).
+- Accessibility: every icon-only control carries an aria-label (iter 54);
+  prefers-reduced-motion disables camera drift + FOV breathing (iter 55).
 - Graceful degradation: WebGL-less browsers get a fallback message; failed
   texture loads fall back to tinted materials, never white balls (iter 51).
 

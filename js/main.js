@@ -239,7 +239,7 @@ function updateCamera(dt) {
     camera.position.lerpVectors(flight.fromPos, destPos, k);
     controls.target.lerpVectors(flight.fromTarget, followPos, k);
     // gentle FOV breath mid-flight for a cinematic dolly feel
-    camera.fov = 55 + 6 * Math.sin(Math.PI * k);
+    camera.fov = 55 + (reducedMotion ? 0 : 6 * Math.sin(Math.PI * k));
     camera.updateProjectionMatrix();
     if (flight.t >= 1) {
       flight = null;
@@ -293,6 +293,7 @@ document.getElementById('nav-toggle').addEventListener('click', () => {
 // ─── Render loop ──────────────────────────────────────────────────────────
 
 // after ~25s of no input with nothing selected, drift cinematically
+const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const idleState = { last: performance.now() };
 const pokeIdle = () => { idleState.last = performance.now(); };
 for (const ev of ['pointerdown', 'wheel', 'keydown', 'touchstart']) {
@@ -312,9 +313,10 @@ function animate() {
   for (const c of craft.values()) c.update(sim.days);
   belt.update(sim.days);
 
-  // cinematic drift while the tour dwells; otherwise only after long idle
-  controls.autoRotate = tour.active
-    || (!selected && performance.now() - idleState.last > 25000);
+  // cinematic drift while the tour dwells; otherwise only after long idle —
+  // suppressed entirely for prefers-reduced-motion users
+  controls.autoRotate = !reducedMotion && (tour.active
+    || (!selected && performance.now() - idleState.last > 25000));
   controls.autoRotateSpeed = tour.active ? 0.4 : 0.18;
 
   updateCamera(dt);

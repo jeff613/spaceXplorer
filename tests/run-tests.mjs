@@ -380,6 +380,20 @@ try {
       'button, input[type=range], input[type=search], input[type=date]',
     )].every((el) => el.getAttribute('aria-label') || el.textContent.trim().length >= 2),
   ));
+  const rmPage = await browser.newPage();
+  await rmPage.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'reduce' }]);
+  await rmPage.goto(BASE, { waitUntil: 'networkidle0', timeout: 30000 });
+  await rmPage.waitForFunction(() => window.__sx && document.body.classList.contains('loaded'));
+  const rmDrift = await rmPage.evaluate(async () => {
+    const sx = window.__sx;
+    sx.tour.start();
+    await sx.frame();
+    const drift = sx.controls.autoRotate;
+    sx.tour.stop();
+    return drift;
+  });
+  check('prefers-reduced-motion disables camera drift', rmDrift === false);
+  await rmPage.close();
   const neb = await page.evaluate(() => {
     const g = window.__sx.scene.getObjectByName('nebulae');
     return {
