@@ -3,7 +3,7 @@
 Maintained by the improvement loop. Newest first. "Iter" numbers refer to
 loop iterations (see PRD.md).
 
-## Unreleased (develop, iters 42–85)
+## Unreleased (develop, iters 42–86)
 
 ### Visual quality
 - Comet hero pass: coal-dark lumpy nuclei, perihelion-driven coma (43)
@@ -15,7 +15,7 @@ loop iterations (see PRD.md).
 - Enceladus south-polar geyser plume (65)
 - Phobos/Deimos potato shapes (49); Pluto bump relief (78)
 - Hi-res progressive textures: Earth 8K; Moon/Jupiter/Saturn/Mars/Venus/
-  Mercury 4K — first paint stays lightweight (56, 58, 69–71, 77)
+  Mercury 4K, Earth clouds 4K — first paint stays lightweight (56, 58, 69–71, 77, 86)
 - Live band shear on Uranus + Neptune (66); starfield nebulae + Andromeda (47)
 - Craft fixes: Roadster ×6 speck fix, rover scale, Parker matte-shield orb
   fix (42, 48)

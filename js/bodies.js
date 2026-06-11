@@ -432,12 +432,19 @@ export function createPlanet(scene, data) {
 
   let clouds = null;
   if (data.clouds) {
+    const cloudMat = new THREE.MeshPhongMaterial({
+      map: loadTex(data.clouds), blending: THREE.AdditiveBlending,
+      transparent: true, opacity: 0.55, depthWrite: false,
+    });
+    if (data.cloudsHi) {
+      texLoader.load(`textures/${data.cloudsHi}`, (hi) => {
+        hi.colorSpace = THREE.SRGBColorSpace;
+        cloudMat.map = hi;
+        cloudMat.needsUpdate = true;
+      });
+    }
     clouds = new THREE.Mesh(
-      new THREE.SphereGeometry(displayRadius * 1.015, 48, 24),
-      new THREE.MeshPhongMaterial({
-        map: loadTex(data.clouds), blending: THREE.AdditiveBlending,
-        transparent: true, opacity: 0.55, depthWrite: false,
-      }),
+      new THREE.SphereGeometry(displayRadius * 1.015, 48, 24), cloudMat,
     );
     tiltGroup.add(clouds);
   }

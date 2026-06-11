@@ -478,6 +478,15 @@ try {
     { timeout: 25000 },
   );
   check('all tour-stop worlds upgrade progressively to 4k', true);
+  await page.waitForFunction(
+    () => {
+      const e = window.__sx.bodies.get('earth');
+      const cl = e.tiltGroup.children.find((ch) => ch.material?.blending === 2 && ch.material.map);
+      return cl?.material.map.image?.width === 4096;
+    },
+    { timeout: 25000 },
+  );
+  check('Earth cloud layer upgrades progressively to 4k', true);
   const zoomClamp = await page.evaluate(async () => {
     const sx = window.__sx;
     sx.select(sx.bodies.get('sun'), { instant: true });
