@@ -102,7 +102,7 @@ const sound = createSound();
 const userSelect = (body) => { tour.stop(); select(body); };
 const navigator = buildNavigator(bodies, craft, userSelect);
 const labels = createLabels(bodies, craft, userSelect);
-const tour = createTour(bodies, craft, select);
+const tour = createTour(bodies, craft, select, sim);
 
 // the selected body's orbit glows amber so its path stands out
 function setOrbitHighlight(body, on) {
@@ -406,6 +406,9 @@ document.getElementById('onboard-tour').addEventListener('click', () => {
 });
 document.getElementById('onboard-close').addEventListener('click', dismissToast);
 canvas.addEventListener('pointerdown', dismissToast, { once: false });
+// the toast overlaps the tour banner — starting a tour must clear it
+document.getElementById('btn-tour').addEventListener('click', dismissToast);
+document.getElementById('btn-spacex-tour').addEventListener('click', dismissToast);
 
 // start focused on the whole system; fade in the HUD
 document.body.classList.add('loaded');

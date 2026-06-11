@@ -926,6 +926,44 @@ try {
   check(`Starman warranty counter sane (${starman.warranties}×)`,
     starman.warranties > 100000 && starman.warranties < 140000 && starman.hiddenAfter);
 
+  // SpaceX Story: a time-traveling tour from Falcon 1 to the IPO
+  const story = await page.evaluate(async () => {
+    const sx = window.__sx;
+    const wasPlaying = sx.sim.playing;
+    sx.sim.playing = false;
+    document.getElementById('btn-spacex-tour').click();
+    await sx.frame();
+    const first = {
+      date: document.getElementById('date-label').textContent,
+      name: document.getElementById('tour-name').textContent,
+      step: document.getElementById('tour-step').textContent,
+      sel: sx.selected()?.data.id,
+    };
+    document.getElementById('tour-next').click();
+    document.getElementById('tour-next').click();
+    await sx.frame();
+    const third = {
+      date: document.getElementById('date-label').textContent,
+      name: document.getElementById('tour-name').textContent,
+      sel: sx.selected()?.data.id,
+    };
+    document.getElementById('tour-exit').click();
+    const exited = !document.getElementById('tour-banner').classList.contains('open')
+      && !document.getElementById('btn-spacex-tour').classList.contains('on');
+    sx.sim.playing = wasPlaying;
+    document.getElementById('btn-now').click();
+    sx.deselect();
+    await sx.frame();
+    return { first, third, exited };
+  });
+  check(`SpaceX Story opens on Falcon 1 in 2008 (${story.first.date})`,
+    story.first.date.startsWith('2008-09-28') && story.first.name === 'Falcon 1 reaches orbit'
+    && story.first.step === '1 / 7' && story.first.sel === 'earth');
+  check(`SpaceX Story stop 3 = Starman departure (${story.third.date})`,
+    story.third.date.startsWith('2018-02-06') && story.third.sel === 'roadster'
+    && story.third.name === 'Starman leaves Earth');
+  check('SpaceX Story exits cleanly', story.exited);
+
   console.log('\n— Numeric stability under stress');
   const stable = await page.evaluate(async () => {
     const sx = window.__sx;

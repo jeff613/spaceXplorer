@@ -312,7 +312,7 @@ body.loaded #hud-header, body.loaded #nav-panel, body.loaded #time-bar { opacity
 
 /* ── Grand tour ─────────────────────────────────────────────────────── */
 
-#btn-tour {
+#btn-tour, #btn-spacex-tour {
   width: 100%;
   background: rgba(255, 179, 71, 0.08);
   border: 1px solid rgba(255, 179, 71, 0.35);
@@ -328,7 +328,7 @@ body.loaded #hud-header, body.loaded #nav-panel, body.loaded #time-bar { opacity
   transition: all 0.15s;
 }
 
-#btn-tour:hover, #btn-tour.on {
+#btn-tour:hover, #btn-tour.on, #btn-spacex-tour:hover, #btn-spacex-tour.on {
   background: rgba(255, 179, 71, 0.18);
   border-color: var(--amber);
 }
