@@ -2,7 +2,7 @@
 
 **Status:** Living document — the improvement loop works against this.
 **Owner:** Jeff
-**Last updated:** 2026-06-13 (iteration 81)
+**Last updated:** 2026-06-13 (iteration 82)
 
 ## 1. Vision
 
@@ -77,6 +77,8 @@ a date picker alongside NOW.
 - `npm test` green on every iteration; suite grows with every feature.
 - Zero console/page errors in normal use.
 - 60 fps target on a typical laptop; no jank when fast-forwarding time.
+  Measured 120 fps idle AND at 100 days/s with the full 64-object scene
+  (iter 82); suite gates ≥30.
 - Every object: accurate stats, a memorable fact, clickable, searchable,
   labeled.
 - Orbital positions within a few percent of published ephemerides for the

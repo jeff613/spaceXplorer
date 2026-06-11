@@ -972,7 +972,7 @@ try {
   });
   // headless Chrome renders on SwiftShader (software GL) — a real GPU is
   // far faster, so this is a regression tripwire, not the 60fps product bar
-  check(`headless FPS ${fps.toFixed(0)} ≥ 12 (software GL floor)`, fps >= 12);
+  check(`headless FPS ${fps.toFixed(0)} ≥ 30 (measured 120 on dev hardware)`, fps >= 30);
 
   console.log('\n— Deep links');
   const page2 = await openPage(browser, `${BASE}/?focus=saturn`, consoleErrors);
