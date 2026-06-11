@@ -292,7 +292,7 @@ export function setupTimeControls(sim, sound) {
   });
 
   // SPCX IPO: Nasdaq market open, June 12 2026, 9:30 ET (13:30 UTC).
-  // Runs on sim time like everything else — time-travel moves the clock.
+  // Runs on wall-clock time — time-travel never moves this clock.
   const IPO_MS = Date.UTC(2026, 5, 12, 13, 30);
   const ipoBadge = document.getElementById('ipo-countdown');
   const ipoLabel = document.getElementById('ipo-label');
@@ -307,7 +307,7 @@ export function setupTimeControls(sim, sound) {
       const d = new Date(simMs);
       dateLabel.textContent = d.toISOString().slice(0, 10) + '  ' + d.toISOString().slice(11, 16) + ' UTC';
 
-      const delta = IPO_MS - simMs;
+      const delta = IPO_MS - Date.now();
       const s = Math.abs(delta) / 1000;
       const days = Math.floor(s / 86400);
       const clock = `${days > 0 ? days.toLocaleString('en-US') + 'd ' : ''}`
@@ -317,7 +317,7 @@ export function setupTimeControls(sim, sound) {
       ipoClock.textContent = (live ? 'T+' : 'T−') + clock;
       ipoBadge.classList.toggle('live', live);
 
-      // one-time flourish when sim time crosses T-0 while you're watching
+      // one-time flourish when the real clock crosses T-0 while you're watching
       if (prevDelta !== null && prevDelta > 0 && delta <= 0 && !celebrated) {
         celebrated = true;
         ipoBadge.classList.add('celebrate');

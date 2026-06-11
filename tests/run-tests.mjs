@@ -1003,25 +1003,22 @@ try {
   check('date label reflects the jump', halley86.label.startsWith('1986-02-09'));
 
   // SPCX IPO badge: counts down before Nasdaq open (2026-06-12 13:30 UTC),
-  // flips to T+ trading mode after, driven by sim time
+  // flips to T+ trading mode after, driven by wall-clock time (stub Date.now)
   const ipo = await page.evaluate(async () => {
     const sx = window.__sx;
-    const J2000 = Date.UTC(2000, 0, 1, 12);
-    const wasPlaying = sx.sim.playing;
-    sx.sim.playing = false; // freeze time so the clock strings are exact
+    const realNow = Date.now;
     const read = () => ({
       label: document.getElementById('ipo-label').textContent,
       clock: document.getElementById('ipo-clock').textContent,
       live: document.getElementById('ipo-countdown').classList.contains('live'),
     });
-    sx.sim.days = (Date.UTC(2026, 5, 12, 13, 0) - J2000) / 86400000; // T−30 min
+    Date.now = () => Date.UTC(2026, 5, 12, 13, 0); // T−30 min
     await sx.frame();
     const before = read();
-    sx.sim.days = (Date.UTC(2026, 5, 12, 14, 0) - J2000) / 86400000; // T+30 min
+    Date.now = () => Date.UTC(2026, 5, 12, 14, 0); // T+30 min
     await sx.frame();
     const after = read();
-    sx.sim.playing = wasPlaying;
-    document.getElementById('btn-now').click();
+    Date.now = realNow;
     await sx.frame();
     return { before, after };
   });
@@ -1032,26 +1029,26 @@ try {
     ipo.after.live && ipo.after.clock === 'T+00:30:00'
     && ipo.after.label.includes('TRADING ON NASDAQ'));
 
-  // celebration must be asserted on a fresh page: earlier suite tests
-  // (e.g. the +1 sidereal year jump) already crossed T-0 on the main page
+  // celebration must be asserted on a fresh page: the badge test above
+  // already crossed T-0 on the main page, consuming the one-shot
   const celPage = await openPage(browser, BASE, consoleErrors);
   const cel = await celPage.evaluate(async () => {
     const sx = window.__sx;
-    const J2000 = Date.UTC(2000, 0, 1, 12);
-    sx.sim.playing = false;
+    const realNow = Date.now;
     const badge = document.getElementById('ipo-countdown');
-    sx.sim.days = (Date.UTC(2026, 5, 12, 13, 29, 55) - J2000) / 86400000;
+    Date.now = () => Date.UTC(2026, 5, 12, 13, 29, 55);
     await sx.frame();
-    sx.sim.days = (Date.UTC(2026, 5, 12, 13, 30, 5) - J2000) / 86400000;
+    Date.now = () => Date.UTC(2026, 5, 12, 13, 30, 5);
     await sx.frame();
     const fired = badge.classList.contains('celebrate');
     // cross again — must stay silent, the flourish is one-shot per load
     badge.classList.remove('celebrate');
-    sx.sim.days = (Date.UTC(2026, 5, 12, 13, 29, 55) - J2000) / 86400000;
+    Date.now = () => Date.UTC(2026, 5, 12, 13, 29, 55);
     await sx.frame();
-    sx.sim.days = (Date.UTC(2026, 5, 12, 13, 30, 5) - J2000) / 86400000;
+    Date.now = () => Date.UTC(2026, 5, 12, 13, 30, 5);
     await sx.frame();
     const refired = badge.classList.contains('celebrate');
+    Date.now = realNow;
     return { fired, refired };
   });
   await celPage.close();
