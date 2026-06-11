@@ -977,9 +977,34 @@ function attachEclipse(target, getOccluder) {
 }
 
 // ─── Asteroid belt ────────────────────────────────────────────────────────
+// Real rocks, not point sprites: a few low-poly irregular geometry variants
+// drawn as InstancedMesh (one draw call each), lit by the sun like everything
+// else, plus a faint Points layer at the same scatter so the ring still reads
+// at system-wide zoom where individual rocks are subpixel.
+
+function makeRockGeometry(rnd) {
+  const geo = new THREE.IcosahedronGeometry(1, 1); // non-indexed, 80 faces
+  const pos = geo.attributes.position;
+  // displace shared vertices consistently (keyed by position) so faces stay
+  // welded, then squash each axis for an irregular potato silhouette
+  const bump = new Map();
+  const sx = 0.62 + rnd() * 0.66, sy = 0.62 + rnd() * 0.66, sz = 0.62 + rnd() * 0.66;
+  const v = new THREE.Vector3();
+  for (let i = 0; i < pos.count; i++) {
+    v.fromBufferAttribute(pos, i);
+    const key = `${v.x.toFixed(3)},${v.y.toFixed(3)},${v.z.toFixed(3)}`;
+    if (!bump.has(key)) bump.set(key, 0.72 + rnd() * 0.56);
+    v.multiplyScalar(bump.get(key));
+    pos.setXYZ(i, v.x * sx, v.y * sy, v.z * sz);
+  }
+  geo.computeVertexNormals(); // non-indexed → faceted, rocky shading
+  return geo;
+}
 
 export function createAsteroidBelt(scene) {
   const COUNT = 2200;
+  // keep this loop byte-identical to the old Points version: it feeds from the
+  // shared `rand` stream, and the Kuiper belt scatter behind it must not shift
   const positions = new Float32Array(COUNT * 3);
   for (let i = 0; i < COUNT; i++) {
     const au = 2.1 + rand() * 1.2 + (rand() - 0.5) * 0.15;
@@ -989,18 +1014,69 @@ export function createAsteroidBelt(scene) {
     positions[i * 3 + 1] = (rand() - 0.5) * 3.5;
     positions[i * 3 + 2] = Math.sin(a) * r;
   }
+  const group = new THREE.Group();
+  group.name = 'asteroid-belt';
+  scene.add(group);
+
+  // rock shapes/orientations draw from their own seeded stream so the shared
+  // `rand` sequence stays untouched (universe scatter must be reproducible)
+  const rrand = mulberry32(0x0be17a57);
+  const VARIANTS = 4;
+  // the bright RoomEnvironment IBL would flood the rocks with flat light and
+  // erase the sun's day/night contrast — keep it to a faint fill
+  const mat = new THREE.MeshStandardMaterial({
+    roughness: 0.94, metalness: 0.05, envMapIntensity: 0.2,
+  });
+  const rocks = [];
+  for (let v = 0; v < VARIANTS; v++) {
+    const n = Math.floor(COUNT / VARIANTS) + (v < COUNT % VARIANTS ? 1 : 0);
+    const m = new THREE.InstancedMesh(makeRockGeometry(rrand), mat, n);
+    m.name = 'belt-rocks';
+    rocks.push(m);
+    group.add(m);
+  }
+  const dummy = new THREE.Object3D();
+  const col = new THREE.Color();
+  const fill = new Array(VARIANTS).fill(0);
+  for (let i = 0; i < COUNT; i++) {
+    const m = rocks[i % VARIANTS];
+    dummy.position.fromArray(positions, i * 3);
+    dummy.rotation.set(rrand() * Math.PI * 2, rrand() * Math.PI * 2, rrand() * Math.PI * 2);
+    dummy.scale.setScalar(0.07 + Math.pow(rrand(), 2.2) * 0.38); // many pebbles, few boulders
+    dummy.updateMatrix();
+    m.setMatrixAt(fill[i % VARIANTS], dummy.matrix);
+    // warm grey-brown family: C-type dark grey through S-type rusty tan
+    // (setHSL works in linear space — keep lightness near real albedo, 4–13%)
+    col.setHSL(0.06 + rrand() * 0.05, 0.12 + rrand() * 0.24, 0.04 + rrand() * 0.09);
+    m.setColorAt(fill[i % VARIANTS], col);
+    fill[i % VARIANTS]++;
+  }
+
+  // far dust at the exact same scatter; depth-tested behind the rocks so it
+  // only shows where a rock is too small to resolve. Soft round sprite, not
+  // the default square point
+  const dc = document.createElement('canvas');
+  dc.width = dc.height = 32;
+  const dctx = dc.getContext('2d');
+  const dg = dctx.createRadialGradient(16, 16, 0, 16, 16, 16);
+  dg.addColorStop(0, 'rgba(255,255,255,1)');
+  dg.addColorStop(0.4, 'rgba(255,255,255,0.5)');
+  dg.addColorStop(1, 'rgba(255,255,255,0)');
+  dctx.fillStyle = dg;
+  dctx.fillRect(0, 0, 32, 32);
   const geo = new THREE.BufferGeometry();
   geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-  const mat = new THREE.PointsMaterial({
-    color: 0x8a7f6e, size: 0.55, sizeAttenuation: true, transparent: true, opacity: 0.75,
-  });
-  const belt = new THREE.Points(geo, mat);
-  scene.add(belt);
+  const dust = new THREE.Points(geo, new THREE.PointsMaterial({
+    color: 0x8a7f6e, size: 0.4, sizeAttenuation: true, transparent: true, opacity: 0.55,
+    map: new THREE.CanvasTexture(dc), depthWrite: false,
+  }));
+  group.add(dust);
+
   const kuiper = createKuiperBelt(scene);
   return {
-    setVisible(v) { belt.visible = v; kuiper.visible = v; },
+    setVisible(v) { group.visible = v; kuiper.visible = v; },
     update(days) {
-      belt.rotation.y = (days / 1680) * Math.PI * 2; // ~4.6 yr mean period
+      group.rotation.y = (days / 1680) * Math.PI * 2; // ~4.6 yr mean period
       kuiper.rotation.y = (days / 90000) * Math.PI * 2; // ~250 yr mean period
     },
   };

@@ -1133,6 +1133,22 @@ try {
   }
 
   console.log('\n— Determinism & lunar phase');
+  const beltRocks = await page.evaluate(() => {
+    const rocks = [];
+    window.__sx.scene.traverse((o) => {
+      if (o.isInstancedMesh && o.name === 'belt-rocks') rocks.push(o);
+    });
+    return {
+      meshes: rocks.length,
+      total: rocks.reduce((s, m) => s + m.count, 0),
+      lit: rocks.every((m) => m.material.isMeshStandardMaterial && !!m.geometry.attributes.normal),
+      colored: rocks.every((m) => !!m.instanceColor),
+    };
+  });
+  check(`asteroid belt is ${beltRocks.total} lit instanced rocks in ${beltRocks.meshes} draw calls (no flat dots)`,
+    beltRocks.total === 2200 && beltRocks.meshes >= 2 && beltRocks.meshes <= 6
+    && beltRocks.lit && beltRocks.colored, JSON.stringify(beltRocks));
+
   const worldFingerprint = `(() => {
     const sx = window.__sx;
     const belt = [];
@@ -1141,6 +1157,10 @@ try {
       if (o.isPoints && (n === 2200 || n === 3000) && belt.length < 6) {
         const a = o.geometry.attributes.position.array;
         belt.push(a[0], a[1], a[2]);
+      }
+      if (o.isInstancedMesh && o.name === 'belt-rocks') {
+        const m = o.instanceMatrix.array; // rock scatter + per-rock pose
+        belt.push(m[0], m[1], m[2], m[12], m[13], m[14]);
       }
     });
     return belt.join(',');
