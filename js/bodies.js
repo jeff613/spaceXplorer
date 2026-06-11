@@ -6,12 +6,6 @@ import {
 
 const texLoader = new THREE.TextureLoader();
 const rand = mulberry32(20260610);
-function randDir(target) {
-  const u = rand() * 2 - 1;
-  const t = rand() * Math.PI * 2;
-  const sxy = Math.sqrt(1 - u * u);
-  return target.set(sxy * Math.cos(t), u, sxy * Math.sin(t));
-}
 const DEG = Math.PI / 180;
 
 function loadTex(file, mat, fallbackColor) {
@@ -69,6 +63,33 @@ export function keplerPosition(el, days, target = new THREE.Vector3()) {
 
   const s = scaleDistance(r) / r;
   return target.set(x * s, z * s, -y * s);
+}
+
+// ─── Temporal anti-aliasing for fast motion ───────────────────────────────
+// Positions are exact functions of sim time, but the render loop samples
+// them once per frame. At high speeds the per-frame step exceeds a large
+// fraction of a short period (ISS laps every 93 min; Earth spins daily), so
+// the sampled phase lands at effectively random spots — objects strobe and
+// teleport instead of sweeping. Each fast motion gets its own clock: while
+// the playback step would move its phase more than MAX_PHASE_STEP radians,
+// the displayed clock advances at that cap (smooth and direction-true); the
+// moment steps are small again (slower speed, pause, date teleport) it
+// snaps back to exact sim time. stepDays is the playback step the render
+// loop took this frame — direct update(days) calls stay exact.
+
+const MAX_PHASE_STEP = 0.25; // rad of phase per rendered frame
+
+export function makeSmoothClock(periodDays) {
+  const maxStepDays = Math.abs(periodDays) * MAX_PHASE_STEP / (Math.PI * 2);
+  let shown = null;
+  return (days, stepDays) => {
+    if (shown !== null && Math.abs(stepDays) > maxStepDays) {
+      shown += Math.sign(stepDays) * maxStepDays;
+    } else {
+      shown = days; // exact: small step, paused, date jump, or direct call
+    }
+    return shown;
+  };
 }
 
 function makeOrbitLine(el, color = 0x3a4a5a, opacity = 0.45) {
@@ -226,10 +247,11 @@ export function createSun(scene) {
   flare.raycast = () => {}; // never intercept clicks
   light.add(flare);
 
+  const spinClock = makeSmoothClock(25.4);
   return {
     data: SUN, mesh, displayRadius: SUN_DISPLAY_RADIUS,
-    update(days) {
-      mesh.rotation.y = (days / 25.4) * Math.PI * 2;
+    update(days, stepDays) {
+      mesh.rotation.y = (spinClock(days, stepDays) / 25.4) * Math.PI * 2;
       // granulation churns in real time, even when the sim is paused
       mat.uniforms.time.value = performance.now() / 1000;
       rimMat.uniforms.time.value = mat.uniforms.time.value;
@@ -410,6 +432,14 @@ export function createPlanet(scene, data) {
       const ctx = c.getContext('2d');
       ctx.filter = 'invert(1)';
       ctx.drawImage(img, 0, 0);
+      // floor the ocean roughness at 0.35: at 0 the sea is a perfect mirror
+      // and reflects scene.environment (RoomEnvironment's rectangular light
+      // panels) as hard-edged white squares; 0.35 samples a blurred PMREM
+      // mip — soft sun glint, no squares
+      ctx.filter = 'none';
+      ctx.globalAlpha = 0.35;
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(0, 0, c.width, c.height);
       const rough = new THREE.CanvasTexture(c);
       mat.roughnessMap = rough;
       mat.roughness = 1.0;
@@ -545,16 +575,19 @@ export function createPlanet(scene, data) {
   const orbitLine = makeOrbitLine(data.elements);
   scene.add(orbitLine);
 
+  const spinHours = data.visualSpinHours ?? data.rotationHours;
+  const spinClock = makeSmoothClock(spinHours / 24);
   const body = {
     data, mesh, anchor, tiltGroup, orbitLine, displayRadius, rings, atmosphere,
-    update(days) {
+    update(days, stepDays) {
       keplerPosition(data.elements, days, anchor.position);
       // visualSpinHours: what we render can outpace the body's true day
       // (Venus shows its cloud deck, which super-rotates in ~4 days)
-      mesh.rotation.y = (days * 24 / (data.visualSpinHours ?? data.rotationHours)) * Math.PI * 2;
+      const spinDays = spinClock(days, stepDays);
+      mesh.rotation.y = (spinDays * 24 / spinHours) * Math.PI * 2;
       const sh = mat.userData.shader;
       if (sh) {
-        if (sh.uniforms.uDays) sh.uniforms.uDays.value = days % 10000;
+        if (sh.uniforms.uDays) sh.uniforms.uDays.value = spinDays % 10000;
         if (sh.uniforms.uPlanetPos) {
           sh.uniforms.uPlanetPos.value.copy(anchor.position);
           sh.uniforms.uRingNormal.value.set(0, 1, 0).applyQuaternion(tiltGroup.quaternion);
@@ -770,13 +803,15 @@ export function createMoon(scene, data, parentBody) {
   const pw = new THREE.Vector3();
   const mw = new THREE.Vector3();
   const sunDir = new THREE.Vector3();
+  const orbitClock = makeSmoothClock(data.period);
   return {
     data, mesh, anchor: mesh, orbitLine, displayRadius, parent: parentBody,
-    update(days) {
+    update(days, stepDays) {
+      const t = orbitClock(days, stepDays);
       // ecliptic longitude maps to scene angle as a = -lambda (z = -y_ecl)
       const a = data.meanLongitude0 !== undefined
-        ? -(data.meanLongitude0 + (360 / data.period) * days) * DEG
-        : phase + (days / data.period) * Math.PI * 2;
+        ? -(data.meanLongitude0 + (360 / data.period) * t) * DEG
+        : phase + (t / data.period) * Math.PI * 2;
       const inc = (data.orbitInclination || 0) * DEG;
       mesh.position.set(
         Math.cos(a) * orbitR,
@@ -894,43 +929,120 @@ export function createComet(scene, data) {
   const orbitLine = makeOrbitLine(data.elements, 0x8a7a4a, 0.4);
   scene.add(orbitLine);
 
-  // tail: a fixed pool of points stretched anti-sunward, growing near perihelion
-  const N = 240;
-  const positions = new Float32Array(N * 3);
-  const jitter = [];
-  for (let i = 0; i < N; i++) jitter.push(randDir(new THREE.Vector3()));
-  const tailGeo = new THREE.BufferGeometry();
-  tailGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-  const tail = new THREE.Points(tailGeo, new THREE.PointsMaterial({
-    color: data.color, size: 1.6, sizeAttenuation: false,
-    transparent: true, opacity: 0.55, depthWrite: false,
-    blending: THREE.AdditiveBlending,
-  }));
-  scene.add(tail);
+  // Tails: two particle fans stretched anti-sunward, growing near perihelion.
+  // - dust tail: broad warm fan that curves back along the orbit (dust lags)
+  // - ion tail: narrower, longer, faint blue, dead straight anti-sunward
+  // Soft round shader sprites with per-particle size/fade so the tail reads
+  // as a smudge that dissolves at the tip — never a beam of square pixels.
+  const makeTailPoints = (count, colorHex, seedSalt) => {
+    let seed = 0;
+    for (const ch of data.id) seed = (seed * 31 + ch.charCodeAt(0)) >>> 0;
+    const nrand = mulberry32(seed ^ seedSalt);
+    const positions = new Float32Array(count * 3);
+    const sizes = new Float32Array(count);
+    const fades = new Float32Array(count);
+    const params = new Float32Array(count * 3); // f along tail, ux/uy on unit disc
+    for (let i = 0; i < count; i++) {
+      const f = nrand() ** 1.6; // denser near the nucleus
+      const ang = nrand() * Math.PI * 2;
+      const rad = Math.sqrt(nrand());
+      params[i * 3] = f;
+      params[i * 3 + 1] = Math.cos(ang) * rad;
+      params[i * 3 + 2] = Math.sin(ang) * rad;
+      sizes[i] = (1.0 + 2.4 * f) * (0.7 + 0.6 * nrand()); // grows as it diffuses
+      fades[i] = (1 - f) ** 1.5 * (0.4 + 0.35 * nrand()); // dies smoothly at the tip
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    geo.setAttribute('aSize', new THREE.BufferAttribute(sizes, 1));
+    geo.setAttribute('aFade', new THREE.BufferAttribute(fades, 1));
+    const mat = new THREE.ShaderMaterial({
+      uniforms: {
+        uColor: { value: new THREE.Color(colorHex) },
+        uOpacity: { value: 0 },
+      },
+      vertexShader: `
+        attribute float aSize;
+        attribute float aFade;
+        varying float vFade;
+        void main() {
+          vFade = aFade;
+          vec4 mv = modelViewMatrix * vec4(position, 1.0);
+          gl_PointSize = min(aSize * (340.0 / -mv.z), 56.0);
+          gl_Position = projectionMatrix * mv;
+        }`,
+      fragmentShader: `
+        uniform vec3 uColor;
+        uniform float uOpacity;
+        varying float vFade;
+        void main() {
+          float r = length(gl_PointCoord - 0.5) * 2.0;
+          float glow = pow(smoothstep(1.0, 0.0, r), 1.6);
+          gl_FragColor = vec4(uColor, glow * vFade * uOpacity);
+        }`,
+      transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+    });
+    const pts = new THREE.Points(geo, mat);
+    pts.frustumCulled = false; // positions move every frame; skip stale bounds
+    pts.raycast = () => {};
+    scene.add(pts);
+    return { pts, positions, params, count };
+  };
+  const dust = makeTailPoints(420, 0xffeccd, 0x7e57a11);
+  const ion = makeTailPoints(200, 0x7fa8ff, 0x10ca7a1);
 
   const dir = new THREE.Vector3();
+  const vel = new THREE.Vector3();
+  const lat1 = new THREE.Vector3();
+  const lat2 = new THREE.Vector3();
+  const ahead = new THREE.Vector3();
   const tailStart = scaleDistance(6); // tail only inside ~6 AU
 
   return {
-    data, mesh, orbitLine, displayRadius,
+    data, mesh, orbitLine, displayRadius, dustTail: dust.pts, ionTail: ion.pts,
     update(days) {
       keplerPosition(data.elements, days, mesh.position);
       const d = mesh.position.length();
       const activity = Math.max(0, Math.min(1, (tailStart - d) / tailStart));
       coma.material.opacity = activity * 0.85;
       coma.scale.setScalar(2 + activity * 14);
-      tail.visible = d < tailStart;
-      if (!tail.visible) return;
-      dir.copy(mesh.position).normalize();
+      const visible = d < tailStart;
+      dust.pts.visible = visible;
+      ion.pts.visible = visible;
+      if (!visible) return;
+      dir.copy(mesh.position).normalize(); // anti-sunward
+      // orbital velocity direction → the dust tail curves away from it
+      keplerPosition(data.elements, days + 2, ahead);
+      vel.copy(ahead).sub(mesh.position).normalize();
+      lat1.copy(vel).addScaledVector(dir, -vel.dot(dir));
+      if (lat1.lengthSq() < 1e-8) lat1.set(0, 1, 0).addScaledVector(dir, -dir.y);
+      lat1.normalize();
+      lat2.crossVectors(dir, lat1);
       const len = (tailStart - d) * 0.55 + 4;
-      for (let i = 0; i < N; i++) {
-        const f = (i / N) ** 1.4; // denser near the nucleus
-        const spread = f * len * 0.10;
-        positions[i * 3] = mesh.position.x + dir.x * f * len + jitter[i].x * spread;
-        positions[i * 3 + 1] = mesh.position.y + dir.y * f * len + jitter[i].y * spread;
-        positions[i * 3 + 2] = mesh.position.z + dir.z * f * len + jitter[i].z * spread;
-      }
-      tailGeo.attributes.position.needsUpdate = true;
+      const ionLen = len * 1.45;
+      // brightness fades smoothly to nothing as the comet recedes
+      dust.pts.material.uniforms.uOpacity.value = Math.min(1, activity ** 0.7 * 0.85 + 0.15);
+      ion.pts.material.uniforms.uOpacity.value = Math.min(1, activity ** 0.7 * 0.55 + 0.08);
+      const place = (t, length, spread0, spread1, curve) => {
+        const { positions, params, count } = t;
+        for (let i = 0; i < count; i++) {
+          const f = params[i * 3];
+          const ux = params[i * 3 + 1];
+          const uy = params[i * 3 + 2];
+          const along = f * length;
+          const sp = length * (spread0 + spread1 * f); // cone, not a line
+          const lag = curve * f * f * length; // quadratic arc away from motion
+          positions[i * 3] = mesh.position.x + dir.x * along - vel.x * lag
+            + (lat1.x * ux + lat2.x * uy) * sp;
+          positions[i * 3 + 1] = mesh.position.y + dir.y * along - vel.y * lag
+            + (lat1.y * ux + lat2.y * uy) * sp;
+          positions[i * 3 + 2] = mesh.position.z + dir.z * along - vel.z * lag
+            + (lat1.z * ux + lat2.z * uy) * sp;
+        }
+        t.pts.geometry.attributes.position.needsUpdate = true;
+      };
+      place(dust, len, 0.035, 0.22, 0.30); // broad curved dust fan
+      place(ion, ionLen, 0.012, 0.05, 0); // straight narrow ion streak
     },
   };
 }
@@ -965,8 +1077,8 @@ function attachEclipse(target, getOccluder) {
     mat.userData.eclipseShader = shader;
   };
   const baseUpdate = target.update;
-  target.update = (days) => {
-    baseUpdate(days);
+  target.update = (days, stepDays) => {
+    baseUpdate(days, stepDays);
     const sh = mat.userData.eclipseShader;
     if (sh) {
       const occ = getOccluder();
@@ -977,9 +1089,34 @@ function attachEclipse(target, getOccluder) {
 }
 
 // ─── Asteroid belt ────────────────────────────────────────────────────────
+// Real rocks, not point sprites: a few low-poly irregular geometry variants
+// drawn as InstancedMesh (one draw call each), lit by the sun like everything
+// else, plus a faint Points layer at the same scatter so the ring still reads
+// at system-wide zoom where individual rocks are subpixel.
+
+function makeRockGeometry(rnd) {
+  const geo = new THREE.IcosahedronGeometry(1, 1); // non-indexed, 80 faces
+  const pos = geo.attributes.position;
+  // displace shared vertices consistently (keyed by position) so faces stay
+  // welded, then squash each axis for an irregular potato silhouette
+  const bump = new Map();
+  const sx = 0.62 + rnd() * 0.66, sy = 0.62 + rnd() * 0.66, sz = 0.62 + rnd() * 0.66;
+  const v = new THREE.Vector3();
+  for (let i = 0; i < pos.count; i++) {
+    v.fromBufferAttribute(pos, i);
+    const key = `${v.x.toFixed(3)},${v.y.toFixed(3)},${v.z.toFixed(3)}`;
+    if (!bump.has(key)) bump.set(key, 0.72 + rnd() * 0.56);
+    v.multiplyScalar(bump.get(key));
+    pos.setXYZ(i, v.x * sx, v.y * sy, v.z * sz);
+  }
+  geo.computeVertexNormals(); // non-indexed → faceted, rocky shading
+  return geo;
+}
 
 export function createAsteroidBelt(scene) {
   const COUNT = 2200;
+  // keep this loop byte-identical to the old Points version: it feeds from the
+  // shared `rand` stream, and the Kuiper belt scatter behind it must not shift
   const positions = new Float32Array(COUNT * 3);
   for (let i = 0; i < COUNT; i++) {
     const au = 2.1 + rand() * 1.2 + (rand() - 0.5) * 0.15;
@@ -989,18 +1126,69 @@ export function createAsteroidBelt(scene) {
     positions[i * 3 + 1] = (rand() - 0.5) * 3.5;
     positions[i * 3 + 2] = Math.sin(a) * r;
   }
+  const group = new THREE.Group();
+  group.name = 'asteroid-belt';
+  scene.add(group);
+
+  // rock shapes/orientations draw from their own seeded stream so the shared
+  // `rand` sequence stays untouched (universe scatter must be reproducible)
+  const rrand = mulberry32(0x0be17a57);
+  const VARIANTS = 4;
+  // the bright RoomEnvironment IBL would flood the rocks with flat light and
+  // erase the sun's day/night contrast — keep it to a faint fill
+  const mat = new THREE.MeshStandardMaterial({
+    roughness: 0.94, metalness: 0.05, envMapIntensity: 0.2,
+  });
+  const rocks = [];
+  for (let v = 0; v < VARIANTS; v++) {
+    const n = Math.floor(COUNT / VARIANTS) + (v < COUNT % VARIANTS ? 1 : 0);
+    const m = new THREE.InstancedMesh(makeRockGeometry(rrand), mat, n);
+    m.name = 'belt-rocks';
+    rocks.push(m);
+    group.add(m);
+  }
+  const dummy = new THREE.Object3D();
+  const col = new THREE.Color();
+  const fill = new Array(VARIANTS).fill(0);
+  for (let i = 0; i < COUNT; i++) {
+    const m = rocks[i % VARIANTS];
+    dummy.position.fromArray(positions, i * 3);
+    dummy.rotation.set(rrand() * Math.PI * 2, rrand() * Math.PI * 2, rrand() * Math.PI * 2);
+    dummy.scale.setScalar(0.07 + Math.pow(rrand(), 2.2) * 0.38); // many pebbles, few boulders
+    dummy.updateMatrix();
+    m.setMatrixAt(fill[i % VARIANTS], dummy.matrix);
+    // warm grey-brown family: C-type dark grey through S-type rusty tan
+    // (setHSL works in linear space — keep lightness near real albedo, 4–13%)
+    col.setHSL(0.06 + rrand() * 0.05, 0.12 + rrand() * 0.24, 0.04 + rrand() * 0.09);
+    m.setColorAt(fill[i % VARIANTS], col);
+    fill[i % VARIANTS]++;
+  }
+
+  // far dust at the exact same scatter; depth-tested behind the rocks so it
+  // only shows where a rock is too small to resolve. Soft round sprite, not
+  // the default square point
+  const dc = document.createElement('canvas');
+  dc.width = dc.height = 32;
+  const dctx = dc.getContext('2d');
+  const dg = dctx.createRadialGradient(16, 16, 0, 16, 16, 16);
+  dg.addColorStop(0, 'rgba(255,255,255,1)');
+  dg.addColorStop(0.4, 'rgba(255,255,255,0.5)');
+  dg.addColorStop(1, 'rgba(255,255,255,0)');
+  dctx.fillStyle = dg;
+  dctx.fillRect(0, 0, 32, 32);
   const geo = new THREE.BufferGeometry();
   geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-  const mat = new THREE.PointsMaterial({
-    color: 0x8a7f6e, size: 0.55, sizeAttenuation: true, transparent: true, opacity: 0.75,
-  });
-  const belt = new THREE.Points(geo, mat);
-  scene.add(belt);
+  const dust = new THREE.Points(geo, new THREE.PointsMaterial({
+    color: 0x8a7f6e, size: 0.4, sizeAttenuation: true, transparent: true, opacity: 0.55,
+    map: new THREE.CanvasTexture(dc), depthWrite: false,
+  }));
+  group.add(dust);
+
   const kuiper = createKuiperBelt(scene);
   return {
-    setVisible(v) { belt.visible = v; kuiper.visible = v; },
+    setVisible(v) { group.visible = v; kuiper.visible = v; },
     update(days) {
-      belt.rotation.y = (days / 1680) * Math.PI * 2; // ~4.6 yr mean period
+      group.rotation.y = (days / 1680) * Math.PI * 2; // ~4.6 yr mean period
       kuiper.rotation.y = (days / 90000) * Math.PI * 2; // ~250 yr mean period
     },
   };
@@ -1209,8 +1397,8 @@ export function buildSolarSystem(scene) {
     const pluto = bodies.get('pluto');
     const charon = bodies.get('charon');
     const charonUpdate = charon.update;
-    charon.update = (days) => {
-      charonUpdate(days);
+    charon.update = (days, stepDays) => {
+      charonUpdate(days, stepDays);
       pluto.mesh.position.copy(charon.mesh.position).multiplyScalar(-0.109);
     };
   }

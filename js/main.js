@@ -108,6 +108,27 @@ document.getElementById('btn-random').addEventListener('click', () => {
 const labels = createLabels(bodies, craft, userSelect);
 const tour = createTour(bodies, craft, select);
 
+// fly-to viewing distance: surface rovers are tiny miniatures pinned to a
+// planet, so they get a much closer floor than free-flying bodies
+const flyToDist = (body) => Math.max(
+  TRUE_SCALE ? 0.01 : (body.data.kind === 'surface' ? 1.4 : 4),
+  body.displayRadius * 5.5,
+);
+
+// fly-to approach direction: free craft keep the current viewing angle;
+// surface rovers are approached from their local sky so they land framed
+// against their planet instead of silhouetted against empty space
+function flyToDir(body, fromPos, target) {
+  const dir = fromPos.clone().sub(target).normalize();
+  if (dir.lengthSq() < 0.5) dir.set(0.4, 0.35, 1).normalize();
+  if (!TRUE_SCALE && body.data.kind === 'surface') {
+    const radial = target.clone()
+      .sub(bodies.get(body.data.parent).anchor.position).normalize();
+    dir.add(radial.multiplyScalar(2)).normalize();
+  }
+  return dir;
+}
+
 // the selected body's orbit glows amber so its path stands out
 function setOrbitHighlight(body, on) {
   const line = body?.orbitLine;
@@ -134,9 +155,8 @@ function select(body, { instant = false } = {}) {
   body.mesh.getWorldPosition(followPos);
   prevFollowPos.copy(followPos);
   if (instant) {
-    const viewDist = Math.max(TRUE_SCALE ? 0.01 : 4, body.displayRadius * 5.5);
-    const dir = camera.position.clone().sub(followPos).normalize();
-    if (dir.lengthSq() < 0.5) dir.set(0.4, 0.35, 1).normalize();
+    const viewDist = flyToDist(body);
+    const dir = flyToDir(body, camera.position, followPos);
     camera.position.copy(followPos).add(dir.multiplyScalar(viewDist));
     controls.target.copy(followPos);
     flight = null;
@@ -247,9 +267,8 @@ function updateCamera(dt) {
     // fly-to: ease camera toward a viewing spot near the body
     flight.t = Math.min(1, flight.t + dt / 1.4);
     const k = 1 - Math.pow(1 - flight.t, 3); // easeOutCubic
-    const viewDist = Math.max(TRUE_SCALE ? 0.01 : 4, selected.displayRadius * 5.5);
-    const dir = flight.fromPos.clone().sub(followPos).normalize();
-    if (dir.lengthSq() < 0.5) dir.set(0.4, 0.35, 1).normalize();
+    const viewDist = flyToDist(selected);
+    const dir = flyToDir(selected, flight.fromPos, followPos);
     const destPos = followPos.clone().add(dir.multiplyScalar(viewDist));
     camera.position.lerpVectors(flight.fromPos, destPos, k);
     controls.target.lerpVectors(flight.fromTarget, followPos, k);
@@ -322,10 +341,14 @@ function animate() {
   requestAnimationFrame(animate);
   const dt = Math.min(clock.getDelta(), 0.1);
 
-  if (sim.playing) sim.days += sim.speed * sim.dir * dt;
+  // stepDays tells updates how far playback moved this frame, so fast
+  // short-period motion can be smoothed without ever desyncing a paused
+  // scene, a date jump, or a direct update(days) call
+  const stepDays = sim.playing ? sim.speed * sim.dir * dt : 0;
+  if (sim.playing) sim.days += stepDays;
 
-  for (const body of bodies.values()) body.update(sim.days);
-  for (const c of craft.values()) c.update(sim.days);
+  for (const body of bodies.values()) body.update(sim.days, stepDays);
+  for (const c of craft.values()) c.update(sim.days, stepDays);
   belt.update(sim.days);
 
   // cinematic drift while the tour dwells; otherwise only after long idle —
@@ -337,7 +360,9 @@ function animate() {
   // never let the camera zoom inside the selected body
   controls.minDistance = TRUE_SCALE
     ? 0.002
-    : (selected ? Math.max(2, selected.displayRadius * 1.25) : 2);
+    : (selected
+      ? Math.max(selected.data.kind === 'surface' ? 0.6 : 2, selected.displayRadius * 1.25)
+      : 2);
 
   updateCamera(dt);
   controls.update();
@@ -352,7 +377,7 @@ function animate() {
     if (c._glint) {
       c.mesh.getWorldPosition(glintTmp);
       const d = camera.position.distanceTo(glintTmp);
-      const near = Math.max(6, c.displayRadius * 9);
+      const near = Math.max(TRUE_SCALE ? 0.003 : 6, c.displayRadius * 9);
       c._glint.material.opacity = Math.min(0.45, Math.max(0, (d - near) / (near * 3)));
     }
   }

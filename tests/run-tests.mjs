@@ -14,7 +14,7 @@ import pixelmatch from 'pixelmatch';
 import { PNG } from 'pngjs';
 
 const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
-const PORT = 8643;
+const PORT = Number(process.env.SX_TEST_PORT ?? 8643);
 const BASE = `http://127.0.0.1:${PORT}`;
 const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 
@@ -147,6 +147,33 @@ try {
   });
   check(`Perseverance pinned to Mars surface (${marsFleet.surfDist.toFixed(2)} R)`,
     marsFleet.surfDist > 0.95 && marsFleet.surfDist < 1.1);
+  // P0-3: rovers must stand on their wheels (local up = surface normal) and
+  // read as tiny surface miniatures, not orbiter-sized boxes
+  const roverPose = await page.evaluate(async () => {
+    const THREE = await import('three');
+    const sx = window.__sx;
+    const mars = sx.bodies.get('mars');
+    return ['perseverance', 'curiosity'].map((id) => {
+      const c = sx.craft.get(id);
+      c.mesh.updateWorldMatrix(true, true);
+      const pos = c.mesh.getWorldPosition(new THREE.Vector3());
+      const normal = pos.clone()
+        .sub(mars.mesh.getWorldPosition(new THREE.Vector3())).normalize();
+      const up = new THREE.Vector3(0, 1, 0)
+        .applyQuaternion(c.mesh.getWorldQuaternion(new THREE.Quaternion()));
+      const box = new THREE.Box3();
+      const tmp = new THREE.Box3();
+      c.mesh.traverse((o) => {
+        if (o.isMesh && o.name !== 'pickproxy') box.union(tmp.setFromObject(o));
+      });
+      const s = box.getSize(new THREE.Vector3());
+      return { id, upDot: +up.dot(normal).toFixed(3), size: +Math.max(s.x, s.y, s.z).toFixed(3) };
+    });
+  });
+  check('rovers stand upright on the surface (up ∥ local normal)',
+    roverPose.every((r) => r.upDot > 0.999), JSON.stringify(roverPose));
+  check('rovers are surface miniatures (0.15–0.45 units, < ⅓ Mars radius)',
+    roverPose.every((r) => r.size > 0.15 && r.size < 0.45), JSON.stringify(roverPose));
   check('SOHO sits sunward of Earth (L1)', marsFleet.sohoInside);
   // LRO must circle the Moon, not the Earth
   const lro = await page.evaluate(() => {
@@ -217,7 +244,9 @@ try {
       box.getSize(s);
       return +Math.max(s.x, s.y, s.z).toFixed(2);
     };
-    return ['iss', 'roadster', 'perseverance', 'hubble', 'jwst', 'parker'].map(
+    // rovers are deliberately smaller (surface miniatures) — sized against
+    // Mars in the rover pose check above
+    return ['iss', 'roadster', 'hubble', 'jwst', 'parker'].map(
       (id) => [id, visibleSize(sx.craft.get(id).mesh)],
     );
   });
@@ -367,6 +396,45 @@ try {
   check('comet nucleus is a dark lumpy body, coma swells at perihelion only',
     comet.dark && comet.lumpy && comet.comaActive > 0.3 && comet.comaIdleNow,
     JSON.stringify(comet));
+  // tails are a fan, not a beam: dust spreads laterally and curves off-axis,
+  // ion stays a narrower streak that reaches further anti-sunward
+  const tails = await page.evaluate(async () => {
+    const sx = window.__sx;
+    const h = sx.bodies.get('halley');
+    const save = sx.sim.days;
+    const days1986 = (Date.parse('1986-02-09T00:00Z') - Date.parse('2000-01-01T12:00Z')) / 86400000;
+    h.update(days1986);
+    const p = h.mesh.position;
+    const len = Math.hypot(p.x, p.y, p.z);
+    const ax = p.x / len, ay = p.y / len, az = p.z / len; // anti-sunward axis
+    const measure = (pts) => {
+      const a = pts.geometry.attributes.position.array;
+      const n = a.length / 3;
+      let lat = 0, maxAlong = 0;
+      for (let i = 0; i < n; i++) {
+        const dx = a[i * 3] - p.x, dy = a[i * 3 + 1] - p.y, dz = a[i * 3 + 2] - p.z;
+        const along = dx * ax + dy * ay + dz * az;
+        lat += Math.hypot(dx - ax * along, dy - ay * along, dz - az * along);
+        maxAlong = Math.max(maxAlong, along);
+      }
+      return {
+        meanLat: +(lat / n).toFixed(2), maxAlong: +maxAlong.toFixed(1),
+        visible: pts.visible, opacity: +pts.material.uniforms.uOpacity.value.toFixed(2),
+      };
+    };
+    const dust = measure(h.dustTail), ion = measure(h.ionTail);
+    h.update(save);
+    await sx.frame();
+    return { dust, ion };
+  });
+  check('comet dust tail at perihelion: visible broad fan with lateral spread',
+    tails.dust.visible && tails.dust.opacity > 0.3 && tails.dust.meanLat > 1.5,
+    JSON.stringify(tails.dust));
+  check('comet ion tail at perihelion: visible, narrower than dust, reaches further',
+    tails.ion.visible && tails.ion.opacity > 0.2
+      && tails.ion.meanLat < tails.dust.meanLat
+      && tails.ion.maxAlong > tails.dust.maxAlong,
+    JSON.stringify(tails));
   const rocks = await page.evaluate(() => {
     const sx = window.__sx;
     const radiusSpread = (mesh) => {
@@ -493,6 +561,24 @@ try {
     { timeout: 40000 },
   );
   check('Earth cloud layer upgrades progressively to 4k', true);
+  // P0-5 regression: mirror-smooth oceans (roughness 0) reflected the
+  // RoomEnvironment's square light panels as hard-edged white blobs — the
+  // ocean roughness floor must stay above mirror level, land stays matte
+  await page.waitForFunction(
+    () => !!window.__sx.bodies.get('earth').mesh.material.roughnessMap,
+    { timeout: 20000 },
+  );
+  const oceanRough = await page.evaluate(() => {
+    const c = window.__sx.bodies.get('earth').mesh.material.roughnessMap.image;
+    const ctx = c.getContext('2d');
+    const px = (u, v) => ctx.getImageData(
+      Math.round(u * (c.width - 1)), Math.round(v * (c.height - 1)), 1, 1,
+    ).data[1];
+    // equirectangular: mid-Pacific ocean (0°N 150°W), Sahara land (20°N 10°E)
+    return { ocean: px(30 / 360, 0.5), land: px(190 / 360, 70 / 180) };
+  });
+  check('Earth ocean roughness floored (no mirror IBL squares)',
+    oceanRough.ocean >= 70 && oceanRough.land >= 200, JSON.stringify(oceanRough));
   const zoomClamp = await page.evaluate(async () => {
     const sx = window.__sx;
     sx.select(sx.bodies.get('sun'), { instant: true });
@@ -788,6 +874,7 @@ try {
     const paused = sx.sim.days === before;
     document.getElementById('btn-play').click(); // resume
     const slider = document.getElementById('speed-slider');
+    const defaultSpeed = sx.sim.speed; // untouched since load
     slider.value = 100;
     slider.dispatchEvent(new Event('input'));
     const fast = sx.sim.speed;
@@ -796,25 +883,29 @@ try {
     sx.sim.days += 5000;
     document.getElementById('btn-now').click();
     const nowDelta = Math.abs(sx.sim.days - (Date.now() - Date.UTC(2000, 0, 1, 12)) / 86400000);
-    return { paused, fast, nowDelta };
+    return { paused, fast, defaultSpeed, nowDelta };
   });
   check('pause freezes simulation time', t.paused);
-  check(`speed slider max = 100 days/s (got ${t.fast.toFixed(0)})`, approx(t.fast, 100, 1));
+  check(`default load speed = 1 day/s (got ${t.defaultSpeed})`, approx(t.defaultSpeed, 1, 1e-9));
+  check(`speed slider max = 100 days/s (got ${t.fast.toFixed(0)})`, approx(t.fast, 100, 1e-9));
   check('NOW returns to the present', t.nowDelta < 0.01);
+  // P0-9: the 1× button is gone; the slider's leftmost stop IS real time
   const rt = await page.evaluate(() => {
-    document.getElementById('btn-realtime').click();
-    return {
+    const slider = document.getElementById('speed-slider');
+    slider.value = 0;
+    slider.dispatchEvent(new Event('input'));
+    const out = {
       speed: window.__sx.sim.speed,
       label: document.getElementById('speed-label').textContent,
+      buttonGone: document.getElementById('btn-realtime') === null,
     };
+    slider.value = 50;
+    slider.dispatchEvent(new Event('input'));
+    return out;
   });
-  check(`1x button sets real time (${rt.label})`,
-    Math.abs(rt.speed - 1 / 86400) < 1e-9 && rt.label === 'real time');
-  await page.evaluate(() => {
-    const sl = document.getElementById('speed-slider');
-    sl.value = 50;
-    sl.dispatchEvent(new Event('input'));
-  });
+  check(`leftmost slider = exact real time (${rt.label})`,
+    rt.speed === 1 / 86400 && rt.label === 'real time');
+  check('redundant 1x button removed', rt.buttonGone);
 
   // reverse time
   const rev = await page.evaluate(async () => {
@@ -913,6 +1004,63 @@ try {
     return finite;
   });
   check('positions stay finite after +3000 days of fast-forward', stable);
+
+  console.log('\n— Smooth motion at max sim speed (P0-2)');
+  // at 100 days/s a frame step exceeds whole orbits of short-period objects
+  // (ISS: 93 min) — the displayed phase must sweep smoothly, never strobe
+  const smooth = await page.evaluate(async () => {
+    const sx = window.__sx;
+    const slider = document.getElementById('speed-slider');
+    slider.value = 100; // 100 days/s — max
+    slider.dispatchEvent(new Event('input'));
+    if (!sx.sim.playing) document.getElementById('btn-play').click();
+    const iss = sx.craft.get('iss');
+    const wrap = (a) => Math.atan2(Math.sin(a), Math.cos(a));
+    const angleOf = (m) => Math.atan2(m.position.z, m.position.x);
+    const targets = {
+      iss: () => angleOf(iss.mesh),
+      phobos: () => angleOf(sx.bodies.get('phobos').mesh),
+      spin: () => sx.bodies.get('earth').mesh.rotation.y,
+    };
+    const steps = { iss: [], phobos: [], spin: [] };
+    await new Promise((res) => {
+      let prev = null;
+      let n = 0;
+      const tick = () => {
+        const cur = Object.fromEntries(Object.entries(targets).map(([k, f]) => [k, f()]));
+        if (prev) for (const k in cur) steps[k].push(wrap(cur[k] - prev[k]));
+        prev = cur;
+        if (++n < 40) requestAnimationFrame(tick); else res();
+      };
+      requestAnimationFrame(tick);
+    });
+    const stat = (a) => ({
+      max: +Math.max(...a.map(Math.abs)).toFixed(3),
+      flips: a.slice(1).filter((v, i) => Math.sign(v) !== Math.sign(a[i])).length,
+    });
+    // pausing must snap the displayed phase back to exact sim time
+    document.getElementById('btn-play').click(); // pause
+    await sx.frame(); await sx.frame();
+    const shownA = angleOf(iss.mesh);
+    iss.update(sx.sim.days); // direct call bypasses playback smoothing — exact
+    const resync = Math.abs(wrap(angleOf(iss.mesh) - shownA));
+    document.getElementById('btn-play').click(); // resume
+    slider.value = 50;
+    slider.dispatchEvent(new Event('input'));
+    document.getElementById('btn-now').click();
+    return {
+      iss: stat(steps.iss), phobos: stat(steps.phobos), spin: stat(steps.spin),
+      resync: +resync.toFixed(5),
+    };
+  });
+  check(`ISS sweeps, never strobes, at max speed (max step ${smooth.iss.max} rad ≤ 0.3, ${smooth.iss.flips} reversals)`,
+    smooth.iss.max <= 0.3 && smooth.iss.flips === 0, JSON.stringify(smooth.iss));
+  check(`Phobos sweeps, never strobes, at max speed (max step ${smooth.phobos.max} rad ≤ 0.3)`,
+    smooth.phobos.max <= 0.3 && smooth.phobos.flips === 0, JSON.stringify(smooth.phobos));
+  check(`Earth spin stays continuous at max speed (max step ${smooth.spin.max} rad ≤ 0.3)`,
+    smooth.spin.max <= 0.3 && smooth.spin.flips === 0, JSON.stringify(smooth.spin));
+  check(`pause resyncs displayed phase to exact sim time (off by ${smooth.resync} rad)`,
+    smooth.resync < 1e-6);
 
   console.log('\n— Keyboard, help & labels');
   await page.keyboard.press('ArrowRight');
@@ -1202,6 +1350,22 @@ try {
   }
 
   console.log('\n— Determinism & lunar phase');
+  const beltRocks = await page.evaluate(() => {
+    const rocks = [];
+    window.__sx.scene.traverse((o) => {
+      if (o.isInstancedMesh && o.name === 'belt-rocks') rocks.push(o);
+    });
+    return {
+      meshes: rocks.length,
+      total: rocks.reduce((s, m) => s + m.count, 0),
+      lit: rocks.every((m) => m.material.isMeshStandardMaterial && !!m.geometry.attributes.normal),
+      colored: rocks.every((m) => !!m.instanceColor),
+    };
+  });
+  check(`asteroid belt is ${beltRocks.total} lit instanced rocks in ${beltRocks.meshes} draw calls (no flat dots)`,
+    beltRocks.total === 2200 && beltRocks.meshes >= 2 && beltRocks.meshes <= 6
+    && beltRocks.lit && beltRocks.colored, JSON.stringify(beltRocks));
+
   const worldFingerprint = `(() => {
     const sx = window.__sx;
     const belt = [];
@@ -1210,6 +1374,10 @@ try {
       if (o.isPoints && (n === 2200 || n === 3000) && belt.length < 6) {
         const a = o.geometry.attributes.position.array;
         belt.push(a[0], a[1], a[2]);
+      }
+      if (o.isInstancedMesh && o.name === 'belt-rocks') {
+        const m = o.instanceMatrix.array; // rock scatter + per-rock pose
+        belt.push(m[0], m[1], m[2], m[12], m[13], m[14]);
       }
     });
     return belt.join(',');
@@ -1260,6 +1428,45 @@ try {
   check(`true scale: Moon at ${tsChecks.moonOrbit.toFixed(0)} Earth radii (58–63)`,
     tsChecks.moonOrbit > 58 && tsChecks.moonOrbit < 63);
   check('true scale: toggle reflects mode', tsChecks.toggleChecked);
+  const tsCraft = await ts.evaluate(() => {
+    const sx = window.__sx;
+    const earth = sx.bodies.get('earth');
+    const V3 = sx.camera.position.constructor;
+    // world-space bounding radius of a craft group, ignoring helpers
+    function boundR(root) {
+      const rootPos = root.getWorldPosition(new V3());
+      let r = 0;
+      root.traverse((o) => {
+        if (!o.geometry || o.name === 'pickproxy' || o.name === 'glint') return;
+        o.geometry.computeBoundingSphere();
+        const p = o.getWorldPosition(new V3());
+        const s = o.getWorldScale(new V3());
+        r = Math.max(r, p.distanceTo(rootPos)
+          + o.geometry.boundingSphere.radius * Math.max(s.x, s.y, s.z));
+      });
+      return r;
+    }
+    let worstParented = { id: null, rel: 0 };
+    let worstFree = { id: null, rel: 0 };
+    for (const [id, c] of sx.craft) {
+      if (c.isCloud) continue;
+      const parent = c.data.parent ? sx.bodies.get(c.data.parent) : null;
+      const rel = boundR(c.mesh) / (parent ?? earth).displayRadius;
+      const worst = parent ? worstParented : worstFree;
+      if (rel > worst.rel) { worst.id = id; worst.rel = rel; }
+    }
+    sx.select(sx.craft.get('iss'), { instant: true });
+    const issPos = sx.craft.get('iss').mesh.getWorldPosition(new V3());
+    return { worstParented, worstFree, issCamDist: sx.camera.position.distanceTo(issPos) };
+  });
+  check(`true scale: orbiters/rovers are miniatures (worst ${tsCraft.worstParented.id}`
+    + ` = ${tsCraft.worstParented.rel.toFixed(2)}× its parent < 0.2)`,
+  tsCraft.worstParented.rel < 0.2);
+  check(`true scale: free-flying craft smaller than Earth (worst ${tsCraft.worstFree.id}`
+    + ` = ${tsCraft.worstFree.rel.toFixed(2)}× < 1)`,
+  tsCraft.worstFree.rel < 1);
+  check(`true scale: fly-to ISS frames it (cam dist ${tsCraft.issCamDist.toFixed(3)} < 0.02)`,
+    tsCraft.issCamDist < 0.02);
   await ts.close();
 
   console.log('\n— Onboarding');

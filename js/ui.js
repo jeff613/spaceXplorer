@@ -241,13 +241,25 @@ export function setupTimeControls(sim, sound) {
   const dateLabel = document.getElementById('date-label');
   const dateInput = document.getElementById('date-input');
 
-  const sliderToSpeed = (v) => Math.pow(10, (v / 100) * 4 - 2); // 0.01 → 100 days/s
+  const REALTIME = 1 / 86400; // one real second per second, in days/s
+
+  // Two log-linear segments: left half spans real time → 1 day/s (the
+  // default, at v=50), right half spans 1 → 100 days/s. v=0 is exactly
+  // real time, so the leftmost stop literally runs the clock at 1 s/s.
+  const sliderToSpeed = (v) =>
+    v <= 50
+      ? REALTIME * Math.pow(86400, v / 50) // real time → 1 day/s
+      : Math.pow(10, (v - 50) / 25); //          1 → 100 days/s
 
   const fmtSpeed = (dps) => {
     if (dps >= 1) return `${dps >= 10 ? Math.round(dps) : dps.toFixed(1)} days/s`;
     const hps = dps * 24;
     if (hps >= 1) return `${hps.toFixed(1)} hrs/s`;
-    return `${(hps * 60).toFixed(0)} min/s`;
+    const mps = hps * 60;
+    if (mps >= 1) return `${mps.toFixed(0)} min/s`;
+    const sps = mps * 60;
+    if (sps < 1.005) return 'real time'; // 1 s/s
+    return `${sps < 10 ? sps.toFixed(1) : Math.round(sps)} sec/s`;
   };
 
   const apply = () => {
@@ -265,11 +277,6 @@ export function setupTimeControls(sim, sound) {
 
   nowBtn.addEventListener('click', () => {
     sim.days = (Date.now() - J2000) / 86400000;
-  });
-
-  document.getElementById('btn-realtime').addEventListener('click', () => {
-    sim.speed = 1 / 86400; // one real second per second
-    speedLabel.textContent = 'real time';
   });
 
   reverseBtn.addEventListener('click', () => {
