@@ -552,20 +552,18 @@ export function buildSpacecraft(scene, bodies) {
   return craft;
 }
 
-// Starlink: one Points cloud, each satellite on its own inclined circular
-// orbit (shared 53° inclination, random RAAN + phase), updated on CPU.
+// Constellation: one Points cloud, each satellite on its own inclined
+// circular orbit, updated on CPU. Starlink's structure is the real
+// constellation's, baked from a CelesTrak snapshot (data.src →
+// textures/starlink-shells.json): per-shell inclination / altitude /
+// period plus a downsampled per-sat RAAN+phase list, so the dense ~53°
+// band edges and the polar shells render true. GPS and the GEO ring stay
+// procedural (one uniform shell from count/orbitRadii/periodDays).
 function buildStarlink(earth, data) {
-  const N = data.count;
-  const orbitR = earth.displayRadius * data.orbitRadii;
-  const raan = new Float32Array(N);
-  const phase = new Float32Array(N);
-  for (let i = 0; i < N; i++) {
-    raan[i] = rand() * Math.PI * 2;
-    phase[i] = rand() * Math.PI * 2;
-  }
-  const positions = new Float32Array(N * 3);
+  let N = 0;
+  let positions, raan, phase, orbitR, w, cosI, sinI;
   const geo = new THREE.BufferGeometry();
-  geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(0), 3));
   const points = new THREE.Points(geo, new THREE.PointsMaterial({
     color: data.color, size: 2.2, sizeAttenuation: false,
     map: roundPointTexture(), alphaTest: 0.25,
@@ -574,22 +572,64 @@ function buildStarlink(earth, data) {
   points.name = data.id;
   earth.anchor.add(points);
 
-  const inc = data.inclination * DEG;
-  const cosI = Math.cos(inc), sinI = Math.sin(inc);
-  const w = (Math.PI * 2) / data.periodDays;
-  const orbitClock = makeSmoothClock(data.periodDays); // shared by the cloud
+  // anti-strobe clock shared by the cloud; rebuilt from the shortest shell
+  // period once the baked shells arrive (procedural clouds keep data's)
+  let orbitClock = makeSmoothClock(data.periodDays ?? 0.066);
+
+  // shells: [{ orbitR, periodDays, incDeg, sats: [[raanDeg, phaseDeg], …] }]
+  function fill(shells) {
+    orbitClock = makeSmoothClock(Math.min(...shells.map((sh) => sh.periodDays)));
+    N = shells.reduce((sum, sh) => sum + sh.sats.length, 0);
+    positions = new Float32Array(N * 3);
+    raan = new Float32Array(N); phase = new Float32Array(N);
+    orbitR = new Float32Array(N); w = new Float32Array(N);
+    cosI = new Float32Array(N); sinI = new Float32Array(N);
+    let i = 0;
+    for (const sh of shells) {
+      const wSh = (Math.PI * 2) / sh.periodDays;
+      const inc = sh.incDeg * DEG;
+      for (const [raanDeg, phaseDeg] of sh.sats) {
+        raan[i] = raanDeg * DEG; phase[i] = phaseDeg * DEG;
+        orbitR[i] = sh.orbitR; w[i] = wSh;
+        cosI[i] = Math.cos(inc); sinI[i] = Math.sin(inc);
+        i++;
+      }
+    }
+    geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  }
+
+  if (data.src) {
+    fetch(data.src).then((r) => r.json()).then((json) => {
+      fill(json.shells.map((sh) => ({
+        // altitude exaggerated ~11× (550 km would hug the display globe);
+        // relative shell spacing is kept true
+        orbitR: earth.displayRadius * (1 + sh.altKm / 1000),
+        periodDays: sh.periodMin / 1440,
+        incDeg: sh.incDeg,
+        sats: sh.sats,
+      })));
+      data.info['Satellites'] = `${json.totalTracked.toLocaleString('en-US')} tracked (constellation snapshot ${json.snapshot})`;
+    });
+  } else {
+    fill([{
+      orbitR: earth.displayRadius * data.orbitRadii,
+      periodDays: data.periodDays,
+      incDeg: data.inclination,
+      sats: Array.from({ length: data.count }, () => [rand() * 360, rand() * 360]),
+    }]);
+  }
 
   return {
     data, mesh: points, displayRadius: earth.displayRadius * 1.8, isCloud: true,
     update(days, stepDays) {
       const t = orbitClock(days, stepDays);
       for (let i = 0; i < N; i++) {
-        const a = phase[i] + t * w;
-        const xo = Math.cos(a) * orbitR;
-        const zo = Math.sin(a) * orbitR;
+        const a = phase[i] + t * w[i];
+        const xo = Math.cos(a) * orbitR[i];
+        const zo = Math.sin(a) * orbitR[i];
         // incline, then rotate plane by RAAN
-        const yi = -zo * sinI;
-        const zi = zo * cosI;
+        const yi = -zo * sinI[i];
+        const zi = zo * cosI[i];
         const cR = Math.cos(raan[i]), sR = Math.sin(raan[i]);
         positions[i * 3] = xo * cR - zi * sR;
         positions[i * 3 + 1] = yi;

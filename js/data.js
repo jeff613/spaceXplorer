@@ -91,7 +91,7 @@ export const PLANETS = [
       'Day length': '23.93 hours', 'Distance from Sun': '1.00 AU',
       'Surface temp': '−88 to 58 °C', 'Moons': '1',
     },
-    fact: 'The only known world with liquid surface water and life. Roughly 8,000 active satellites orbit it — most of them Starlink.',
+    fact: 'The only known world with liquid surface water and life. More than 10,000 satellites orbit it — most of them Starlink.',
   },
   {
     id: 'mars', name: 'Mars', type: 'Planet', texture: '2k_mars.jpg', textureHi: '4k_mars.jpg', atmosphere: 0xd89a72,
@@ -709,10 +709,13 @@ export const SPACECRAFT = [
   },
   {
     id: 'starlink', name: 'Starlink', type: 'Satellite constellation', kind: 'constellation',
-    count: 700, orbitRadii: 1.55, periodDays: 0.0661, inclination: 53, color: 0x7fb8ff,
+    src: 'textures/starlink-shells.json', color: 0x7fb8ff,
     info: {
-      'Operator': 'SpaceX', 'Active satellites': '~7,000+', 'Altitude': '~550 km',
-      'Inclination': '53°', 'Purpose': 'Global broadband internet',
+      'Operator': 'SpaceX',
+      'Satellites': '10,545 tracked (constellation snapshot 2026-06-10)',
+      'Shells': '43°, 53° (densest band), 70°, and 97° polar',
+      'Altitude': '~460–570 km for the main shells',
+      'Purpose': 'Global broadband internet',
     },
     fact: 'The largest satellite constellation in history — more than half of all active satellites orbiting Earth are Starlinks.',
   },
