@@ -627,6 +627,17 @@ function makeMoonColorMap(data) {
       ctx.fillStyle = `rgba(235,180,90,${0.05 + nrand() * 0.08})`;
       ctx.fillRect(0, y, W, 6 + nrand() * 18);
     }
+  } else if (data.style === 'charon') {
+    for (let i = 0; i < 50; i++) {
+      splat(nrand() * W, nrand() * H, 5 + nrand() * 14,
+        nrand() < 0.5 ? 'rgba(120,116,120,0.35)' : 'rgba(168,164,170,0.3)');
+    }
+    // Mordor Macula: the dark red organic cap on the Pluto-facing pole
+    const cap = ctx.createLinearGradient(0, H * 0.30, 0, 0);
+    cap.addColorStop(0, 'rgba(0,0,0,0)');
+    cap.addColorStop(1, 'rgba(96,42,30,0.85)');
+    ctx.fillStyle = cap;
+    ctx.fillRect(0, 0, W, H * 0.30);
   } else if (data.style === 'triton') {
     for (let i = 0; i < 90; i++) {
       splat(nrand() * W, nrand() * H, 4 + nrand() * 12,

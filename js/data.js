@@ -404,7 +404,7 @@ export const MOONS = [
     fact: 'Orbits backwards — a captured Kuiper Belt world. Nitrogen geysers erupt from its −235 °C surface.',
   },
   {
-    id: 'charon', name: 'Charon', type: 'Moon of Pluto', parent: 'pluto', color: 0x8d8b90,
+    id: 'charon', style: 'charon', name: 'Charon', type: 'Moon of Pluto', parent: 'pluto', color: 0x8d8b90,
     radiusKm: 606, orbitRadii: 2.6, trueOrbitRadii: 16.5, period: 6.39,
     info: { 'Radius': '606 km', 'Orbital period': '6.4 days', 'Feature': 'Mordor Macula (dark red pole)' },
     fact: 'Half Pluto\'s size — the pair orbit a point in empty space between them, making Pluto–Charon the solar system\'s only true binary world.',
