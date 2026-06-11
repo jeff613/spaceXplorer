@@ -2,7 +2,7 @@
 
 **Status:** Living document — the improvement loop works against this.
 **Owner:** Jeff
-**Last updated:** 2026-06-13 (iteration 69)
+**Last updated:** 2026-06-13 (iteration 70)
 
 ## 1. Vision
 
@@ -104,7 +104,7 @@ a date picker alongside NOW.
       Parker blob fix — matte TPS shield, kit scale, profile angle (iter 48)
 - [x] Post-processing pipeline: UnrealBloomPass + ACES filmic tone mapping — shipped iter 5; film-grade finishing pass (vignette + deterministic grain) — iter 41
 - [x] Animated sun: surface noise shader + corona (iter 5); lens flare (iter 13); photospheric limb darkening + animated chromosphere rim (iter 39)
-- [x] Higher-res planet textures: 2K set + ring alpha (iter 10); Earth hero pass — 8K daymap, topology bump, specular oceans w/ sun glint (iter 35); terrain bump relief for Mars, Mercury, Moon (iter 37); live band shear extended to Uranus + Neptune (iter 66); Moon 4K progressive upgrade (iter 69)
+- [x] Higher-res planet textures: 2K set + ring alpha (iter 10); Earth hero pass — 8K daymap, topology bump, specular oceans w/ sun glint (iter 35); terrain bump relief for Mars, Mercury, Moon (iter 37); live band shear extended to Uranus + Neptune (iter 66); Moon, Jupiter, Saturn 4K progressive upgrades (iters 69–70)
 - [x] Atmospheric scattering upgrade (day-side rim, sunset terminator band) — shipped iter 15; limb haze extended to all four giants (iter 40); Venus cloud-deck super-rotation, ~4-day visual spin (iter 60)
 - [x] Ring shadows both ways (iter 6, 32); Galilean moon transit shadows on Jupiter (iter 36); Saturn's big-four moon shadows (iter 38); moons eclipse into their planet's shadow (iter 53)
 - [x] Milky way skybox upgrade (2K pano) — shipped iter 10

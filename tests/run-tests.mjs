@@ -418,10 +418,12 @@ try {
   );
   check('Milky Way panorama upgrades progressively to 8k', true);
   await page.waitForFunction(
-    () => window.__sx.bodies.get('moon').mesh.material.map?.image?.width === 4096,
+    () => ['moon', 'jupiter', 'saturn'].every(
+      (id) => window.__sx.bodies.get(id).mesh.material.map?.image?.width === 4096,
+    ),
     { timeout: 20000 },
   );
-  check('Moon upgrades progressively to 4k', true);
+  check('Moon, Jupiter, Saturn upgrade progressively to 4k', true);
   const zoomClamp = await page.evaluate(async () => {
     const sx = window.__sx;
     sx.select(sx.bodies.get('sun'), { instant: true });
@@ -886,7 +888,9 @@ try {
   const texPage = await browser.newPage();
   await texPage.setRequestInterception(true);
   texPage.on('request', (req) => {
-    if (req.url().includes('2k_jupiter')) req.abort();
+    // both the base map and the progressive hi-res must fail for the
+    // fallback canvas to stick
+    if (req.url().includes('_jupiter')) req.abort();
     else req.continue();
   });
   await texPage.goto(BASE, { waitUntil: 'networkidle0', timeout: 30000 });
