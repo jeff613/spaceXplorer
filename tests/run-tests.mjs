@@ -408,6 +408,21 @@ try {
     { timeout: 20000 },
   );
   check('Milky Way panorama upgrades progressively to 8k', true);
+  const zoomClamp = await page.evaluate(async () => {
+    const sx = window.__sx;
+    sx.select(sx.bodies.get('sun'), { instant: true });
+    await sx.frame();
+    const sunMin = sx.controls.minDistance;
+    sx.select(sx.bodies.get('jupiter'), { instant: true });
+    await sx.frame();
+    const jupMin = sx.controls.minDistance;
+    sx.deselect();
+    await sx.frame();
+    return { sunMin, jupMin, idleMin: sx.controls.minDistance };
+  });
+  check('camera cannot zoom inside the selected body',
+    zoomClamp.sunMin > 10 && zoomClamp.jupMin > 5 && zoomClamp.idleMin === 2,
+    JSON.stringify(zoomClamp));
   const neb = await page.evaluate(() => {
     const g = window.__sx.scene.getObjectByName('nebulae');
     return {

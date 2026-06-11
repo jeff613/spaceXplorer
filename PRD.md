@@ -2,7 +2,7 @@
 
 **Status:** Living document — the improvement loop works against this.
 **Owner:** Jeff
-**Last updated:** 2026-06-13 (iteration 58)
+**Last updated:** 2026-06-13 (iteration 59)
 
 ## 1. Vision
 
@@ -84,6 +84,8 @@ a date picker alongside NOW.
 - Mobile: usable with touch, readable HUD, no overlap disasters.
 - Accessibility: every icon-only control carries an aria-label (iter 54);
   prefers-reduced-motion disables camera drift + FOV breathing (iter 55).
+- Camera never clips inside a body: zoom floor tracks the selected
+  object's radius (iter 59).
 - Graceful degradation: WebGL-less browsers get a fallback message; failed
   texture loads fall back to tinted materials, never white balls (iter 51).
 - Fast first paint: heavyweight textures load progressively — Earth paints

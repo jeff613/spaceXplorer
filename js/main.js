@@ -323,6 +323,11 @@ function animate() {
     || (!selected && performance.now() - idleState.last > 25000));
   controls.autoRotateSpeed = tour.active ? 0.4 : 0.18;
 
+  // never let the camera zoom inside the selected body
+  controls.minDistance = TRUE_SCALE
+    ? 0.002
+    : (selected ? Math.max(2, selected.displayRadius * 1.25) : 2);
+
   updateCamera(dt);
   controls.update();
   timeUI.updateDate();
