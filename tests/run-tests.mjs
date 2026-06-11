@@ -575,6 +575,12 @@ try {
     () => !!document.querySelector('meta[property="og:title"]')
       && !!document.querySelector('meta[name="description"]'),
   ));
+  check('og:image card exists and is served', await page.evaluate(async () => {
+    const img = document.querySelector('meta[property="og:image"]')?.content;
+    if (!img || !img.endsWith('social-preview.jpg')) return false;
+    const res = await fetch('social-preview.jpg', { method: 'HEAD' });
+    return res.ok;
+  }));
 
   // click empty space deselects
   await page.mouse.click(720, 80);
