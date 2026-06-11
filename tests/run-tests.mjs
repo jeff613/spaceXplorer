@@ -822,6 +822,36 @@ try {
     halley86.au < 0.9, `label: ${halley86.label}`);
   check('date label reflects the jump', halley86.label.startsWith('1986-02-09'));
 
+  // SPCX IPO badge: counts down before Nasdaq open (2026-06-12 13:30 UTC),
+  // flips to T+ trading mode after, driven by sim time
+  const ipo = await page.evaluate(async () => {
+    const sx = window.__sx;
+    const J2000 = Date.UTC(2000, 0, 1, 12);
+    const wasPlaying = sx.sim.playing;
+    sx.sim.playing = false; // freeze time so the clock strings are exact
+    const read = () => ({
+      label: document.getElementById('ipo-label').textContent,
+      clock: document.getElementById('ipo-clock').textContent,
+      live: document.getElementById('ipo-countdown').classList.contains('live'),
+    });
+    sx.sim.days = (Date.UTC(2026, 5, 12, 13, 0) - J2000) / 86400000; // T−30 min
+    await sx.frame();
+    const before = read();
+    sx.sim.days = (Date.UTC(2026, 5, 12, 14, 0) - J2000) / 86400000; // T+30 min
+    await sx.frame();
+    const after = read();
+    sx.sim.playing = wasPlaying;
+    document.getElementById('btn-now').click();
+    await sx.frame();
+    return { before, after };
+  });
+  check(`IPO badge counts down pre-open (${ipo.before.clock})`,
+    !ipo.before.live && ipo.before.clock === 'T−00:30:00'
+    && ipo.before.label === 'SPCX IPO · NASDAQ');
+  check(`IPO badge flips to trading post-open (${ipo.after.clock})`,
+    ipo.after.live && ipo.after.clock === 'T+00:30:00'
+    && ipo.after.label.includes('TRADING ON NASDAQ'));
+
   console.log('\n— Numeric stability under stress');
   const stable = await page.evaluate(async () => {
     const sx = window.__sx;
