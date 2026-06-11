@@ -868,6 +868,7 @@ try {
     const paused = sx.sim.days === before;
     document.getElementById('btn-play').click(); // resume
     const slider = document.getElementById('speed-slider');
+    const defaultSpeed = sx.sim.speed; // untouched since load
     slider.value = 100;
     slider.dispatchEvent(new Event('input'));
     const fast = sx.sim.speed;
@@ -876,25 +877,29 @@ try {
     sx.sim.days += 5000;
     document.getElementById('btn-now').click();
     const nowDelta = Math.abs(sx.sim.days - (Date.now() - Date.UTC(2000, 0, 1, 12)) / 86400000);
-    return { paused, fast, nowDelta };
+    return { paused, fast, defaultSpeed, nowDelta };
   });
   check('pause freezes simulation time', t.paused);
-  check(`speed slider max = 100 days/s (got ${t.fast.toFixed(0)})`, approx(t.fast, 100, 1));
+  check(`default load speed = 1 day/s (got ${t.defaultSpeed})`, approx(t.defaultSpeed, 1, 1e-9));
+  check(`speed slider max = 100 days/s (got ${t.fast.toFixed(0)})`, approx(t.fast, 100, 1e-9));
   check('NOW returns to the present', t.nowDelta < 0.01);
+  // P0-9: the 1× button is gone; the slider's leftmost stop IS real time
   const rt = await page.evaluate(() => {
-    document.getElementById('btn-realtime').click();
-    return {
+    const slider = document.getElementById('speed-slider');
+    slider.value = 0;
+    slider.dispatchEvent(new Event('input'));
+    const out = {
       speed: window.__sx.sim.speed,
       label: document.getElementById('speed-label').textContent,
+      buttonGone: document.getElementById('btn-realtime') === null,
     };
+    slider.value = 50;
+    slider.dispatchEvent(new Event('input'));
+    return out;
   });
-  check(`1x button sets real time (${rt.label})`,
-    Math.abs(rt.speed - 1 / 86400) < 1e-9 && rt.label === 'real time');
-  await page.evaluate(() => {
-    const sl = document.getElementById('speed-slider');
-    sl.value = 50;
-    sl.dispatchEvent(new Event('input'));
-  });
+  check(`leftmost slider = exact real time (${rt.label})`,
+    rt.speed === 1 / 86400 && rt.label === 'real time');
+  check('redundant 1x button removed', rt.buttonGone);
 
   // reverse time
   const rev = await page.evaluate(async () => {
