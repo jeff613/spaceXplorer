@@ -502,6 +502,16 @@ export const SPACECRAFT = [
     fact: 'The second permanently crewed outpost in orbit — its name means "Heavenly Palace", and it hosts experiments from 17 nations.',
   },
   {
+    id: 'danuri', name: 'Danuri (KPLO)', type: 'Lunar orbiter (KARI)', kind: 'orbiter', parent: 'moon',
+    orbitRadii: 1.85, periodDays: 0.082, inclination: 90, color: 0xb8e0c8,
+    info: {
+      'Launched': 'Aug 4, 2022', 'Orbit': 'Polar, ~100 km above the Moon',
+      'Agency': 'KARI - South Korea\'s first deep-space mission',
+      'Instrument': 'ShadowCam peers into permanently dark craters',
+    },
+    fact: 'South Korea\'s first voyage beyond Earth orbit. Its ShadowCam sees into the Moon\'s permanently shadowed craters by starlight and earthshine alone.',
+  },
+  {
     id: 'lro', name: 'LRO', type: 'Lunar orbiter', kind: 'orbiter', parent: 'moon',
     orbitRadii: 1.6, periodDays: 0.0786, inclination: 86, color: 0xc8c8d8,
     info: {

@@ -151,6 +151,16 @@ try {
     return lroW.distanceTo(moonW) / sx.bodies.get('moon').displayRadius;
   });
   check(`LRO orbits the Moon (${lro.toFixed(2)} lunar radii, 1.2–2.2)`, lro > 1.2 && lro < 2.2);
+  const danuri = await page.evaluate(() => {
+    const sx = window.__sx;
+    if (!sx.craft.has('danuri')) return -1;
+    const v = sx.craft.get('danuri').mesh.position.constructor;
+    const dW = new v(); sx.craft.get('danuri').mesh.getWorldPosition(dW);
+    const moonW = new v(); sx.bodies.get('moon').mesh.getWorldPosition(moonW);
+    return dW.distanceTo(moonW) / sx.bodies.get('moon').displayRadius;
+  });
+  check(`Danuri orbits the Moon (${danuri.toFixed(2)} lunar radii, 1.4–2.5)`,
+    danuri > 1.4 && danuri < 2.5);
   check('Tiangong present', await page.evaluate(() => window.__sx.craft.has('tiangong')));
   // P0 (user): craft must read as models, not glowing orbs — when focused,
   // the visibility glint must be faded out and the model must have detail

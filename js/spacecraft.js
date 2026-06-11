@@ -254,6 +254,7 @@ function craftMesh(data) {
       t.scale.setScalar(0.55);
       return t;
     }
+    case 'danuri': return makeProbe({ dish: 0.07, panels: 2, scale: 0.5 });
     case 'lro': return makeProbe({ dish: 0.08, panels: 1, scale: 0.55 });
     case 'hubble': return makeTelescope();
     case 'jwst': return makeJWST();

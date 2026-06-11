@@ -2,7 +2,7 @@
 
 **Status:** Living document — the improvement loop works against this.
 **Owner:** Jeff
-**Last updated:** 2026-06-13 (iteration 79)
+**Last updated:** 2026-06-13 (iteration 80)
 
 ## 1. Vision
 
@@ -98,8 +98,8 @@ a date picker alongside NOW.
 satisfied — every object class has had a hero pass and is test-gated. New
 objects may now be added sparingly, with day-one kit-quality visuals
 (procedural model, close-up screenshot, roster/orbit test). First: Mars
-Express (iter 79). Candidates: Lucy, Psyche, BepiColombo (heliocentric
-elements need care), Chang'e/KPLO lunar orbiters.
+Express (iter 79); Danuri/KPLO lunar orbiter (iter 80). Candidates: Lucy,
+Psyche, BepiColombo (heliocentric elements need care), Chang'e.
 
 **Graphics (top priority — best-in-class realistic & fancy)**
 - [x] Procedural color maps for major moons — Io volcanic mottling, Europa lineae, Titan banded haze + atmosphere shell, Triton cantaloupe + pink cap (iter 46); Charon's Mordor Macula (iter 62); Ganymede two-tone terrain + Callisto impact speckles complete the Galileans (iter 63); Enceladus south-polar geyser plume (iter 65); Iapetus yin-yang hemispheres + equatorial ridge (iter 67); crater bump relief for all textureless moons (iter 45); Phobos/Deimos potato shapes (iter 49); Pluto–Charon barycenter wobble (iter 52)
