@@ -889,6 +889,27 @@ try {
     return { n, visible: rects.length };
   });
   check(`no overlapping labels (${overlaps.visible} visible, ${overlaps.n} collisions)`, overlaps.n === 0);
+  const marsOverlaps = await page.evaluate(async () => {
+    const sx = window.__sx;
+    sx.select(sx.bodies.get('mars'), { instant: true });
+    await sx.frame(); await sx.frame();
+    const rects = [...document.querySelectorAll('.label')]
+      .filter((el) => el.style.display !== 'none' && el.offsetParent !== null)
+      .map((el) => el.getBoundingClientRect());
+    let n = 0;
+    for (let i = 0; i < rects.length; i++) {
+      for (let j = i + 1; j < rects.length; j++) {
+        const a = rects[i], b = rects[j];
+        if (a.left < b.right - 2 && a.right > b.left + 2
+          && a.top < b.bottom - 2 && a.bottom > b.top + 2) n++;
+      }
+    }
+    sx.deselect();
+    await sx.frame();
+    return { n, visible: rects.length };
+  });
+  check(`no overlapping labels at the crowded Mars view (${marsOverlaps.visible} visible)`,
+    marsOverlaps.n === 0, `${marsOverlaps.n} collisions`);
 
   console.log('\n— Sound');
   const snd = await page.evaluate(async () => {
