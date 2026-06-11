@@ -322,10 +322,14 @@ function animate() {
   requestAnimationFrame(animate);
   const dt = Math.min(clock.getDelta(), 0.1);
 
-  if (sim.playing) sim.days += sim.speed * sim.dir * dt;
+  // stepDays tells updates how far playback moved this frame, so fast
+  // short-period motion can be smoothed without ever desyncing a paused
+  // scene, a date jump, or a direct update(days) call
+  const stepDays = sim.playing ? sim.speed * sim.dir * dt : 0;
+  if (sim.playing) sim.days += stepDays;
 
-  for (const body of bodies.values()) body.update(sim.days);
-  for (const c of craft.values()) c.update(sim.days);
+  for (const body of bodies.values()) body.update(sim.days, stepDays);
+  for (const c of craft.values()) c.update(sim.days, stepDays);
   belt.update(sim.days);
 
   // cinematic drift while the tour dwells; otherwise only after long idle —
