@@ -212,9 +212,9 @@ canvas.addEventListener('pointerup', (e) => {
   const hits = raycastAt(e.clientX, e.clientY);
   if (hits.length === 0) { deselect(); return; }
 
-  // walk up to the named object, then find its body
+  // walk up to a known object id (skipping helpers like the pick proxy)
   let obj = hits[0].object;
-  while (obj && !obj.name) obj = obj.parent;
+  while (obj && !bodies.get(obj.name) && !craft.get(obj.name)) obj = obj.parent;
   const found = obj && (bodies.get(obj.name) || craft.get(obj.name));
   if (found) userSelect(found); else { tour.stop(); deselect(); }
 });
