@@ -487,6 +487,24 @@ try {
     { timeout: 40000 },
   );
   check('Earth cloud layer upgrades progressively to 4k', true);
+  // P0-5 regression: mirror-smooth oceans (roughness 0) reflected the
+  // RoomEnvironment's square light panels as hard-edged white blobs — the
+  // ocean roughness floor must stay above mirror level, land stays matte
+  await page.waitForFunction(
+    () => !!window.__sx.bodies.get('earth').mesh.material.roughnessMap,
+    { timeout: 20000 },
+  );
+  const oceanRough = await page.evaluate(() => {
+    const c = window.__sx.bodies.get('earth').mesh.material.roughnessMap.image;
+    const ctx = c.getContext('2d');
+    const px = (u, v) => ctx.getImageData(
+      Math.round(u * (c.width - 1)), Math.round(v * (c.height - 1)), 1, 1,
+    ).data[1];
+    // equirectangular: mid-Pacific ocean (0°N 150°W), Sahara land (20°N 10°E)
+    return { ocean: px(30 / 360, 0.5), land: px(190 / 360, 70 / 180) };
+  });
+  check('Earth ocean roughness floored (no mirror IBL squares)',
+    oceanRough.ocean >= 70 && oceanRough.land >= 200, JSON.stringify(oceanRough));
   const zoomClamp = await page.evaluate(async () => {
     const sx = window.__sx;
     sx.select(sx.bodies.get('sun'), { instant: true });

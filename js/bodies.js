@@ -410,6 +410,14 @@ export function createPlanet(scene, data) {
       const ctx = c.getContext('2d');
       ctx.filter = 'invert(1)';
       ctx.drawImage(img, 0, 0);
+      // floor the ocean roughness at 0.35: at 0 the sea is a perfect mirror
+      // and reflects scene.environment (RoomEnvironment's rectangular light
+      // panels) as hard-edged white squares; 0.35 samples a blurred PMREM
+      // mip — soft sun glint, no squares
+      ctx.filter = 'none';
+      ctx.globalAlpha = 0.35;
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(0, 0, c.width, c.height);
       const rough = new THREE.CanvasTexture(c);
       mat.roughnessMap = rough;
       mat.roughness = 1.0;
