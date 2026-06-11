@@ -209,6 +209,34 @@ function makeRover() { // boxy body, mast, six wheels
   return g;
 }
 
+function makeLaunchPad() { // concrete apron, launch mount, tower with amber beacons
+  const g = new THREE.Group();
+  const concrete = new THREE.MeshStandardMaterial({ color: 0xb8b4ac, metalness: 0.05, roughness: 0.9 });
+  const apron = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.055, 0.008, 24), concrete);
+  apron.position.y = 0.004;
+  g.add(apron);
+  const mount = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.018, 0.018, 6), matMetal());
+  mount.position.y = 0.017;
+  g.add(mount);
+  const tower = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.085, 0.012), matMetal());
+  tower.position.set(0.03, 0.05, 0);
+  g.add(tower);
+  // emissive amber lights so the pad still reads on the night side
+  const amber = new THREE.MeshStandardMaterial({
+    color: 0xffb347, emissive: 0xff9a28, emissiveIntensity: 1.6, roughness: 0.6,
+  });
+  const beacon = new THREE.Mesh(new THREE.SphereGeometry(0.006, 10, 8), amber);
+  beacon.position.set(0.03, 0.096, 0);
+  g.add(beacon);
+  for (let i = 0; i < 4; i++) {
+    const a = (i / 4) * Math.PI * 2 + Math.PI / 4;
+    const lamp = new THREE.Mesh(new THREE.SphereGeometry(0.004, 8, 6), amber);
+    lamp.position.set(Math.cos(a) * 0.044, 0.01, Math.sin(a) * 0.044);
+    g.add(lamp);
+  }
+  return g;
+}
+
 function makeISSMesh() { // truss, bronze-gold arrays, module stack, radiators
   const g = new THREE.Group();
   const truss = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.035, 0.035), matMetal());
@@ -279,6 +307,13 @@ function craftMesh(data) {
       const r = makeRover();
       r.scale.setScalar(4);
       return r;
+    }
+    case 'starbase':
+    case 'lc39a':
+    case 'slc4e': {
+      const p = makeLaunchPad();
+      p.scale.setScalar(2.5);
+      return p;
     }
     case 'juno': return makeProbe({ dish: 0.16, panels: 3 });
     case 'cassini': return makeProbe({ dish: 0.22 });
@@ -381,6 +416,9 @@ export function buildSpacecraft(scene, bodies) {
         r * Math.sin(lat),
         -r * Math.cos(lat) * Math.sin(lon),
       );
+      // stand the model on the surface: local +y along the outward normal
+      mesh.quaternion.setFromUnitVectors(
+        new THREE.Vector3(0, 1, 0), mesh.position.clone().normalize());
       parent.mesh.add(mesh);
       const pick = addPickProxy(mesh, 0.7);
       craft.set(data.id, { data, mesh, pick, displayRadius: 0.45, update() {} });

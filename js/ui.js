@@ -25,6 +25,7 @@ export function buildNavigator(bodies, craft, onSelect) {
         'roadster', 'newhorizons', 'pioneer10', 'pioneer11',
         'voyager1', 'voyager2'],
     },
+    { title: 'SpaceX Launch Sites', ids: ['starbase', 'lc39a', 'slc4e'] },
   ];
   const items = new Map();
   const headers = [];
