@@ -652,8 +652,17 @@ try {
     return res.ok;
   }));
 
-  // click empty space deselects
-  await page.mouse.click(720, 80);
+  // click empty space deselects — probe for a point with truly nothing
+  // under it (orbit lines and drifting objects made a fixed point flaky)
+  const safePt = await page.evaluate(() => {
+    const cands = [[720, 80], [200, 560], [980, 640], [420, 130], [1150, 220]];
+    for (const [x, y] of cands) {
+      const el = document.elementFromPoint(x, y);
+      if (el?.id === 'scene' && window.__sx.raycastAt(x, y).length === 0) return { x, y };
+    }
+    return { x: 720, y: 80 };
+  });
+  await page.mouse.click(safePt.x, safePt.y);
   await frames(page, 2);
   check('click on empty space deselects', await page.evaluate(
     () => window.__sx.selected() === null
