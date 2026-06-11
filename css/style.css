@@ -229,6 +229,22 @@ body.loaded #hud-header, body.loaded #nav-panel, body.loaded #time-bar { opacity
 
 #info-share:hover { color: var(--cyan); }
 
+#info-prev, #info-next {
+  position: absolute;
+  top: 8px;
+  padding: 4px 9px;
+  background: none;
+  border: none;
+  color: var(--ink-dim);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+#info-prev { right: 96px; }
+#info-next { right: 66px; }
+#info-prev:hover, #info-next:hover { color: var(--cyan); }
+
 .info-name {
   font-family: var(--font-display);
   font-size: 19px;

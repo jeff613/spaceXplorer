@@ -155,6 +155,13 @@ function deselect() {
 }
 
 document.getElementById('info-close').addEventListener('click', deselect);
+for (const [btnId, step] of [['info-prev', -1], ['info-next', 1]]) {
+  document.getElementById(btnId).addEventListener('click', () => {
+    const order = navigator.order;
+    const i = selected ? order.indexOf(selected) : -1;
+    userSelect(order[(i + step + order.length) % order.length]);
+  });
+}
 
 const helpOverlay = () => document.getElementById('help-overlay');
 document.getElementById('btn-help').addEventListener('click', () => {

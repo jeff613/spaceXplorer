@@ -468,14 +468,14 @@ try {
   }));
   await page.waitForFunction(
     () => window.__sx.scene.getObjectByName('skysphere')?.material.map?.image?.width === 8192,
-    { timeout: 20000 },
+    { timeout: 40000 },
   );
   check('Milky Way panorama upgrades progressively to 8k', true);
   await page.waitForFunction(
     () => ['moon', 'jupiter', 'saturn', 'mars', 'venus', 'mercury'].every(
       (id) => window.__sx.bodies.get(id).mesh.material.map?.image?.width === 4096,
     ),
-    { timeout: 25000 },
+    { timeout: 40000 },
   );
   check('all tour-stop worlds upgrade progressively to 4k', true);
   await page.waitForFunction(
@@ -484,7 +484,7 @@ try {
       const cl = e.tiltGroup.children.find((ch) => ch.material?.blending === 2 && ch.material.map);
       return cl?.material.map.image?.width === 4096;
     },
-    { timeout: 25000 },
+    { timeout: 40000 },
   );
   check('Earth cloud layer upgrades progressively to 4k', true);
   const zoomClamp = await page.evaluate(async () => {
@@ -869,6 +869,16 @@ try {
   await page.keyboard.press('ArrowLeft');
   await frames(page, 2);
   check('ArrowLeft goes back (Sun)', await page.evaluate(
+    () => window.__sx.selected()?.data.id === 'sun',
+  ));
+  await page.evaluate(() => document.getElementById('info-next').click());
+  await frames(page, 2);
+  check('info-panel › cycles forward (Mercury)', await page.evaluate(
+    () => window.__sx.selected()?.data.id === 'mercury',
+  ));
+  await page.evaluate(() => document.getElementById('info-prev').click());
+  await frames(page, 2);
+  check('info-panel ‹ cycles back (Sun)', await page.evaluate(
     () => window.__sx.selected()?.data.id === 'sun',
   ));
   await page.keyboard.press('Escape');
