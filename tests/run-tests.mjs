@@ -221,13 +221,18 @@ try {
   ));
   const bands = await page.evaluate(async () => {
     const sx = window.__sx;
+    // materials compile on first render — make sure Neptune has been on
+    // camera before reading its patched shader
+    sx.select(sx.bodies.get('neptune'), { instant: true });
     await sx.frame();
-    return ['jupiter', 'saturn'].map((id) => {
+    sx.deselect();
+    await sx.frame();
+    return ['jupiter', 'saturn', 'uranus', 'neptune'].map((id) => {
       const sh = sx.bodies.get(id).mesh.material.userData.shader;
       return sh ? sh.uniforms.uDays.value : null;
     });
   });
-  check('gas giant band shader compiled with live uniform',
+  check('all four giants run the live band shader',
     bands.every((v) => typeof v === 'number' && v > 0), JSON.stringify(bands));
   const transits = await page.evaluate(async () => {
     const sx = window.__sx;
