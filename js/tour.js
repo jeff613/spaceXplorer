@@ -4,8 +4,8 @@
 
 const STOPS = [
   'sun', 'mercury', 'venus', 'earth', 'iss', 'moon', 'mars', 'perseverance',
-  'jupiter', 'europa', 'saturn', 'titan', 'uranus', 'neptune', 'pluto',
-  'halley', 'apophis', 'roadster', 'voyager1',
+  'jupiter', 'io', 'europa', 'saturn', 'titan', 'uranus', 'neptune', 'triton',
+  'pluto', 'halley', 'bennu', 'roadster', 'voyager1',
 ];
 
 const DWELL_MS = 9000;

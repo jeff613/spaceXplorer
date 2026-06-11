@@ -840,7 +840,7 @@ try {
     step: document.getElementById('tour-step').textContent,
   }));
   check('tour starts at the Sun with banner', tourStart.active && tourStart.selected === 'sun'
-    && tourStart.banner && tourStart.step.startsWith('1 /'), JSON.stringify(tourStart));
+    && tourStart.banner && tourStart.step === '1 / 21', JSON.stringify(tourStart));
   check('tour dwell has cinematic camera drift', await page.evaluate(
     () => window.__sx.controls.autoRotate === true,
   ));
