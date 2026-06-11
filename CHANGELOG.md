@@ -5,6 +5,11 @@ loop iterations (see PRD.md).
 
 ## Unreleased (develop, iters 42–88)
 
+### P0 fixes (pre-launch)
+- True-scale mode: spacecraft are now proportionate miniatures (ISS was
+  rendering at ~4.8× Earth's radius); fly-to framing and glint fade-out
+  made scale-aware so craft are visible and frameable
+
 ### Visual quality
 - Comet hero pass: coal-dark lumpy nuclei, perihelion-driven coma (43)
 - Small bodies: irregular asteroids (Bennu, Vesta…), seeded crater bumps on

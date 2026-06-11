@@ -294,6 +294,18 @@ function craftMesh(data) {
   }
 }
 
+// In TRUE_SCALE the kit models (built at ~0.3–0.8 scene units for the
+// exaggerated display mode) would dwarf the now-tiny planets, while literal
+// physical size (ISS ≈ 109 m ≈ 5e-8 units) would be sub-pixel and
+// unframeable — so craft become proportionate miniatures instead. Returns
+// the fitted bounding radius for camera-framing use.
+function trueScaleFit(mesh, targetR) {
+  const sphere = new THREE.Box3().setFromObject(mesh)
+    .getBoundingSphere(new THREE.Sphere());
+  mesh.scale.multiplyScalar(targetR / sphere.radius);
+  return targetR;
+}
+
 // Invisible, oversized sphere so tiny craft are clickable
 function addPickProxy(mesh, radius) {
   const proxy = new THREE.Mesh(
@@ -324,7 +336,8 @@ export function buildSpacecraft(scene, bodies) {
       const parent = bodies.get(data.parent);
       const orbitR = parent.displayRadius * data.orbitRadii;
       const mesh = craftMesh(data);
-      if (TRUE_SCALE) mesh.scale.multiplyScalar(0.02);
+      const displayRadius = TRUE_SCALE
+        ? trueScaleFit(mesh, parent.displayRadius * 0.1) : 0.6;
       mesh.add(makeGlint(data.color, 0.3));
       mesh.name = data.id;
       const plane = new THREE.Group();
@@ -334,7 +347,7 @@ export function buildSpacecraft(scene, bodies) {
       const pick = addPickProxy(mesh, 1.0);
       const phase = rand() * Math.PI * 2;
       craft.set(data.id, {
-        data, mesh, pick, displayRadius: 0.6,
+        data, mesh, pick, displayRadius,
         update(days) {
           const a = phase + (days / data.periodDays) * Math.PI * 2;
           mesh.position.set(Math.cos(a) * orbitR, 0, Math.sin(a) * orbitR);
@@ -345,7 +358,8 @@ export function buildSpacecraft(scene, bodies) {
       // L1/L2 sit on the Sun–Earth line; factor <1 = sunward L1, >1 = L2
       // (display-exaggerated)
       const mesh = craftMesh(data);
-      if (TRUE_SCALE) mesh.scale.multiplyScalar(0.02);
+      const displayRadius = TRUE_SCALE
+        ? trueScaleFit(mesh, earth.displayRadius * 0.5) : 0.7;
       mesh.add(makeGlint(data.color, 0.35));
       mesh.name = data.id;
       scene.add(mesh);
@@ -356,7 +370,7 @@ export function buildSpacecraft(scene, bodies) {
       const u = new THREE.Vector3();
       const w = new THREE.Vector3(0, 1, 0);
       craft.set(data.id, {
-        data, mesh, pick, displayRadius: 0.7,
+        data, mesh, pick, displayRadius,
         update(days) {
           mesh.position.copy(earth.anchor.position).multiplyScalar(data.factor);
           const th = haloPhase + (days / 178) * Math.PI * 2; // ~6-month halo
@@ -370,7 +384,8 @@ export function buildSpacecraft(scene, bodies) {
       // of the spinning mesh so it rides the planet's rotation
       const parent = bodies.get(data.parent);
       const mesh = craftMesh(data);
-      if (TRUE_SCALE) mesh.scale.multiplyScalar(0.02);
+      const displayRadius = TRUE_SCALE
+        ? trueScaleFit(mesh, parent.displayRadius * 0.06) : 0.45;
       mesh.add(makeGlint(data.color, 0.12));
       mesh.name = data.id;
       const lat = data.lat * DEG;
@@ -383,10 +398,11 @@ export function buildSpacecraft(scene, bodies) {
       );
       parent.mesh.add(mesh);
       const pick = addPickProxy(mesh, 0.7);
-      craft.set(data.id, { data, mesh, pick, displayRadius: 0.45, update() {} });
+      craft.set(data.id, { data, mesh, pick, displayRadius, update() {} });
     } else if (data.kind === 'helio') {
       const mesh = craftMesh(data);
-      if (TRUE_SCALE) mesh.scale.multiplyScalar(0.02);
+      const displayRadius = TRUE_SCALE
+        ? trueScaleFit(mesh, earth.displayRadius * 0.5) : 0.8;
       mesh.add(makeGlint(data.color, 0.35));
       mesh.name = data.id;
       scene.add(mesh);
@@ -405,12 +421,13 @@ export function buildSpacecraft(scene, bodies) {
       orbitLine.userData.isOrbit = true;
       scene.add(orbitLine);
       craft.set(data.id, {
-        data, mesh, pick, orbitLine, displayRadius: 0.8,
+        data, mesh, pick, orbitLine, displayRadius,
         update(days) { keplerPosition(data.elements, days, mesh.position); },
       });
     } else if (data.kind === 'deep') {
       const mesh = craftMesh(data);
-      if (TRUE_SCALE) mesh.scale.multiplyScalar(0.02);
+      const displayRadius = TRUE_SCALE
+        ? trueScaleFit(mesh, earth.displayRadius * 0.5) : 2.5;
       mesh.add(makeGlint(data.color, 0.4));
       mesh.name = data.id;
       const dir = raDecToDir(data.raDeg, data.decDeg);
@@ -433,7 +450,7 @@ export function buildSpacecraft(scene, bodies) {
       // probes keep receding, so they drift outward with sim time
       const trailPos = trail.geometry.attributes.position;
       craft.set(data.id, {
-        data, mesh, pick, orbitLine: trail, displayRadius: 2.5,
+        data, mesh, pick, orbitLine: trail, displayRadius,
         update(days) {
           const au = Math.max(6, data.distanceAU
             + (data.speedAUyr ?? 0) * ((days - 9657) / 365.25));

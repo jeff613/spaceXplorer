@@ -1191,6 +1191,45 @@ try {
   check(`true scale: Moon at ${tsChecks.moonOrbit.toFixed(0)} Earth radii (58–63)`,
     tsChecks.moonOrbit > 58 && tsChecks.moonOrbit < 63);
   check('true scale: toggle reflects mode', tsChecks.toggleChecked);
+  const tsCraft = await ts.evaluate(() => {
+    const sx = window.__sx;
+    const earth = sx.bodies.get('earth');
+    const V3 = sx.camera.position.constructor;
+    // world-space bounding radius of a craft group, ignoring helpers
+    function boundR(root) {
+      const rootPos = root.getWorldPosition(new V3());
+      let r = 0;
+      root.traverse((o) => {
+        if (!o.geometry || o.name === 'pickproxy' || o.name === 'glint') return;
+        o.geometry.computeBoundingSphere();
+        const p = o.getWorldPosition(new V3());
+        const s = o.getWorldScale(new V3());
+        r = Math.max(r, p.distanceTo(rootPos)
+          + o.geometry.boundingSphere.radius * Math.max(s.x, s.y, s.z));
+      });
+      return r;
+    }
+    let worstParented = { id: null, rel: 0 };
+    let worstFree = { id: null, rel: 0 };
+    for (const [id, c] of sx.craft) {
+      if (c.isCloud) continue;
+      const parent = c.data.parent ? sx.bodies.get(c.data.parent) : null;
+      const rel = boundR(c.mesh) / (parent ?? earth).displayRadius;
+      const worst = parent ? worstParented : worstFree;
+      if (rel > worst.rel) { worst.id = id; worst.rel = rel; }
+    }
+    sx.select(sx.craft.get('iss'), { instant: true });
+    const issPos = sx.craft.get('iss').mesh.getWorldPosition(new V3());
+    return { worstParented, worstFree, issCamDist: sx.camera.position.distanceTo(issPos) };
+  });
+  check(`true scale: orbiters/rovers are miniatures (worst ${tsCraft.worstParented.id}`
+    + ` = ${tsCraft.worstParented.rel.toFixed(2)}× its parent < 0.2)`,
+  tsCraft.worstParented.rel < 0.2);
+  check(`true scale: free-flying craft smaller than Earth (worst ${tsCraft.worstFree.id}`
+    + ` = ${tsCraft.worstFree.rel.toFixed(2)}× < 1)`,
+  tsCraft.worstFree.rel < 1);
+  check(`true scale: fly-to ISS frames it (cam dist ${tsCraft.issCamDist.toFixed(3)} < 0.02)`,
+    tsCraft.issCamDist < 0.02);
   await ts.close();
 
   console.log('\n— Onboarding');

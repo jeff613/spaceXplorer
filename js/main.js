@@ -352,7 +352,7 @@ function animate() {
     if (c._glint) {
       c.mesh.getWorldPosition(glintTmp);
       const d = camera.position.distanceTo(glintTmp);
-      const near = Math.max(6, c.displayRadius * 9);
+      const near = Math.max(TRUE_SCALE ? 0.003 : 6, c.displayRadius * 9);
       c._glint.material.opacity = Math.min(0.45, Math.max(0, (d - near) / (near * 3)));
     }
   }
