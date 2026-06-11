@@ -377,6 +377,30 @@ body.loaded #hud-header, body.loaded #nav-panel, body.loaded #time-bar { opacity
 
 #tour-banner button:hover { color: var(--amber); }
 
+/* ── Mars transfer caption ──────────────────────────────────────────── */
+
+#transfer-caption {
+  position: fixed;
+  bottom: 140px;
+  left: 50%;
+  transform: translate(-50%, 16px);
+  z-index: 9;
+  background: var(--panel);
+  border: 1px solid rgba(255, 179, 71, 0.4);
+  border-radius: 30px;
+  padding: 8px 18px;
+  font-family: var(--font-display);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  color: var(--amber);
+  backdrop-filter: blur(8px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s, transform 0.3s;
+}
+
+#transfer-caption.show { opacity: 1; transform: translate(-50%, 0); }
+
 /* ── Time bar ───────────────────────────────────────────────────────── */
 
 #time-bar {
