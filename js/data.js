@@ -502,6 +502,29 @@ export const SPACECRAFT = [
     fact: 'The second permanently crewed outpost in orbit — its name means "Heavenly Palace", and it hosts experiments from 17 nations.',
   },
   {
+    id: 'dragon', name: 'Crew Dragon', type: 'Crew capsule (SpaceX)', kind: 'orbiter', parent: 'earth',
+    orbitRadii: 1.48, periodDays: 0.0648, inclination: 51.6, color: 0xf0f4f8,
+    info: {
+      'First crewed flight': 'Demo-2 — May 30, 2020',
+      'First': 'First commercial spacecraft to carry humans to orbit',
+      'Crew': '4 on NASA missions (designed for up to 7)',
+      'Heat shield': 'PICA-X ablative', 'Docks with': 'The ISS, autonomously',
+    },
+    fact: 'Ended America\'s nine-year human-launch gap after the Shuttle retired — the first crewed orbital spacecraft ever built and flown by a private company.',
+  },
+  {
+    id: 'starship', name: 'Starship', type: 'Super heavy-lift rocket (SpaceX)', kind: 'orbiter', parent: 'earth',
+    orbitRadii: 1.52, periodDays: 0.0655, inclination: 26.5, color: 0xd8dde2,
+    info: {
+      'Height': '~121 m full stack — largest rocket ever flown',
+      'First integrated flight': 'Apr 20, 2023, from Starbase, Texas',
+      'Booster': 'Super Heavy — 33 Raptor engines',
+      'Skin': 'Stainless steel, dark heat-shield tiles on the belly',
+      'Design goal': 'Full and rapid reusability',
+    },
+    fact: 'Twice the thrust of the Saturn V — and in 2024 its Super Heavy booster flew home and was caught in mid-air by the launch tower\'s "chopstick" arms.',
+  },
+  {
     id: 'danuri', name: 'Danuri (KPLO)', type: 'Lunar orbiter (KARI)', kind: 'orbiter', parent: 'moon',
     orbitRadii: 1.85, periodDays: 0.082, inclination: 90, color: 0xb8e0c8,
     info: {
