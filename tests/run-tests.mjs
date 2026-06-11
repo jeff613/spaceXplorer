@@ -14,7 +14,7 @@ import pixelmatch from 'pixelmatch';
 import { PNG } from 'pngjs';
 
 const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
-const PORT = 8643;
+const PORT = Number(process.env.SX_TEST_PORT ?? 8643);
 const BASE = `http://127.0.0.1:${PORT}`;
 const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 
