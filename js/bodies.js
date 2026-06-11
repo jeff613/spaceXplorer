@@ -542,7 +542,9 @@ export function createPlanet(scene, data) {
     data, mesh, anchor, tiltGroup, orbitLine, displayRadius, rings, atmosphere,
     update(days) {
       keplerPosition(data.elements, days, anchor.position);
-      mesh.rotation.y = (days * 24 / data.rotationHours) * Math.PI * 2;
+      // visualSpinHours: what we render can outpace the body's true day
+      // (Venus shows its cloud deck, which super-rotates in ~4 days)
+      mesh.rotation.y = (days * 24 / (data.visualSpinHours ?? data.rotationHours)) * Math.PI * 2;
       const sh = mat.userData.shader;
       if (sh) {
         if (sh.uniforms.uDays) sh.uniforms.uDays.value = days % 10000;

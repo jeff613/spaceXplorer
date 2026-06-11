@@ -423,6 +423,21 @@ try {
   check('camera cannot zoom inside the selected body',
     zoomClamp.sunMin > 10 && zoomClamp.jupMin > 5 && zoomClamp.idleMin === 2,
     JSON.stringify(zoomClamp));
+  const venusSpin = await page.evaluate(async () => {
+    const sx = window.__sx;
+    const v = sx.bodies.get('venus');
+    const save = sx.sim.days;
+    v.update(save);
+    const r0 = v.mesh.rotation.y;
+    v.update(save + 1);
+    const r1 = v.mesh.rotation.y;
+    v.update(save);
+    await sx.frame();
+    // cloud deck super-rotates: one day should advance ~24/96 of a turn
+    return +((r1 - r0) / (Math.PI * 2)).toFixed(3);
+  });
+  check('Venus cloud deck super-rotates (~4-day visual spin, retrograde)',
+    Math.abs(venusSpin - (-0.25)) < 0.01, String(venusSpin));
   const neb = await page.evaluate(() => {
     const g = window.__sx.scene.getObjectByName('nebulae');
     return {

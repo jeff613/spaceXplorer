@@ -71,7 +71,7 @@ export const PLANETS = [
     id: 'venus', name: 'Venus', type: 'Planet', texture: '2k_venus_atmosphere.jpg', atmosphere: 0xe8cf9a,
     radiusKm: 6051.8,
     elements: { a: 0.723, e: 0.0068, i: 3.39, Om: 76.68, varpi: 131.53, L0: 181.98, period: 224.7 },
-    rotationHours: -5832.5, tilt: 177.4,
+    rotationHours: -5832.5, visualSpinHours: -96, tilt: 177.4,
     info: {
       'Radius': '6,052 km', 'Mass': '4.87 × 10²⁴ kg', 'Orbital period': '225 days',
       'Day length': '243 Earth days (retrograde)', 'Distance from Sun': '0.72 AU',
