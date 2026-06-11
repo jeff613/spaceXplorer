@@ -417,6 +417,11 @@ try {
     { timeout: 20000 },
   );
   check('Milky Way panorama upgrades progressively to 8k', true);
+  await page.waitForFunction(
+    () => window.__sx.bodies.get('moon').mesh.material.map?.image?.width === 4096,
+    { timeout: 20000 },
+  );
+  check('Moon upgrades progressively to 4k', true);
   const zoomClamp = await page.evaluate(async () => {
     const sx = window.__sx;
     sx.select(sx.bodies.get('sun'), { instant: true });

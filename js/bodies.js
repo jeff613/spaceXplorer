@@ -696,6 +696,13 @@ export function createMoon(scene, data, parentBody) {
     ? new THREE.MeshStandardMaterial({ roughness: 0.96, metalness: 0, envMapIntensity: 0.25 })
     : new THREE.MeshStandardMaterial({ color: data.color, roughness: 0.96, metalness: 0, envMapIntensity: 0.25 });
   if (data.texture) mat.map = loadTex(data.texture, mat, data.color);
+  if (data.textureHi) {
+    texLoader.load(`textures/${data.textureHi}`, (hi) => {
+      hi.colorSpace = THREE.SRGBColorSpace;
+      mat.map = hi;
+      mat.needsUpdate = true;
+    });
+  }
   if (data.bump) {
     mat.bumpMap = texLoader.load(`textures/${data.bump}`);
     mat.bumpScale = data.bumpScale ?? 1.6;

@@ -309,7 +309,7 @@ export const SUN = {
 // (Earth's Moon orbits near the ecliptic, not Earth's equator).
 export const MOONS = [
   {
-    id: 'moon', name: 'Moon', type: 'Moon of Earth', parent: 'earth', texture: '2k_moon.jpg',
+    id: 'moon', name: 'Moon', type: 'Moon of Earth', parent: 'earth', texture: '2k_moon.jpg', textureHi: '4k_moon.jpg',
     bump: 'moonbump1k.jpg', bumpScale: 1.8,
     ecliptic: true, meanLongitude0: 218.316, orbitInclination: 5.14,
     radiusKm: 1737.4, orbitRadii: 3.2, trueOrbitRadii: 60.3, period: 27.321661,
