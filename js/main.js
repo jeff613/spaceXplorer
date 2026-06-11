@@ -125,49 +125,8 @@ function flyToDir(body, fromPos, target) {
     const radial = target.clone()
       .sub(bodies.get(body.data.parent).anchor.position).normalize();
     dir.add(radial.multiplyScalar(2)).normalize();
-  } else if (body.data.kind === 'orbiter') {
-    clearParentDir(dir, body, target);
   }
   return dir;
-}
-
-// arriving on a planet orbiter while keeping the current bearing can leave
-// the parent planet between camera and craft — or even put the camera inside
-// it (P0-10). Blend the bearing toward the craft's radial-out direction (the
-// rovers' surface-approach idea) just enough that the final camera→craft
-// segment clears the parent sphere. Margins are relative to the parent's
-// radius, so this holds in TRUE_SCALE too.
-function clearParentDir(dir, body, target) {
-  const parent = bodies.get(body.data.parent);
-  const pPos = parent.mesh.getWorldPosition(new THREE.Vector3());
-  const radial = target.clone().sub(pPos).normalize();
-  const viewDist = flyToDist(body);
-  const need = parent.displayRadius * 1.15;
-  const mix = new THREE.Vector3();
-  // does the camera→craft segment stay `need` away from the parent's center
-  // when arriving along blend weight w between current bearing and radial-out?
-  const clears = (w) => {
-    mix.copy(dir).lerp(radial, w);
-    if (mix.lengthSq() < 1e-6) return false; // degenerate anti-parallel blend
-    mix.normalize();
-    const cam = target.clone().add(mix.clone().multiplyScalar(viewDist));
-    const seg = target.clone().sub(cam);
-    const t = THREE.MathUtils.clamp(
-      pPos.clone().sub(cam).dot(seg) / seg.lengthSq(), 0, 1);
-    return cam.add(seg.multiplyScalar(t)).distanceTo(pPos) >= need;
-  };
-  if (clears(0)) return;
-  if (!clears(1)) { dir.copy(radial); return; } // best achievable: planet dead astern
-  // bisect to the smallest clearing blend so the bearing shifts no more than
-  // necessary, and stays continuous frame-to-frame during an animated flight
-  let lo = 0;
-  let hi = 1;
-  for (let i = 0; i < 10; i++) {
-    const mid = (lo + hi) / 2;
-    if (clears(mid)) hi = mid; else lo = mid;
-  }
-  clears(hi); // leaves `mix` holding the chosen bearing
-  dir.copy(mix);
 }
 
 // the selected body's orbit glows amber so its path stands out
