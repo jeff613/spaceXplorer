@@ -272,19 +272,15 @@ try {
     recede.tenYears - recede.now > 30 && recede.tenYears - recede.now < 42,
     JSON.stringify(recede));
   check('Tiangong present', await page.evaluate(() => window.__sx.craft.has('tiangong')));
-  // SpaceX fleet must circle Earth in the LEO display band
-  const spacex = await page.evaluate(() => {
+  // Starship stands at Starbase between transfer windows, riding Earth's spin
+  const staged = await page.evaluate(() => {
     const sx = window.__sx;
-    const out = {};
-    for (const id of ['starship']) {
-      if (!sx.craft.has(id)) { out[id] = -1; continue; }
-      const v = sx.craft.get(id).mesh.position.constructor;
-      const w = new v(); sx.craft.get(id).mesh.getWorldPosition(w);
-      const earthW = new v(); sx.bodies.get('earth').mesh.getWorldPosition(earthW);
-      out[id] = w.distanceTo(earthW) / sx.bodies.get('earth').displayRadius;
-    }
-    return out;
+    const v = sx.camera.position.constructor;
+    const ship = new v(); sx.craft.get('starship').mesh.getWorldPosition(ship);
+    const pad = new v(); sx.craft.get('starbase').mesh.getWorldPosition(pad);
+    return +ship.distanceTo(pad).toFixed(2);
   });
+  check(`Starship stands at Starbase (${staged} units from the pad)`, staged < 1.2);
   // Crew Dragon flies LC-39A → ISS cycles — every phase a function of sim days
   const mission = await page.evaluate(async () => {
     const sx = window.__sx;
@@ -312,8 +308,6 @@ try {
     mission.pad.phase === 'pad' && mission.pad.dPad < 0.2);
   check(`Crew Dragon docks with the ISS (phase ${mission.docked.phase}, ${mission.docked.dISS} off station)`,
     mission.docked.phase === 'docked' && mission.docked.dISS < 0.2);
-  check(`Starship orbits Earth (${spacex.starship.toFixed(2)} Earth radii, 1.2–2.0)`,
-    spacex.starship > 1.2 && spacex.starship < 2.0);
   // P0 (user): craft must read as models, not glowing orbs — when focused,
   // the visibility glint must be faded out and the model must have detail
   const orbCheck = await page.evaluate(async () => {

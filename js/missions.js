@@ -18,6 +18,32 @@ const BEHIND = 0.9;        // rad behind the ISS at orbit injection
 const smooth = (u) => u * u * (3 - 2 * u);
 const clamp01 = (u) => Math.min(1, Math.max(0, u));
 
+// ─── Starship: staged at Starbase ─────────────────────────────────────────
+// Between transfer windows real Starships stand at Boca Chica, not in orbit.
+// The selectable craft becomes a static vehicle beside the pad (the Mars-bound
+// fleet in transfer.js launches from the mount itself, so no overlap).
+
+export function attachStarshipDisplay(craft, bodies) {
+  const ship = craft.get('starship');
+  const pad = craft.get('starbase');
+  const earth = bodies.get('earth');
+  if (!ship || !pad) return;
+
+  const mesh = ship.mesh;
+  const plane = mesh.parent;
+  earth.mesh.add(mesh); // ride the planet's spin like the pads do
+  plane?.removeFromParent();
+
+  // stand beside the pad: nose up, engine bells on the ground
+  const normal = pad.mesh.position.clone().normalize();
+  const east = new THREE.Vector3(0, 1, 0).cross(normal).normalize();
+  mesh.position.copy(pad.mesh.position)
+    .addScaledVector(east, 0.45)
+    .addScaledVector(normal, 0.58);
+  mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), normal);
+  ship.update = () => {}; // nothing to animate — it rides the spinning mesh
+}
+
 export function attachDragonMission(craft, bodies) {
   const dragon = craft.get('dragon');
   const iss = craft.get('iss');
