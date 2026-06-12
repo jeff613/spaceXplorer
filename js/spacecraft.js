@@ -645,7 +645,7 @@ function craftMesh(data) {
     case 'starship': {
       const s = new THREE.Group();
       const kit = makeStarship();
-      kit.scale.setScalar(1.66); // 52 m — real proportion: half an ISS
+      kit.scale.setScalar(2.04); // staged full stack, 121 m on the size curve
       s.add(kit);
       return s;
     }
