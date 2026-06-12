@@ -25,16 +25,30 @@ const SPACEX_STOPS = [
 
 const DWELL_MS = 9000;
 
+// Grand Tour clock: 60 sim-seconds per real second — planets turn and
+// orbiters glide during dwells instead of blurring past. Slider value 18
+// maps to ~60 s/s on the time slider's log scale.
+const TOUR_SLIDER_VALUE = 18;
+
 export function createTour(bodies, craft, select, sim) {
   const banner = document.getElementById('tour-banner');
   const nameEl = document.getElementById('tour-name');
   const dateEl = document.getElementById('tour-date');
   const stepEl = document.getElementById('tour-step');
+  const speedSlider = document.getElementById('speed-slider');
 
   let stops = STOPS;
   let idx = -1;
   let timer = null;
   let active = false;
+  let prevSliderValue = null;
+
+  // drive speed through the slider so sim.speed, label, and control stay
+  // in sync; restore the visitor's setting when the tour ends
+  const setSlider = (v) => {
+    speedSlider.value = v;
+    speedSlider.dispatchEvent(new Event('input'));
+  };
 
   const get = (id) => bodies.get(id) || craft.get(id);
   const norm = (s) => (typeof s === 'string' ? { id: s } : s);
@@ -57,6 +71,10 @@ export function createTour(bodies, craft, select, sim) {
     tour.stop();
     stops = list;
     active = true;
+    if (list === STOPS) {
+      prevSliderValue = speedSlider.value;
+      setSlider(TOUR_SLIDER_VALUE);
+    }
     banner.classList.add('open');
     document.getElementById(btnId).classList.add('on');
     show(0);
@@ -70,6 +88,10 @@ export function createTour(bodies, craft, select, sim) {
       if (!active) return;
       active = false;
       clearTimeout(timer);
+      if (prevSliderValue !== null) {
+        setSlider(prevSliderValue);
+        prevSliderValue = null;
+      }
       banner.classList.remove('open');
       document.getElementById('btn-tour').classList.remove('on');
       document.getElementById('btn-spacex-tour').classList.remove('on');

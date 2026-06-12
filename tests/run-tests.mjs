@@ -1391,6 +1391,30 @@ try {
   check(`Grand Tour shows no date badge ("${story.grandBadge}")`, story.grandBadge === '');
   check('SpaceX Story exits cleanly', story.exited);
 
+  // Grand Tour dwells at a calm 60 sec/s and hands the clock back on exit
+  const tourSpeed = await page.evaluate(async () => {
+    const sx = window.__sx;
+    const slider = document.getElementById('speed-slider');
+    const before = { v: slider.value, speed: sx.sim.speed };
+    sx.tour.start();
+    await sx.frame();
+    const during = {
+      secPerSec: sx.sim.speed * 86400,
+      label: document.getElementById('speed-label').textContent,
+    };
+    sx.tour.stop();
+    await sx.frame();
+    const after = { v: slider.value, speed: sx.sim.speed };
+    sx.deselect();
+    await sx.frame();
+    return { before, during, after };
+  });
+  check(`Grand Tour slows the clock to 60 sec/s (${tourSpeed.during.secPerSec.toFixed(1)} s/s, "${tourSpeed.during.label}")`,
+    tourSpeed.during.secPerSec > 55 && tourSpeed.during.secPerSec < 65
+    && tourSpeed.during.label === '60 sec/s');
+  check('Grand Tour restores the speed slider on exit',
+    tourSpeed.after.v === tourSpeed.before.v && tourSpeed.after.speed === tourSpeed.before.speed);
+
   console.log('\n— Numeric stability under stress');
   const stable = await page.evaluate(async () => {
     const sx = window.__sx;
