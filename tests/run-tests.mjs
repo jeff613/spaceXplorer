@@ -302,20 +302,35 @@ try {
       booster: dragon.booster.visible,
     };
     await at(0.6);
+    const boosterW = new THREE.Vector3();
+    dragon.booster.getWorldPosition(boosterW);
+    const padW = new THREE.Vector3();
+    sx.craft.get('lc39a').mesh.getWorldPosition(padW);
     const docked = {
       phase: dragon.missionPhase(sx.sim.days),
       dISS: d(dragon.mesh, sx.craft.get('iss').mesh),
-      booster: dragon.booster.visible,
+      boosterHome: dragon.booster.visible && boosterW.distanceTo(padW) < 1.5,
     };
+    // the climb + rendezvous must never dip inside the planet
+    let minRadii = 1e9;
+    const earthW = new THREE.Vector3(); const dw = new THREE.Vector3();
+    for (let f = 0.30; f <= 0.412; f += 0.002) {
+      await at(f);
+      sx.bodies.get('earth').anchor.getWorldPosition(earthW);
+      dragon.mesh.getWorldPosition(dw);
+      minRadii = Math.min(minRadii, dw.distanceTo(earthW) / sx.bodies.get('earth').displayRadius);
+    }
     document.getElementById('btn-now').click();
     sx.sim.playing = wasPlaying;
     await sx.frame();
-    return { pad, docked };
+    return { pad, docked, minRadii: +minRadii.toFixed(3) };
   });
+  check(`launch trajectory clears the surface (min ${mission.minRadii} Earth radii)`,
+    mission.minRadii >= 0.99);
   check(`Crew Dragon waits atop its Falcon 9 on LC-39A (phase ${mission.pad.phase}, ${mission.pad.dPad} from pad)`,
     mission.pad.phase === 'pad' && mission.pad.dPad < 1.5 && mission.pad.booster);
-  check(`Crew Dragon docks with the ISS, booster long gone (phase ${mission.docked.phase}, ${mission.docked.dISS} off station)`,
-    mission.docked.phase === 'docked' && mission.docked.dISS < 0.2 && !mission.docked.booster);
+  check(`Crew Dragon docks with the ISS, Falcon 9 landed back home (phase ${mission.docked.phase}, ${mission.docked.dISS} off station)`,
+    mission.docked.phase === 'docked' && mission.docked.dISS < 0.2 && mission.docked.boosterHome);
   // P0 (user): craft must read as models, not glowing orbs — when focused,
   // the visibility glint must be faded out and the model must have detail
   const orbCheck = await page.evaluate(async () => {

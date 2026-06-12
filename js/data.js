@@ -513,6 +513,17 @@ export const SPACECRAFT = [
     fact: 'Ended America\'s nine-year human-launch gap after the Shuttle retired — the first crewed orbital spacecraft ever built and flown by a private company.',
   },
   {
+    id: 'falcon9', name: 'Falcon 9', type: 'Reusable booster (SpaceX)', kind: 'orbiter', parent: 'earth',
+    orbitRadii: 1.46, periodDays: 0.0648, inclination: 51.6, color: 0xe8e4dc,
+    info: {
+      'Role': 'Carries Crew Dragon to orbit, then flies home',
+      'First landing': 'Dec 21, 2015 — first orbital booster ever recovered',
+      'Reuse record': 'Single boosters have flown 20+ missions',
+      'Landing': 'Returns tail-first to the launch site or a droneship',
+    },
+    fact: 'Before Falcon 9, every orbital rocket in history flew once and was thrown away. Watch it stage mid-climb and land back at the Cape.',
+  },
+  {
     id: 'starship', name: 'Starship', type: 'Super heavy-lift rocket (SpaceX)', kind: 'orbiter', parent: 'earth',
     orbitRadii: 1.52, periodDays: 0.0655, inclination: 26.5, color: 0xd8dde2,
     info: {

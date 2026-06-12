@@ -13,7 +13,6 @@ const DOCK_END = 0.95;  // berthed just below the ISS
 const DESC_END = 0.995; // re-entry arc back toward the Cape
 
 const CHASE_RADII = 1.40;  // phasing orbit, just under the ISS's 1.45
-const BEHIND = 0.9;        // rad behind the ISS at orbit injection
 
 const smooth = (u) => u * u * (3 - 2 * u);
 const clamp01 = (u) => Math.min(1, Math.max(0, u));
@@ -61,39 +60,53 @@ export function attachDragonMission(craft, bodies) {
   const incl = iss.mesh.parent.rotation.x;
   const planeNormal = new THREE.Vector3(0, Math.cos(incl), Math.sin(incl));
 
-  // Falcon 9 first stage: Dragon rides it off the pad, separation mid-climb
+  // Falcon 9: a real selectable craft. Dragon rides it off the pad; it stages
+  // mid-climb and flies tail-first back to a pad landing (RTLS), then waits,
+  // restacked, for the next launch.
   const B_LEN = 0.75;
   const DRAGON_TAIL = 0.36; // capsule+trunk extent below the model origin
-  const SEP = 0.55;         // booster cuts off this far up the ascent
-  const booster = (() => {
-    const g = new THREE.Group();
-    const white = new THREE.MeshStandardMaterial({ color: 0xd9d5cd, metalness: 0.15, roughness: 0.55 });
-    const core = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, B_LEN, 20), white);
-    core.rotation.x = Math.PI / 2;
-    g.add(core);
-    const inter = new THREE.Mesh(new THREE.CylinderGeometry(0.102, 0.102, 0.07, 20),
-      new THREE.MeshStandardMaterial({ color: 0x23262b, roughness: 0.8 }));
-    inter.rotation.x = Math.PI / 2;
-    inter.position.z = B_LEN / 2 - 0.035;
-    g.add(inter);
-    const bell = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.05, 0.06, 12),
-      new THREE.MeshStandardMaterial({ color: 0x6b5a40, metalness: 0.8, roughness: 0.4 }));
-    bell.rotation.x = Math.PI / 2;
-    bell.position.z = -B_LEN / 2 - 0.02;
-    g.add(bell);
-    earth.anchor.add(g);
-    return g;
-  })();
+  const SEP_RAW = 0.5;      // staging point as a fraction of the climb
+  const FLYBACK = 0.008;    // ~11 min from staging to touchdown
+  const falcon = craft.get('falcon9');
+  const booster = falcon.mesh;
+  {
+    const fPlane = booster.parent;
+    earth.anchor.add(booster);
+    fPlane?.removeFromParent();
+    falcon.update = () => {}; // driven from the Dragon mission below
+  }
   dragon.booster = booster;
   const noseDir = new THREE.Vector3();
 
-  // booster rides under the capsule while attached, vanishes at separation
-  function placeBooster(attached) {
-    booster.visible = attached;
-    if (!attached) return;
-    noseDir.set(0, 0, 1).applyQuaternion(mesh.quaternion);
-    booster.position.copy(mesh.position).addScaledVector(noseDir, -(DRAGON_TAIL + B_LEN / 2));
-    booster.quaternion.copy(mesh.quaternion);
+  // the booster's own timeline: under the capsule while attached, a lofted
+  // tail-first arc home after staging, then standing on the pad until restack
+  const sepPos = new THREE.Vector3();
+  const fb1 = new THREE.Vector3();
+  const fb2 = new THREE.Vector3();
+  function placeBooster(attached, t) {
+    booster.visible = true;
+    if (attached) {
+      noseDir.set(0, 0, 1).applyQuaternion(mesh.quaternion);
+      booster.position.copy(mesh.position).addScaledVector(noseDir, -(DRAGON_TAIL + B_LEN / 2));
+      booster.quaternion.copy(mesh.quaternion);
+      return;
+    }
+    const R = earth.displayRadius;
+    const tSep = PAD_END + SEP_RAW * (ASC_END - PAD_END);
+    booster.quaternion.setFromUnitVectors(Z, padUp); // tail-first, always
+    if (t >= tSep && t < tSep + FLYBACK) {
+      // boostback: loft up off the staging point, fall back to the pad
+      p.copy(padPos).addScaledVector(padUp, 0.02 + B_LEN + DRAGON_TAIL);
+      c1.copy(padPos).addScaledVector(padUp, R * 0.7);
+      insertion(c2, R * CHASE_RADII);
+      bezier(sepPos, smooth(SEP_RAW), p, c1, c2);
+      fb1.copy(sepPos).addScaledVector(padUp, 0.9);
+      fb2.copy(padPos).addScaledVector(padUp, 0.02 + B_LEN / 2);
+      bezier(booster.position, smooth(clamp01((t - tSep) / FLYBACK)), sepPos, fb1, fb2);
+    } else {
+      // landed: standing beside the tower, awaiting the next stack
+      booster.position.copy(padPos).addScaledVector(padUp, 0.02 + B_LEN / 2);
+    }
   }
 
   const issPos = new THREE.Vector3();
@@ -113,11 +126,16 @@ export function attachDragonMission(craft, bodies) {
     earth.anchor.worldToLocal(target);
   }
 
-  // chase-orbit position: Δ rad behind the ISS at radius r (anchor space)
-  function chase(target, behind, radius) {
-    localize(issPos, iss.mesh);
-    q.setFromAxisAngle(planeNormal, behind);
-    target.copy(issPos).normalize().applyQuaternion(q).multiplyScalar(radius);
+  // orbit-insertion point: the pad's direction projected into the ISS plane,
+  // pushed 0.6 rad downrange — launches climb over their own horizon, the way
+  // real ascents do, instead of chording through the planet toward the ISS
+  const injDir = new THREE.Vector3();
+  const issDir = new THREE.Vector3();
+  const cross = new THREE.Vector3();
+  function insertion(target, radius) {
+    injDir.copy(padUp).addScaledVector(planeNormal, -padUp.dot(planeNormal)).normalize();
+    q.setFromAxisAngle(planeNormal, -0.6); // forward along the orbit
+    target.copy(injDir.applyQuaternion(q)).multiplyScalar(radius);
   }
 
   const bezier = (target, u, p0, p1, p2) => {
@@ -143,16 +161,24 @@ export function attachDragonMission(craft, bodies) {
       onPad = true;
       attached = true;
     } else if (t < ASC_END) {
-      const u = smooth(clamp01((t - PAD_END) / (ASC_END - PAD_END)));
-      attached = u < SEP; // staging: the booster falls away mid-climb
+      const raw = clamp01((t - PAD_END) / (ASC_END - PAD_END));
+      const u = smooth(raw);
+      attached = raw < SEP_RAW; // staging: the booster falls away mid-climb
       p.copy(padPos).addScaledVector(padUp, 0.02 + B_LEN + DRAGON_TAIL);
       c1.copy(padPos).addScaledVector(padUp, R * 0.7);
-      chase(c2, BEHIND, R * CHASE_RADII);
+      insertion(c2, R * CHASE_RADII);
       bezier(mesh.position, u, p, c1, c2);
     } else if (t < REN_END) {
       const u = smooth(clamp01((t - ASC_END) / (REN_END - ASC_END)));
       const radius = R * (CHASE_RADII + (1.45 - CHASE_RADII) * u);
-      chase(mesh.position, BEHIND * (1 - u), radius);
+      // close the prograde gap from the insertion point to the live ISS
+      localize(issPos, iss.mesh);
+      issDir.copy(issPos).normalize();
+      insertion(p, 1); // unit insertion direction in injDir via p
+      let gap = -Math.atan2(planeNormal.dot(cross.crossVectors(p, issDir)), p.dot(issDir));
+      if (gap < 0.15) gap += Math.PI * 2; // always chase forward
+      q.setFromAxisAngle(planeNormal, gap * (1 - u));
+      mesh.position.copy(issDir).applyQuaternion(q).multiplyScalar(radius);
     } else if (t < DOCK_END) {
       localize(issPos, iss.mesh);
       mesh.position.copy(issPos).addScaledVector(p.copy(issPos).normalize(), -0.12);
@@ -172,7 +198,7 @@ export function attachDragonMission(craft, bodies) {
       mesh.lookAt(earth.anchor.localToWorld(aim));
     }
     last.copy(mesh.position);
-    placeBooster(attached);
+    placeBooster(attached, t);
   };
 
   // mission phase for tests/UI: where in the cycle a given day falls
