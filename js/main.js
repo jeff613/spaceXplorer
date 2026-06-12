@@ -95,6 +95,7 @@ let flight = null; // { t, fromPos, fromTarget }
 const followPos = new THREE.Vector3();
 const glintTmp = new THREE.Vector3();
 const prevFollowPos = new THREE.Vector3();
+const prevParentPos = new THREE.Vector3(); // selected orbiter's parent, last frame
 
 const sound = createSound();
 
@@ -195,6 +196,9 @@ function select(body, { instant = false } = {}) {
   showInfo(body);
   body.mesh.getWorldPosition(followPos);
   prevFollowPos.copy(followPos);
+  if (body.data.kind === 'orbiter') {
+    bodies.get(body.data.parent).mesh.getWorldPosition(prevParentPos);
+  }
   if (instant) {
     const viewDist = flyToDist(body);
     const dir = flyToDir(body, camera.position, followPos);
@@ -303,6 +307,8 @@ canvas.addEventListener('pointermove', (e) => {
 function updateCamera(dt) {
   if (!selected) return;
   selected.mesh.getWorldPosition(followPos);
+  const parent = selected.data.kind === 'orbiter' ? bodies.get(selected.data.parent) : null;
+  const parentPos = parent ? parent.mesh.getWorldPosition(new THREE.Vector3()) : null;
 
   if (flight) {
     // fly-to: ease camera toward a viewing spot near the body
@@ -321,6 +327,20 @@ function updateCamera(dt) {
       camera.fov = 55;
       camera.updateProjectionMatrix();
     }
+  } else if (parent) {
+    // follow an orbiter in its parent's rotating frame: spin the camera
+    // around the parent by the arc the craft swept this frame, so the parent
+    // stays pinned in view instead of whirling at high sim speed
+    const prevOff = prevFollowPos.clone().sub(prevParentPos);
+    const curOff = followPos.clone().sub(parentPos);
+    if (prevOff.lengthSq() > 1e-12 && curOff.lengthSq() > 1e-12) {
+      const q = new THREE.Quaternion()
+        .setFromUnitVectors(prevOff.normalize(), curOff.normalize());
+      camera.position.sub(prevParentPos).applyQuaternion(q).add(parentPos);
+    } else {
+      camera.position.add(followPos.clone().sub(prevFollowPos));
+    }
+    controls.target.copy(followPos);
   } else {
     // follow: ride along with the body as it moves
     const delta = followPos.clone().sub(prevFollowPos);
@@ -328,6 +348,7 @@ function updateCamera(dt) {
     controls.target.copy(followPos);
   }
   prevFollowPos.copy(followPos);
+  if (parentPos) prevParentPos.copy(parentPos);
 }
 
 // ─── UI wiring ────────────────────────────────────────────────────────────

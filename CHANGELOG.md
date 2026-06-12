@@ -30,6 +30,9 @@ loop iterations (see PRD.md).
 - Fly-to on orbiters can no longer arrive with the parent planet blocking
   the view: arrival bearing blends radially out until the sightline clears
   the parent by 1.15× its radius (ISS was occluded on 5/16 bearings)
+- Following an orbiter now rides its orbit's rotating frame: the camera
+  spins around the parent with the craft, so Earth stays pinned in view
+  behind ISS at any sim speed instead of whirling through the frame
 
 ### Visual quality
 - Comet hero pass: coal-dark lumpy nuclei, perihelion-driven coma (43)

@@ -757,6 +757,52 @@ try {
   check('fly-to a craft from behind its parent arrives unoccluded (clearance ≥ 1.1 R)',
     occl.every((r) => r.clear >= 1.1), JSON.stringify(occl));
 
+  // following a fast orbiter must not leave the parent whirling through the
+  // view: the camera rides the orbit's rotating frame, keeping the
+  // camera–parent–craft triangle rigid while the craft sweeps its orbit
+  const rigid = await page.evaluate(async () => {
+    const THREE = await import('three');
+    const sx = window.__sx;
+    const prev = { speed: sx.sim.speed, playing: sx.sim.playing };
+    sx.sim.playing = false;
+    await sx.frame(); // settle smooth clocks
+    sx.select(sx.craft.get('iss'), { instant: true });
+    await sx.frame();
+
+    const worldPos = (obj) => obj.getWorldPosition(new THREE.Vector3());
+    const geom = () => {
+      const pPos = worldPos(sx.bodies.get('earth').mesh);
+      const camOff = sx.camera.position.clone().sub(pPos);
+      const craftOff = worldPos(sx.craft.get('iss').mesh).sub(pPos);
+      return {
+        angle: camOff.angleTo(craftOff), // parent-frame bearing cam↔craft
+        camDist: craftOff.add(pPos).distanceTo(sx.camera.position),
+      };
+    };
+    const start = geom();
+    // default speed (1 day/s) laps ISS ~15×/s; the smooth clock caps the
+    // sweep at 0.25 rad/frame — 30 sampled frames cover several radians
+    sx.sim.speed = 1;
+    sx.sim.playing = true;
+    let maxAngleDrift = 0;
+    let maxDistDrift = 0;
+    for (let i = 0; i < 30; i++) {
+      await sx.frame();
+      const g = geom();
+      maxAngleDrift = Math.max(maxAngleDrift, Math.abs(g.angle - start.angle));
+      maxDistDrift = Math.max(maxDistDrift, Math.abs(g.camDist - start.camDist) / start.camDist);
+    }
+    sx.sim.speed = prev.speed;
+    sx.sim.playing = prev.playing;
+    sx.deselect();
+    await sx.frame();
+    return { maxAngleDrift: +maxAngleDrift.toFixed(3), maxDistDrift: +maxDistDrift.toFixed(3) };
+  });
+  check(`following ISS at speed keeps Earth fixed in frame (bearing drift ${rigid.maxAngleDrift} rad < 0.1)`,
+    rigid.maxAngleDrift < 0.1, JSON.stringify(rigid));
+  check(`following ISS at speed keeps viewing distance (drift ${(rigid.maxDistDrift * 100).toFixed(1)}% < 5%)`,
+    rigid.maxDistDrift < 0.05, JSON.stringify(rigid));
+
   // selection highlights the orbit, deselection restores it
   const hl = await page.evaluate(async () => {
     const sx = window.__sx;
