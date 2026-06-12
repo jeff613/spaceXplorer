@@ -63,7 +63,7 @@ export function attachDragonMission(craft, bodies) {
   // Falcon 9: a real selectable craft. Dragon rides it off the pad; it stages
   // mid-climb and flies tail-first back to a pad landing (RTLS), then waits,
   // restacked, for the next launch.
-  const B_LEN = 0.75;
+  const B_LEN = 0.94; // booster world length at its 1.25 kit scale
   const DRAGON_TAIL = 0.36; // capsule+trunk extent below the model origin
   const SEP_RAW = 0.5;      // staging point as a fraction of the climb
   const FLYBACK = 0.008;    // ~11 min from staging to touchdown

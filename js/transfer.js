@@ -134,7 +134,7 @@ export function createTransfer(scene, bodies, sim, craft) {
     if (!ships) {
       ships = [0, 1, 2].map(() => {
         const s = makeStarship();
-        s.scale.setScalar(1.3);
+        s.scale.setScalar(1.66); // same size curve as the staged Starship
         group.add(s);
         return s;
       });
