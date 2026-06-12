@@ -988,9 +988,15 @@ try {
   // hovering over the disc — both prove click-to-select works
   check('clicking a planet selects it (or craft in front of it)', await page.evaluate(() => {
     const sel = window.__sx.selected();
-    return sel != null && (sel.data.id === 'earth' || sel.data.parent === 'earth'
-      || sel.data.kind === 'lagrange'); // JWST/Gaia/SOHO ride the Sun-Earth line
-  }));
+    if (!sel) return false;
+    if (sel.data.kind === 'lagrange') return true; // JWST/Gaia/SOHO ride the Sun-Earth line
+    // anything in the Earth system counts — in compressed scale the Moon
+    // (and its orbiters, e.g. Danuri) legitimately overlaps Earth's disc
+    for (let d = sel.data; d; d = window.__sx.bodies.get(d.parent)?.data) {
+      if (d.id === 'earth') return true;
+    }
+    return false;
+  }), await page.evaluate(() => `selected=${window.__sx.selected()?.data.id ?? 'null'}`));
 
   await page.keyboard.press('Escape');
   await frames(page, 2);
