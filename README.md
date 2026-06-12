@@ -3,7 +3,7 @@
 An interactive 3D solar system explorer. No build step — plain ES modules with
 Three.js loaded from a CDN.
 
-**Live:** https://spacexplorer-production.up.railway.app
+**Live:** https://spacexplorer-prod.up.railway.app
 
 ![spaceXplorer](social-preview.jpg)
 
