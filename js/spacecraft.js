@@ -596,7 +596,8 @@ function craftMesh(data) {
       // pick proxy and glint stay standard-sized in the crowded LEO band
       const d = new THREE.Group();
       const kit = makeDragon();
-      kit.scale.setScalar(3);
+      // a capsule, not a station: reads just under Hubble, ~2.5× under Starship
+      kit.scale.setScalar(1.6);
       d.add(kit);
       return d;
     }
