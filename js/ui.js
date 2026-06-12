@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { J2000, displayLenToAU } from './data.js';
+import { FINNHUB_KEY } from './config.js';
 
 // ─── Object navigator ─────────────────────────────────────────────────────
 
@@ -293,7 +294,6 @@ export function setupTimeControls(sim, sound) {
 
   // SPCX IPO: Nasdaq market open, June 12 2026, 9:30 ET (13:30 UTC).
   // Runs on wall-clock time — time-travel never moves this clock.
-  const FINNHUB_KEY = 'YOUR_FINNHUB_KEY'; // replace with key from finnhub.io
   const IPO_MS = Date.UTC(2026, 5, 12, 13, 30);
   const ipoBadge    = document.getElementById('ipo-countdown');
   const ipoLabel    = document.getElementById('ipo-label');
@@ -311,16 +311,20 @@ export function setupTimeControls(sim, sound) {
   let prevDelta = null;
   let celebrated = false;
   let pricePollingStarted = false;
+  let priceLoaded = false; // first real quote received → swap cells for the price
 
   function startPricePolling() {
-    // No real key yet → leave the '—' placeholder; don't make a doomed request.
+    // No real key yet → cells keep ticking T+ elapsed; don't make doomed requests.
     if (FINNHUB_KEY === 'YOUR_FINNHUB_KEY') return;
     const fetchPrice = async () => {
       try {
         const r = await fetch(`https://finnhub.io/api/v1/quote?symbol=SPCX&token=${FINNHUB_KEY}`);
         const { c, d, dp } = await r.json();
-        if (c) {
-          ipoPriceVal.textContent = `$${c.toFixed(2)}`;
+        if (!c) return;
+        ipoPriceVal.textContent = `$${c.toFixed(2)}`;
+        priceLoaded = true;
+        // d/dp are null on listing day (no previous close) — price still shows
+        if (d != null && dp != null) {
           const sign = d >= 0 ? '▲' : '▼';
           ipoPriceChg.textContent = `${sign} ${Math.abs(d).toFixed(2)} (${dp >= 0 ? '+' : ''}${dp.toFixed(2)}%)`;
           ipoPriceChg.className = d >= 0 ? 'up' : 'down';
@@ -345,15 +349,17 @@ export function setupTimeControls(sim, sound) {
         ? '★ SPCX is Live · Trading on Nasdaq'
         : 'Explore Space While Waiting for SPCX';
 
-      if (!live) {
+      // cells tick down pre-IPO and tick T+ elapsed until the first quote lands
+      const showPrice = live && priceLoaded;
+      if (!showPrice) {
         ipoEls.days.textContent = pad2(Math.floor(s / 86400));
         ipoEls.hrs.textContent  = pad2(Math.floor((s % 86400) / 3600));
         ipoEls.min.textContent  = pad2(Math.floor((s % 3600) / 60));
         ipoEls.sec.textContent  = pad2(Math.floor(s % 60));
       }
 
-      ipoCells.style.display = live ? 'none' : 'flex';
-      ipoPrice.style.display = live ? 'flex' : 'none';
+      ipoCells.style.display = showPrice ? 'none' : 'flex';
+      ipoPrice.style.display = showPrice ? 'flex' : 'none';
       ipoBadge.classList.toggle('live', live);
 
       if (live && !pricePollingStarted) {

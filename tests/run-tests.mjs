@@ -47,6 +47,14 @@ async function openPage(browser, url, consoleErrors) {
   await page.setViewport({ width: 1440, height: 900 });
   page.on('console', (m) => { if (m.type() === 'error') consoleErrors.push(m.text()); });
   page.on('pageerror', (e) => consoleErrors.push(`pageerror: ${e.message}`));
+  // tests must never hit Finnhub (real clock is post-IPO, so the badge polls on
+  // load once a real key is configured) — serve a canned SPCX quote instead
+  await page.evaluateOnNewDocument(() => {
+    const realFetch = window.fetch;
+    window.fetch = (url, ...args) => String(url).includes('finnhub.io')
+      ? Promise.resolve(new Response(JSON.stringify({ c: 185.42, d: 3.87, dp: 2.14 })))
+      : realFetch(url, ...args);
+  });
   await page.goto(url, { waitUntil: 'networkidle0', timeout: 30000 });
   await page.waitForFunction('window.__sx !== undefined', { timeout: 15000 });
   await page.evaluate(() => window.__sx.frame());
@@ -1018,6 +1026,7 @@ try {
       label:      document.getElementById('ipo-label').textContent,
       days:       document.getElementById('ipo-days').textContent,
       min:        document.getElementById('ipo-min').textContent,
+      price:      document.getElementById('ipo-price-val').textContent,
       cellsShown: document.getElementById('ipo-cells').style.display !== 'none',
       priceShown: document.getElementById('ipo-price').style.display !== 'none',
       live:       document.getElementById('ipo-countdown').classList.contains('live'),
@@ -1026,6 +1035,8 @@ try {
     await sx.frame();
     const before = read();
     Date.now = () => Date.UTC(2026, 5, 12, 14, 0); // T+30 min
+    await sx.frame();
+    await new Promise((r) => setTimeout(r, 80)); // let the (stubbed) quote land
     await sx.frame();
     const after = read();
     Date.now = realNow;
@@ -1036,9 +1047,12 @@ try {
     !ipo.before.live && ipo.before.days === '00' && ipo.before.min === '30'
     && ipo.before.label === 'Explore Space While Waiting for SPCX'
     && ipo.before.cellsShown && !ipo.before.priceShown);
+  // post-open: placeholder key → cells tick T+ elapsed; real key → stubbed quote
+  // swaps in the price. Either way exactly one of the two is visible.
   check('IPO badge flips to live post-open',
-    ipo.after.live && ipo.after.priceShown && !ipo.after.cellsShown
-    && ipo.after.label.includes('SPCX is Live'));
+    ipo.after.live && ipo.after.label.includes('SPCX is Live')
+    && ipo.after.cellsShown !== ipo.after.priceShown
+    && (ipo.after.priceShown ? ipo.after.price === '$185.42' : ipo.after.min === '30'));
 
   // celebration must be asserted on a fresh page: the badge test above
   // already crossed T-0 on the main page, consuming the one-shot
