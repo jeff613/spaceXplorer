@@ -3,7 +3,24 @@
 Maintained by the improvement loop. Newest first. "Iter" numbers refer to
 loop iterations (see PRD.md).
 
-## Unreleased (develop, iters 42–90)
+## Released 2026-06-12 — production @ 7170ba2 (iters 42–90 + SpaceX feature track)
+
+### SpaceX feature track
+- Falcon 9 is its own craft: real ascent geometry and RTLS booster
+  flyback; Crew Dragon launches on a Falcon 9; ships exist only from
+  launch time (no pre-window rocket garden); Starship stands at Starbase,
+  and the staged Starship is the full 121 m stack
+- Launch sites go operational: Starship → Mars, Dragon → ISS
+- Starlink renders the real constellation from a baked CelesTrak TLE
+  snapshot (2026-06-10); constellations get distinct looks and physically
+  honest orbits
+- Mars transfer window visualizer: Hohmann arc with a Starship fleet
+  riding it
+- IPO countdown upgraded to an animated two-line banner with a live SPCX
+  quote (Finnhub); runs on wall-clock time, immune to time travel
+- All craft share one size curve (display = 0.382 × meters^0.244);
+  Dragon at capsule scale (1.6× kit, was 3×)
+- Suite grew to 206 assertions by the release cut
 
 ### P0 fixes (pre-launch)
 - True-scale mode: spacecraft are now proportionate miniatures (ISS was
