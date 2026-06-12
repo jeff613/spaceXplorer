@@ -1333,6 +1333,12 @@ try {
     () => !document.getElementById('nav-panel').classList.contains('collapsed'),
   ));
   await mob.tap('#nav-toggle');
+  const closedSheet = await mob.evaluate(() => {
+    const r = document.getElementById('info-panel').getBoundingClientRect();
+    return { top: r.top, vh: innerHeight };
+  });
+  check(`mobile: closed info sheet is fully offscreen (top ${closedSheet.top.toFixed(0)}`
+    + ` >= vh ${closedSheet.vh})`, closedSheet.top >= closedSheet.vh - 1);
   await mob.evaluate(async () => {
     window.__sx.select(window.__sx.bodies.get('earth'), { instant: true });
     await window.__sx.frame();

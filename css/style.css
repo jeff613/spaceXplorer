@@ -590,7 +590,9 @@ body.loaded #hud-header, body.loaded #nav-panel, body.loaded #time-bar { opacity
     max-height: 44vh;
     border-radius: 12px 12px 0 0;
     border-right: 1px solid var(--panel-edge);
-    transform: translateY(120%);
+    /* % is of the panel's own height — the empty panel is only ~60px tall,
+       so a bare percentage can't clear the 72px bottom anchor. Add it. */
+    transform: translateY(calc(100% + 80px));
   }
   #info-panel.open { transform: translateY(0); }
 
