@@ -2,7 +2,9 @@
 
 **Status:** Living document — the improvement loop works against this.
 **Owner:** Jeff
-**Last updated:** 2026-06-13 (iteration 90)
+**Last updated:** 2026-06-13 (iteration 90); release doc sync 2026-06-12
+**Shipped:** production @ https://spacexplorer-prod.up.railway.app — 2026-06-12
+release (P0 fixes, SEO surface, SpaceX feature track); see CHANGELOG.md
 
 ## 1. Vision
 
@@ -48,29 +50,43 @@ last — only when the visuals are world-class).
 
 ## 4. Current scope (shipped)
 
-**Natural bodies (32):** Sun · 8 planets · dwarfs Ceres, Pluto, Eris,
-Makemake, Haumea · asteroid Vesta · moons Moon, Phobos, Deimos, Io, Europa,
-Ganymede, Callisto, Titan, Enceladus, Rhea, Iapetus, Miranda, Titania,
-Oberon, Triton, Charon · Halley's Comet (dark lumpy nucleus, perihelion-driven coma + anti-sunward tail — comet hero pass iter 43) ·
+**Natural bodies (39):** Sun · 8 planets · dwarfs Ceres, Pluto, Eris,
+Makemake, Haumea, Sedna · asteroids Vesta, Pallas, Bennu, Apophis ·
+Arrokoth · moons Moon, Phobos, Deimos, Io, Europa, Ganymede, Callisto,
+Titan, Enceladus, Rhea, Iapetus, Miranda, Titania, Oberon, Triton, Charon ·
+comets Halley, 67P, NEOWISE (dark lumpy nuclei, perihelion-driven coma +
+anti-sunward tail — comet hero pass iter 43) ·
 asteroid belt · Kuiper belt · starfield.
 
-**Man-made:** all spacecraft are detailed PBR miniatures with image-based lighting and distance-faded glints — P0 orb fix iter 29 (iter 14 base); Roadster/rover close-up scale fix + speck-size test gate iter 42 — ISS · Hubble · JWST at L2 · Starlink shell
-(700 sats) · Juno (polar Jupiter orbit) · Tesla Roadster · Parker Solar
-Probe · New Horizons · Voyager 1 · Voyager 2.
+**Man-made:** all spacecraft are detailed PBR miniatures with image-based lighting and distance-faded glints — P0 orb fix iter 29 (iter 14 base); Roadster/rover close-up scale fix + speck-size test gate iter 42; one shared size curve (display = 0.382 × meters^0.244) — ISS · Tiangong ·
+Hubble · JWST at L2 · Juno · Akatsuki · Europa Clipper · Gaia · SOHO ·
+LRO · Danuri · Mars Express · ExoMars TGO · MRO · Perseverance ·
+Curiosity · Cassini memorial · Tesla Roadster · Parker Solar Probe ·
+New Horizons · Pioneers 10/11 · Voyagers 1/2 · the real Starlink
+constellation (~5,800 sats baked from a CelesTrak TLE snapshot) · GPS +
+geostationary rings · SpaceX fleet: Falcon 9 (real ascent geometry, RTLS
+booster flyback), Crew Dragon (LC-39A → ISS rendezvous cycle), Starship
+at Starbase + Mars-transfer fleet on the Hohmann arc · launch sites
+Starbase, LC-39A, SLC-4E.
 
 **Experience:** search Enter-selects, idle cinematic drift (iter 34) · selected orbit glows amber (iter 31) · shareable moments — ?focus + ?date deep links and a copy-link button (paused on arrival) (iter 25), og:image/twitter social card (iter 64) · live distance-from-Earth + light-travel-time readout on every selection (iter 21) · click/nav/search to select → camera fly-to + follow + info
 panel with stats and a fun fact · floating labels with distance-based
-decluttering · orbit lines · time machine (pause, real-time 1× to 100 days/s, reverse, date picker, NOW) ·
-toggles (orbits, labels, belts, Starlink) · deep links · Esc/empty-click
+decluttering · orbit lines · time machine (pause, reverse, slider from
+exactly real time up to 100 days/s — default 10 min/s, date picker, NOW) ·
+two tours: 21-stop Grand Tour + 10-stop SpaceX Story (calmed clock while
+touring) · IPO banner with live SPCX quote ·
+toggles (orbits, labels, belts, Starlink) · deep links · share button
+(clipboard on desktop, native sheet on touch) · sitemap + JSON-LD + PWA
+manifest · Esc/empty-click
 deselect · hover cursor · Earth night lights + atmospheres · Saturn rings.
 
-**Quality infrastructure:** 32-assertion E2E suite (puppeteer-core + system
+**Quality infrastructure:** 206-assertion E2E suite (puppeteer-core + system
 Chrome): boot, data integrity of all objects, orbital accuracy vs. known
 distances on the current date, sidereal-year round-trip, 1986 Halley
 perihelion via date jump, selection/camera/panel behavior, search, toggles,
 time controls incl. reverse, numeric stability under fast-forward, deep
-links, zero console errors. Experience: time bar now has reverse (⏴) and
-a date picker alongside NOW.
+links, pixel-regression baselines, launches, tours, SEO surface, mobile
+viewport, zero console errors.
 
 ## 5. Quality bars (release gates)
 
@@ -103,6 +119,16 @@ objects may now be added sparingly, with day-one kit-quality visuals
 Express (iter 79); Danuri/KPLO lunar orbiter (iter 80); ExoMars TGO
 (iter 83). Candidates: Lucy, Psyche, BepiColombo (heliocentric elements
 need care — don't fabricate), Queqiao-2 lunar relay.
+
+**SpaceX feature track (shipped to prod 2026-06-12, built on feature
+branches outside the loop, celebrating the SPCX IPO):** Falcon 9 with
+real ascent geometry + RTLS booster flyback · Crew Dragon LC-39A → ISS
+rendezvous cycle (pure function of sim time — time travel lands anywhere
+in the cycle correctly) · Starship at Starbase, departing for Mars on a
+Hohmann arc when the transfer window opens · operational launch sites ·
+real Starlink constellation baked from CelesTrak TLEs · 10-stop SpaceX
+Story tour · IPO countdown banner with live SPCX quote (wall-clock-driven,
+immune to time travel).
 
 **Graphics (top priority — best-in-class realistic & fancy)**
 - [x] Procedural color maps for major moons — Io volcanic mottling, Europa lineae, Titan banded haze + atmosphere shell, Triton cantaloupe + pink cap (iter 46); Charon's Mordor Macula (iter 62); Ganymede two-tone terrain + Callisto impact speckles complete the Galileans (iter 63); Enceladus south-polar geyser plume (iter 65); Iapetus yin-yang hemispheres + equatorial ridge (iter 67); crater bump relief for all textureless moons (iter 45); Phobos/Deimos potato shapes (iter 49); Pluto–Charon barycenter wobble (iter 52)
@@ -164,6 +190,6 @@ and Apophis (iter 26).
 ## 8. Success criteria
 
 - A first-time visitor finds and learns something surprising within 60 seconds.
-- An enthusiast can answer "where is X right now?" for any of 40+ objects.
+- An enthusiast can answer "where is X right now?" for any of 70+ objects.
 - The suite stays green; no known bugs ship and stay shipped.
 - It feels alive: time moves, things orbit, the sky is the real sky of today.
