@@ -20,6 +20,8 @@ const SPACEX_STOPS = [
   { id: 'starlink', title: 'First Starlink batch', date: Date.UTC(2019, 4, 24, 2, 30) },
   { id: 'iss', title: 'Demo-2: crew flies from US soil again', date: Date.UTC(2020, 4, 30, 19, 22) },
   { id: 'earth', title: 'Starship first integrated flight', date: Date.UTC(2023, 3, 20, 13, 33) },
+  { id: 'starship', title: 'Starship survives reentry', date: Date.UTC(2024, 5, 6, 14, 6) },
+  { id: 'starbase', title: 'Chopsticks catch the booster', date: Date.UTC(2024, 9, 13, 12, 32) },
   { id: 'earth', title: 'SPCX rings the Nasdaq bell', date: Date.UTC(2026, 5, 12, 13, 30) },
 ];
 

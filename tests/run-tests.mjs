@@ -1357,13 +1357,14 @@ try {
     document.getElementById('tour-next').click();
     await sx.frame();
     const third = snap();
-    const badges = [first.badge, third.badge];
-    for (let i = 3; i < 7; i++) {
+    const rest = [];
+    for (let i = 3; i < 9; i++) {
       document.getElementById('tour-next').click();
       await sx.frame();
-      badges.push(document.getElementById('tour-date')?.textContent ?? '(no element)');
+      rest.push(snap());
     }
-    const last = snap();
+    const last = rest[rest.length - 1];
+    const badges = [first.badge, third.badge, ...rest.map((s) => s.badge)];
     document.getElementById('tour-exit').click();
     const exited = !document.getElementById('tour-banner').classList.contains('open')
       && !document.getElementById('btn-spacex-tour').classList.contains('on');
@@ -1377,19 +1378,25 @@ try {
     document.getElementById('btn-now').click();
     sx.deselect();
     await sx.frame();
-    return { first, third, last, badges, grandBadge, exited, speedRestored };
+    return { first, third, rest, last, badges, grandBadge, exited, speedRestored };
   });
   check(`SpaceX Story opens on Falcon 1 in 2008 (${story.first.date})`,
     story.first.date.startsWith('2008-09-28') && story.first.name === 'Falcon 1 reaches orbit'
-    && story.first.step === '1 / 7' && story.first.sel === 'earth');
+    && story.first.step === '1 / 9' && story.first.sel === 'earth');
   check(`SpaceX Story stop 3 = Starman departure (${story.third.date})`,
     story.third.date.startsWith('2018-02-06') && story.third.sel === 'roadster'
     && story.third.name === 'Starman leaves Earth');
   check(`SpaceX Story shows a date badge on every step (${JSON.stringify(story.badges)})`,
-    story.badges.length === 6 && story.badges.every((b) => /\b(20\d\d)\b/.test(b))
+    story.badges.length === 8 && story.badges.every((b) => /\b(20\d\d)\b/.test(b))
     && story.first.badge === 'Sep 28, 2008' && story.third.badge === 'Feb 6, 2018');
+  check(`SpaceX Story stop 7 = Starship survives reentry (${story.rest[3]?.sel}, ${story.rest[3]?.badge})`,
+    story.rest[3]?.name === 'Starship survives reentry' && story.rest[3]?.sel === 'starship'
+    && story.rest[3]?.badge === 'Jun 6, 2024');
+  check(`SpaceX Story stop 8 = chopsticks booster catch (${story.rest[4]?.sel}, ${story.rest[4]?.badge})`,
+    story.rest[4]?.name === 'Chopsticks catch the booster' && story.rest[4]?.sel === 'starbase'
+    && story.rest[4]?.badge === 'Oct 13, 2024');
   check(`SpaceX Story IPO finale focuses Earth (${story.last.sel}, ${story.last.badge})`,
-    story.last.step === '7 / 7' && story.last.sel === 'earth'
+    story.last.step === '9 / 9' && story.last.sel === 'earth'
     && story.last.name === 'SPCX rings the Nasdaq bell' && story.last.badge === 'Jun 12, 2026');
   check(`Grand Tour shows no date badge ("${story.grandBadge}")`, story.grandBadge === '');
   check(`SpaceX Story dwells at 60 sec/s (${story.first.secPerSec.toFixed(1)} s/s)`,
