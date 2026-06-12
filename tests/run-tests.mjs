@@ -856,7 +856,7 @@ try {
       };
     };
     const start = geom();
-    // default speed (1 day/s) laps ISS ~15×/s; the smooth clock caps the
+    // 1 day/s laps ISS ~15×/s; the smooth clock caps the
     // sweep at 0.25 rad/frame — 30 sampled frames cover several radians
     sx.sim.speed = 1;
     sx.sim.playing = true;
@@ -1163,18 +1163,21 @@ try {
     document.getElementById('btn-play').click(); // resume
     const slider = document.getElementById('speed-slider');
     const defaultSpeed = sx.sim.speed; // untouched since load
+    const defaultLabel = document.getElementById('speed-label').textContent;
+    const defaultSlider = slider.value;
     slider.value = 100;
     slider.dispatchEvent(new Event('input'));
     const fast = sx.sim.speed;
-    slider.value = 50;
+    slider.value = defaultSlider;
     slider.dispatchEvent(new Event('input'));
     sx.sim.days += 5000;
     document.getElementById('btn-now').click();
     const nowDelta = Math.abs(sx.sim.days - (Date.now() - Date.UTC(2000, 0, 1, 12)) / 86400000);
-    return { paused, fast, defaultSpeed, nowDelta };
+    return { paused, fast, defaultSpeed, defaultLabel, nowDelta };
   });
   check('pause freezes simulation time', t.paused);
-  check(`default load speed = 1 day/s (got ${t.defaultSpeed})`, approx(t.defaultSpeed, 1, 1e-9));
+  check(`default load speed = 10 min/s (got ${(t.defaultSpeed * 86400).toFixed(0)} s/s, "${t.defaultLabel}")`,
+    t.defaultSpeed * 86400 > 550 && t.defaultSpeed * 86400 < 620 && t.defaultLabel === '10 min/s');
   check(`speed slider max = 100 days/s (got ${t.fast.toFixed(0)})`, approx(t.fast, 100, 1e-9));
   check('NOW returns to the present', t.nowDelta < 0.01);
   // P0-9: the 1× button is gone; the slider's leftmost stop IS real time
@@ -1457,7 +1460,7 @@ try {
     await sx.frame();
     const realtimeKept = sps();
     sx.deselect();
-    setSlider(50); // back to the 1 day/s default
+    setSlider(28); // back to the 10 min/s default
     await sx.frame();
     return { issClamped, marsRestored, hubbleClamped, deselectRestored, realtimeKept };
   });

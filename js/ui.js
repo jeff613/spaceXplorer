@@ -250,9 +250,10 @@ export function setupTimeControls(sim, sound) {
 
   const REALTIME = 1 / 86400; // one real second per second, in days/s
 
-  // Two log-linear segments: left half spans real time → 1 day/s (the
-  // default, at v=50), right half spans 1 → 100 days/s. v=0 is exactly
-  // real time, so the leftmost stop literally runs the clock at 1 s/s.
+  // Two log-linear segments: left half spans real time → 1 day/s (v=50),
+  // right half spans 1 → 100 days/s. v=0 is exactly real time, so the
+  // leftmost stop literally runs the clock at 1 s/s. The default is v=28
+  // (~10 min/s, set in index.html) — calm enough to watch Earth orbit.
   const sliderToSpeed = (v) =>
     v <= 50
       ? REALTIME * Math.pow(86400, v / 50) // real time → 1 day/s

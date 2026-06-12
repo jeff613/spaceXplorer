@@ -68,6 +68,8 @@ loop iterations (see PRD.md).
   1 min/s clamps the clock to 1 min/s — Earth's spin and neighbor
   satellites whirled unwatchably at warp; speed restores on leaving
   Earth orbit unless the visitor adjusted the slider meanwhile
+- Default timescale is now 10 min/s (was 1 day/s) — the system still
+  visibly moves, but first-load close-ups no longer strobe
 - Surprise me: fly to a random object (87); info-panel ‹ › cycling for touch users (88, mobile-gated 89); CSS boot splash for slow connections (90); Space bar play/pause (57); zoom floor prevents clipping inside bodies (59)
 - aria-labels on all controls (54); prefers-reduced-motion support (55)
 - Texture-failure fallback (51); asset-integrity deploy gate (73);
