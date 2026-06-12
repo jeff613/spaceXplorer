@@ -695,6 +695,114 @@ try {
   check(`camera arrives near Mars (dist ${sel.camDist.toFixed(1)} < 25)`, sel.camDist < 25);
   check(`controls target locks Mars (${sel.targetDist.toFixed(2)} < 0.5)`, sel.targetDist < 0.5);
 
+  // P0-10: flying to a planet-orbiting craft must never arrive with the
+  // parent planet blocking the view. Park the camera on the far side of the
+  // parent (worst case: planet directly between camera and craft), select,
+  // and assert the camera→craft segment clears the parent sphere.
+  const occl = await page.evaluate(async () => {
+    const THREE = await import('three');
+    const sx = window.__sx;
+    const wasPlaying = sx.sim.playing;
+    sx.sim.playing = false; // freeze orbits — deterministic arrival geometry
+    // fast orbiters ride rate-limited smooth clocks that snap to the exact
+    // sim time on the first paused frame — settle that before parking
+    await sx.frame();
+
+    const worldPos = (obj) => obj.getWorldPosition(new THREE.Vector3());
+    // smallest distance from the parent's center to the camera→craft segment,
+    // in units of the parent's radius (< 1 ⇒ the planet occludes the craft)
+    const clearance = (craftId, parentId) => {
+      const parent = sx.bodies.get(parentId);
+      const pPos = worldPos(parent.mesh);
+      const cPos = worldPos(sx.craft.get(craftId).mesh);
+      const ab = cPos.clone().sub(sx.camera.position);
+      const t = THREE.MathUtils.clamp(
+        pPos.clone().sub(sx.camera.position).dot(ab) / ab.lengthSq(), 0, 1);
+      const closest = sx.camera.position.clone().add(ab.multiplyScalar(t));
+      return closest.distanceTo(pPos) / parent.displayRadius;
+    };
+    // park the camera opposite the craft, offset by az radians around +Y
+    const parkFarSide = (craftId, parentId, az) => {
+      const parent = sx.bodies.get(parentId);
+      const pPos = worldPos(parent.mesh);
+      const away = pPos.clone().sub(worldPos(sx.craft.get(craftId).mesh))
+        .normalize().applyAxisAngle(new THREE.Vector3(0, 1, 0), az);
+      sx.camera.position.copy(pPos).add(away.multiplyScalar(parent.displayRadius * 4));
+      sx.controls.target.copy(pPos);
+    };
+
+    const out = [];
+    const cases = [
+      ['iss', 'earth', 0, 'instant'], ['iss', 'earth', 0.6, 'instant'],
+      ['iss', 'earth', -0.6, 'instant'], ['lro', 'moon', 0, 'instant'],
+      ['iss', 'earth', 0, 'animated'], ['lro', 'moon', 0, 'animated'],
+    ];
+    for (const [craftId, parentId, az, mode] of cases) {
+      parkFarSide(craftId, parentId, az);
+      await sx.frame();
+      sx.select(sx.craft.get(craftId), { instant: mode === 'instant' });
+      if (mode === 'animated') {
+        const t0 = performance.now();
+        while (performance.now() - t0 < 2200) await sx.frame(); // flight is 1.4 s
+      } else {
+        await sx.frame();
+      }
+      out.push({ id: craftId, az, mode, clear: +clearance(craftId, parentId).toFixed(2) });
+      sx.deselect();
+      await sx.frame();
+    }
+    sx.sim.playing = wasPlaying;
+    return out;
+  });
+  check('fly-to a craft from behind its parent arrives unoccluded (clearance ≥ 1.1 R)',
+    occl.every((r) => r.clear >= 1.1), JSON.stringify(occl));
+
+  // following a fast orbiter must not leave the parent whirling through the
+  // view: the camera rides the orbit's rotating frame, keeping the
+  // camera–parent–craft triangle rigid while the craft sweeps its orbit
+  const rigid = await page.evaluate(async () => {
+    const THREE = await import('three');
+    const sx = window.__sx;
+    const prev = { speed: sx.sim.speed, playing: sx.sim.playing };
+    sx.sim.playing = false;
+    await sx.frame(); // settle smooth clocks
+    sx.select(sx.craft.get('iss'), { instant: true });
+    await sx.frame();
+
+    const worldPos = (obj) => obj.getWorldPosition(new THREE.Vector3());
+    const geom = () => {
+      const pPos = worldPos(sx.bodies.get('earth').mesh);
+      const camOff = sx.camera.position.clone().sub(pPos);
+      const craftOff = worldPos(sx.craft.get('iss').mesh).sub(pPos);
+      return {
+        angle: camOff.angleTo(craftOff), // parent-frame bearing cam↔craft
+        camDist: craftOff.add(pPos).distanceTo(sx.camera.position),
+      };
+    };
+    const start = geom();
+    // default speed (1 day/s) laps ISS ~15×/s; the smooth clock caps the
+    // sweep at 0.25 rad/frame — 30 sampled frames cover several radians
+    sx.sim.speed = 1;
+    sx.sim.playing = true;
+    let maxAngleDrift = 0;
+    let maxDistDrift = 0;
+    for (let i = 0; i < 30; i++) {
+      await sx.frame();
+      const g = geom();
+      maxAngleDrift = Math.max(maxAngleDrift, Math.abs(g.angle - start.angle));
+      maxDistDrift = Math.max(maxDistDrift, Math.abs(g.camDist - start.camDist) / start.camDist);
+    }
+    sx.sim.speed = prev.speed;
+    sx.sim.playing = prev.playing;
+    sx.deselect();
+    await sx.frame();
+    return { maxAngleDrift: +maxAngleDrift.toFixed(3), maxDistDrift: +maxDistDrift.toFixed(3) };
+  });
+  check(`following ISS at speed keeps Earth fixed in frame (bearing drift ${rigid.maxAngleDrift} rad < 0.1)`,
+    rigid.maxAngleDrift < 0.1, JSON.stringify(rigid));
+  check(`following ISS at speed keeps viewing distance (drift ${(rigid.maxDistDrift * 100).toFixed(1)}% < 5%)`,
+    rigid.maxDistDrift < 0.05, JSON.stringify(rigid));
+
   // selection highlights the orbit, deselection restores it
   const hl = await page.evaluate(async () => {
     const sx = window.__sx;
