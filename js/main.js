@@ -499,7 +499,15 @@ if (dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam)) {
 const focusId = params.get('focus');
 if (focusId) {
   const target = bodies.get(focusId) || craft.get(focusId);
-  if (target) select(target, { instant: true });
+  if (target) {
+    select(target, { instant: true });
+    // each shared object view is its own page in search engines' eyes
+    const canon = document.querySelector('link[rel="canonical"]');
+    const deepUrl = new URL(canon.href);
+    deepUrl.searchParams.set('focus', focusId);
+    canon.href = deepUrl.toString();
+    document.querySelector('meta[property="og:url"]').content = deepUrl.toString();
+  }
 }
 
 // copy a link to the current view (object + sim date + scale mode)
@@ -511,8 +519,19 @@ document.getElementById('info-share').addEventListener('click', async () => {
   u.searchParams.set('date', d.toISOString().slice(0, 10));
   if (TRUE_SCALE) u.searchParams.set('scale', 'true');
   window.__lastShareUrl = u.toString(); // exposed for the test suite
+  // window.navigator: the nav-panel const above shadows the global in this module
+  const nav = window.navigator;
+  // touch devices get the native share sheet (with text people paste alongside
+  // the link); desktop keeps the quieter copy-to-clipboard
+  if (nav.share && nav.maxTouchPoints > 1) {
+    const line = `Where is ${selected.data.name} right now? Find out on SPACEXPLORER.`;
+    try {
+      await nav.share({ title: 'SPACEXPLORER', text: line, url: u.toString() });
+    } catch { /* sheet dismissed — nothing to do */ }
+    return;
+  }
   try {
-    await navigator.clipboard.writeText(u.toString());
+    await nav.clipboard.writeText(u.toString());
     const btn = document.getElementById('info-share');
     btn.textContent = '✓';
     setTimeout(() => { btn.textContent = '⧉'; }, 1200);

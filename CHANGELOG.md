@@ -76,6 +76,17 @@ loop iterations (see PRD.md).
   invalid-deep-link and mobile value-bounds gates (76)
 - Social preview card (64); README refresh (68); texture housekeeping +
   .railwayignore fix (72)
+- SEO & sharing surface: robots.txt + sitemap.xml (homepage and 24
+  ?focus= deep links, ids cross-checked against data.js by the suite),
+  canonical/og:url (following ?focus= deep links), og:site_name,
+  og:image dimensions/alt, twitter:title/description, JSON-LD
+  WebApplication, crawlable about paragraph in the help overlay, PWA
+  manifest + 🪐 icons (180/192/512)
+- Share button fixed and upgraded: the module-level `navigator` const
+  (nav panel) shadowed `window.navigator`, so clipboard copy had been
+  silently throwing since the button shipped — now actually copies
+  (suite asserts clipboard contents); touch devices get the native
+  share sheet with per-object text ("Where is Voyager 1 right now?")
 
 ### New objects (gate reopened at 79)
 - Mars Express (79), Danuri/KPLO (80), ExoMars TGO (83)

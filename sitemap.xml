@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Homepage plus deep links to the most-searched objects (?focus= is a real,
+     shareable entry point — see js/main.js). Ids must exist in js/data.js;
+     the test suite cross-checks. -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://spacexplorer-prod.up.railway.app/</loc><lastmod>2026-06-12</lastmod><priority>1.0</priority></url>
+  <url><loc>https://spacexplorer-prod.up.railway.app/?focus=sun</loc></url>
+  <url><loc>https://spacexplorer-prod.up.railway.app/?focus=mercury</loc></url>
+  <url><loc>https://spacexplorer-prod.up.railway.app/?focus=venus</loc></url>
+  <url><loc>https://spacexplorer-prod.up.railway.app/?focus=earth</loc></url>
+  <url><loc>https://spacexplorer-prod.up.railway.app/?focus=moon</loc></url>
+  <url><loc>https://spacexplorer-prod.up.railway.app/?focus=mars</loc></url>
+  <url><loc>https://spacexplorer-prod.up.railway.app/?focus=jupiter</loc></url>
+  <url><loc>https://spacexplorer-prod.up.railway.app/?focus=europa</loc></url>
+  <url><loc>https://spacexplorer-prod.up.railway.app/?focus=saturn</loc></url>
+  <url><loc>https://spacexplorer-prod.up.railway.app/?focus=titan</loc></url>
+  <url><loc>https://spacexplorer-prod.up.railway.app/?focus=uranus</loc></url>
+  <url><loc>https://spacexplorer-prod.up.railway.app/?focus=neptune</loc></url>
+  <url><loc>https://spacexplorer-prod.up.railway.app/?focus=pluto</loc></url>
+  <url><loc>https://spacexplorer-prod.up.railway.app/?focus=halley</loc></url>
+  <url><loc>https://spacexplorer-prod.up.railway.app/?focus=iss</loc></url>
+  <url><loc>https://spacexplorer-prod.up.railway.app/?focus=jwst</loc></url>
+  <url><loc>https://spacexplorer-prod.up.railway.app/?focus=voyager1</loc></url>
+  <url><loc>https://spacexplorer-prod.up.railway.app/?focus=voyager2</loc></url>
+  <url><loc>https://spacexplorer-prod.up.railway.app/?focus=newhorizons</loc></url>
+  <url><loc>https://spacexplorer-prod.up.railway.app/?focus=parker</loc></url>
+  <url><loc>https://spacexplorer-prod.up.railway.app/?focus=perseverance</loc></url>
+  <url><loc>https://spacexplorer-prod.up.railway.app/?focus=roadster</loc></url>
+  <url><loc>https://spacexplorer-prod.up.railway.app/?focus=starship</loc></url>
+  <url><loc>https://spacexplorer-prod.up.railway.app/?focus=starlink</loc></url>
+</urlset>
