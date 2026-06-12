@@ -27,6 +27,9 @@ loop iterations (see PRD.md).
   Grand Tour; it previously had no styling at all)
 - Time bar: slider's leftmost is now exactly real time and the redundant
   1× button is gone; default stays 1 day/s
+- Fly-to on orbiters can no longer arrive with the parent planet blocking
+  the view: arrival bearing blends radially out until the sightline clears
+  the parent by 1.15× its radius (ISS was occluded on 5/16 bearings)
 
 ### Visual quality
 - Comet hero pass: coal-dark lumpy nuclei, perihelion-driven coma (43)
