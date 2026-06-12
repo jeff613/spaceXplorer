@@ -1015,9 +1015,12 @@ try {
     const sx = window.__sx;
     const realNow = Date.now;
     const read = () => ({
-      label: document.getElementById('ipo-label').textContent,
-      clock: document.getElementById('ipo-clock').textContent,
-      live: document.getElementById('ipo-countdown').classList.contains('live'),
+      label:      document.getElementById('ipo-label').textContent,
+      days:       document.getElementById('ipo-days').textContent,
+      min:        document.getElementById('ipo-min').textContent,
+      cellsShown: document.getElementById('ipo-cells').style.display !== 'none',
+      priceShown: document.getElementById('ipo-price').style.display !== 'none',
+      live:       document.getElementById('ipo-countdown').classList.contains('live'),
     });
     Date.now = () => Date.UTC(2026, 5, 12, 13, 0); // T−30 min
     await sx.frame();
@@ -1029,12 +1032,13 @@ try {
     await sx.frame();
     return { before, after };
   });
-  check(`IPO badge counts down pre-open (${ipo.before.clock})`,
-    !ipo.before.live && ipo.before.clock === 'T−00:30:00'
-    && ipo.before.label === 'SPCX IPO · NASDAQ');
-  check(`IPO badge flips to trading post-open (${ipo.after.clock})`,
-    ipo.after.live && ipo.after.clock === 'T+00:30:00'
-    && ipo.after.label.includes('TRADING ON NASDAQ'));
+  check(`IPO badge counts down pre-open (${ipo.before.days}d ${ipo.before.min}m)`,
+    !ipo.before.live && ipo.before.days === '00' && ipo.before.min === '30'
+    && ipo.before.label === 'Explore Space While Waiting for SPCX'
+    && ipo.before.cellsShown && !ipo.before.priceShown);
+  check('IPO badge flips to live post-open',
+    ipo.after.live && ipo.after.priceShown && !ipo.after.cellsShown
+    && ipo.after.label.includes('SPCX is Live'));
 
   // celebration must be asserted on a fresh page: the badge test above
   // already crossed T-0 on the main page, consuming the one-shot

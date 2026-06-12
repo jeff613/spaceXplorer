@@ -293,13 +293,43 @@ export function setupTimeControls(sim, sound) {
 
   // SPCX IPO: Nasdaq market open, June 12 2026, 9:30 ET (13:30 UTC).
   // Runs on wall-clock time — time-travel never moves this clock.
+  const FINNHUB_KEY = 'YOUR_FINNHUB_KEY'; // replace with key from finnhub.io
   const IPO_MS = Date.UTC(2026, 5, 12, 13, 30);
-  const ipoBadge = document.getElementById('ipo-countdown');
-  const ipoLabel = document.getElementById('ipo-label');
-  const ipoClock = document.getElementById('ipo-clock');
+  const ipoBadge    = document.getElementById('ipo-countdown');
+  const ipoLabel    = document.getElementById('ipo-label');
+  const ipoCells    = document.getElementById('ipo-cells');
+  const ipoPrice    = document.getElementById('ipo-price');
+  const ipoPriceVal = document.getElementById('ipo-price-val');
+  const ipoPriceChg = document.getElementById('ipo-price-change');
+  const ipoEls = {
+    days: document.getElementById('ipo-days'),
+    hrs:  document.getElementById('ipo-hrs'),
+    min:  document.getElementById('ipo-min'),
+    sec:  document.getElementById('ipo-sec'),
+  };
   const pad2 = (n) => String(n).padStart(2, '0');
   let prevDelta = null;
   let celebrated = false;
+  let pricePollingStarted = false;
+
+  function startPricePolling() {
+    // No real key yet → leave the '—' placeholder; don't make a doomed request.
+    if (FINNHUB_KEY === 'YOUR_FINNHUB_KEY') return;
+    const fetchPrice = async () => {
+      try {
+        const r = await fetch(`https://finnhub.io/api/v1/quote?symbol=SPCX&token=${FINNHUB_KEY}`);
+        const { c, d, dp } = await r.json();
+        if (c) {
+          ipoPriceVal.textContent = `$${c.toFixed(2)}`;
+          const sign = d >= 0 ? '▲' : '▼';
+          ipoPriceChg.textContent = `${sign} ${Math.abs(d).toFixed(2)} (${dp >= 0 ? '+' : ''}${dp.toFixed(2)}%)`;
+          ipoPriceChg.className = d >= 0 ? 'up' : 'down';
+        }
+      } catch { /* network/JSON hiccup — keep last price on screen */ }
+    };
+    fetchPrice();
+    setInterval(fetchPrice, 15000);
+  }
 
   return {
     updateDate() {
@@ -309,13 +339,27 @@ export function setupTimeControls(sim, sound) {
 
       const delta = IPO_MS - Date.now();
       const s = Math.abs(delta) / 1000;
-      const days = Math.floor(s / 86400);
-      const clock = `${days > 0 ? days.toLocaleString('en-US') + 'd ' : ''}`
-        + `${pad2(Math.floor((s % 86400) / 3600))}:${pad2(Math.floor((s % 3600) / 60))}:${pad2(Math.floor(s % 60))}`;
       const live = delta <= 0;
-      ipoLabel.textContent = live ? 'SPCX ★ TRADING ON NASDAQ' : 'SPCX IPO · NASDAQ';
-      ipoClock.textContent = (live ? 'T+' : 'T−') + clock;
+
+      ipoLabel.textContent = live
+        ? '★ SPCX is Live · Trading on Nasdaq'
+        : 'Explore Space While Waiting for SPCX';
+
+      if (!live) {
+        ipoEls.days.textContent = pad2(Math.floor(s / 86400));
+        ipoEls.hrs.textContent  = pad2(Math.floor((s % 86400) / 3600));
+        ipoEls.min.textContent  = pad2(Math.floor((s % 3600) / 60));
+        ipoEls.sec.textContent  = pad2(Math.floor(s % 60));
+      }
+
+      ipoCells.style.display = live ? 'none' : 'flex';
+      ipoPrice.style.display = live ? 'flex' : 'none';
       ipoBadge.classList.toggle('live', live);
+
+      if (live && !pricePollingStarted) {
+        pricePollingStarted = true;
+        startPricePolling();
+      }
 
       // one-time flourish when the real clock crosses T-0 while you're watching
       if (prevDelta !== null && prevDelta > 0 && delta <= 0 && !celebrated) {
