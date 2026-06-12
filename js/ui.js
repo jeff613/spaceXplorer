@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { J2000, displayLenToAU } from './data.js';
+import { FINNHUB_KEY } from './config.js';
 
 // ─── Object navigator ─────────────────────────────────────────────────────
 
@@ -20,11 +21,12 @@ export function buildNavigator(bodies, craft, onSelect) {
     },
     {
       title: 'Spacecraft',
-      ids: ['iss', 'tiangong', 'hubble', 'starlink', 'gps', 'geo', 'jwst', 'gaia', 'soho', 'danuri', 'lro',
+      ids: ['iss', 'dragon', 'starship', 'tiangong', 'hubble', 'starlink', 'gps', 'geo', 'jwst', 'gaia', 'soho', 'danuri', 'lro',
         'akatsuki', 'tgo', 'marsexpress', 'mro', 'perseverance', 'curiosity', 'juno', 'clipper', 'cassini', 'parker',
         'roadster', 'newhorizons', 'pioneer10', 'pioneer11',
         'voyager1', 'voyager2'],
     },
+    { title: 'SpaceX Launch Sites', ids: ['starbase', 'lc39a', 'slc4e'] },
   ];
   const items = new Map();
   const headers = [];
@@ -51,9 +53,12 @@ export function buildNavigator(bodies, craft, onSelect) {
   }
 
   // live filter
+  // ticker easter egg: SPCX finds the only SpaceX hardware on a permanent solar orbit
+  const ALIASES = { spcx: 'tesla roadster' };
   const search = document.getElementById('nav-search');
   search.addEventListener('input', () => {
-    const q = search.value.trim().toLowerCase();
+    const raw = search.value.trim().toLowerCase();
+    const q = ALIASES[raw] ?? raw;
     for (const { el, items: gi } of headers) {
       let any = false;
       for (const it of gi) {
@@ -110,7 +115,9 @@ export function showInfo(body) {
   p.querySelector('.info-live').innerHTML = `
     <div class="info-row"><span class="info-key" id="live-dist-key"></span><span class="info-val" id="live-dist"></span></div>
     <div class="info-row"><span class="info-key">Light travel time</span><span class="info-val" id="live-light"></span></div>
-    <div class="info-row" id="live-extra-row" style="display:none"><span class="info-key" id="live-extra-key"></span><span class="info-val" id="live-extra"></span></div>`;
+    <div class="info-row" id="live-extra-row" style="display:none"><span class="info-key" id="live-extra-key"></span><span class="info-val" id="live-extra"></span></div>
+    <div class="info-row" id="live-extra2-row" style="display:none"><span class="info-key" id="live-extra2-key"></span><span class="info-val" id="live-extra2"></span></div>
+    <div class="info-row" id="live-extra3-row" style="display:none"><span class="info-key" id="live-extra3-key"></span><span class="info-val" id="live-extra3"></span></div>`;
 
   // size comparison vs Earth, drawn to scale
   const cmp = p.querySelector('.info-compare');
@@ -295,12 +302,45 @@ export function setupTimeControls(sim, sound) {
   // SPCX IPO: Nasdaq market open, June 12 2026, 9:30 ET (13:30 UTC).
   // Runs on wall-clock time — time-travel never moves this clock.
   const IPO_MS = Date.UTC(2026, 5, 12, 13, 30);
-  const ipoBadge = document.getElementById('ipo-countdown');
-  const ipoLabel = document.getElementById('ipo-label');
-  const ipoClock = document.getElementById('ipo-clock');
+  const ipoBadge    = document.getElementById('ipo-countdown');
+  const ipoLabel    = document.getElementById('ipo-label');
+  const ipoCells    = document.getElementById('ipo-cells');
+  const ipoPrice    = document.getElementById('ipo-price');
+  const ipoPriceVal = document.getElementById('ipo-price-val');
+  const ipoPriceChg = document.getElementById('ipo-price-change');
+  const ipoEls = {
+    days: document.getElementById('ipo-days'),
+    hrs:  document.getElementById('ipo-hrs'),
+    min:  document.getElementById('ipo-min'),
+    sec:  document.getElementById('ipo-sec'),
+  };
   const pad2 = (n) => String(n).padStart(2, '0');
   let prevDelta = null;
   let celebrated = false;
+  let pricePollingStarted = false;
+  let priceLoaded = false; // first real quote received → swap cells for the price
+
+  function startPricePolling() {
+    // No real key yet → cells keep ticking T+ elapsed; don't make doomed requests.
+    if (FINNHUB_KEY === 'YOUR_FINNHUB_KEY') return;
+    const fetchPrice = async () => {
+      try {
+        const r = await fetch(`https://finnhub.io/api/v1/quote?symbol=SPCX&token=${FINNHUB_KEY}`);
+        const { c, d, dp } = await r.json();
+        if (!c) return;
+        ipoPriceVal.textContent = `$${c.toFixed(2)}`;
+        priceLoaded = true;
+        // d/dp are null on listing day (no previous close) — price still shows
+        if (d != null && dp != null) {
+          const sign = d >= 0 ? '▲' : '▼';
+          ipoPriceChg.textContent = `${sign} ${Math.abs(d).toFixed(2)} (${dp >= 0 ? '+' : ''}${dp.toFixed(2)}%)`;
+          ipoPriceChg.className = d >= 0 ? 'up' : 'down';
+        }
+      } catch { /* network/JSON hiccup — keep last price on screen */ }
+    };
+    fetchPrice();
+    setInterval(fetchPrice, 15000);
+  }
 
   return {
     updateDate() {
@@ -310,13 +350,29 @@ export function setupTimeControls(sim, sound) {
 
       const delta = IPO_MS - Date.now();
       const s = Math.abs(delta) / 1000;
-      const days = Math.floor(s / 86400);
-      const clock = `${days > 0 ? days.toLocaleString('en-US') + 'd ' : ''}`
-        + `${pad2(Math.floor((s % 86400) / 3600))}:${pad2(Math.floor((s % 3600) / 60))}:${pad2(Math.floor(s % 60))}`;
       const live = delta <= 0;
-      ipoLabel.textContent = live ? 'SPCX ★ TRADING ON NASDAQ' : 'SPCX IPO · NASDAQ';
-      ipoClock.textContent = (live ? 'T+' : 'T−') + clock;
+
+      ipoLabel.textContent = live
+        ? '★ SPCX is Live · Trading on Nasdaq'
+        : 'Explore Space While Waiting for SPCX';
+
+      // cells tick down pre-IPO and tick T+ elapsed until the first quote lands
+      const showPrice = live && priceLoaded;
+      if (!showPrice) {
+        ipoEls.days.textContent = pad2(Math.floor(s / 86400));
+        ipoEls.hrs.textContent  = pad2(Math.floor((s % 86400) / 3600));
+        ipoEls.min.textContent  = pad2(Math.floor((s % 3600) / 60));
+        ipoEls.sec.textContent  = pad2(Math.floor(s % 60));
+      }
+
+      ipoCells.style.display = showPrice ? 'none' : 'flex';
+      ipoPrice.style.display = showPrice ? 'flex' : 'none';
       ipoBadge.classList.toggle('live', live);
+
+      if (live && !pricePollingStarted) {
+        pricePollingStarted = true;
+        startPricePolling();
+      }
 
       // one-time flourish when the real clock crosses T-0 while you're watching
       if (prevDelta !== null && prevDelta > 0 && delta <= 0 && !celebrated) {
@@ -346,6 +402,7 @@ export function setupToggles(handlers) {
 
 const _ra = new THREE.Vector3();
 const _rb = new THREE.Vector3();
+const _rc = new THREE.Vector3();
 
 function realAU(worldPos, target) {
   const len = worldPos.length();
@@ -359,7 +416,7 @@ function fmtLight(seconds) {
   return `${(seconds / 3600).toFixed(1)} hours`;
 }
 
-export function updateLiveStats(body, earth) {
+export function updateLiveStats(body, earth, mars, sim) {
   const distEl = document.getElementById('live-dist');
   if (!distEl || !body) return;
   body.mesh.getWorldPosition(_ra);
@@ -394,6 +451,36 @@ export function updateLiveStats(body, earth) {
     extraRow.style.display = '';
   } else if (extraRow) {
     extraRow.style.display = 'none';
+  }
+
+  // Where is Starman? The Roadster gets live speed, Mars range, and the
+  // running count of how many times it has out-driven its warranty.
+  const extra2 = document.getElementById('live-extra2-row');
+  const extra3 = document.getElementById('live-extra3-row');
+  if (body.data.id === 'roadster' && mars && sim) {
+    // heliocentric speed from vis-viva (a = 1.325 AU, its orbital element)
+    const rAU = _ra.length();
+    const k = 0.01720209895; // Gaussian gravitational constant, AU^1.5/day
+    const vKms = k * Math.sqrt(Math.max(0, 2 / rAU - 1 / 1.325)) * 149597870.7 / 86400;
+    document.getElementById('live-extra-key').textContent = 'Speed (now)';
+    document.getElementById('live-extra').textContent =
+      `${(vKms * 3600).toLocaleString('en-US', { maximumFractionDigits: 0 })} km/h`;
+    extraRow.style.display = '';
+    realAU(mars.anchor.position, _rc);
+    document.getElementById('live-extra2-key').textContent = 'Distance from Mars (now)';
+    document.getElementById('live-extra2').textContent = `${_ra.distanceTo(_rc).toFixed(2)} AU`;
+    extra2.style.display = '';
+    // odometer estimate: mean orbital speed × time since the FH demo launch
+    const simMs = J2000 + sim.days * 86400000;
+    const days = Math.max(0, (simMs - Date.UTC(2018, 1, 6, 20, 45)) / 86400000);
+    const warranties = days * (2 * Math.PI * 1.325 * 149597870.7 / 557) / 1.609344 / 36000;
+    document.getElementById('live-extra3-key').textContent = 'Warranty exceeded (est.)';
+    document.getElementById('live-extra3').textContent =
+      `${Math.floor(warranties).toLocaleString('en-US')}× the 36,000-mile plan`;
+    extra3.style.display = '';
+  } else {
+    if (extra2) extra2.style.display = 'none';
+    if (extra3) extra3.style.display = 'none';
   }
 
   const km = dAU * 149597870;

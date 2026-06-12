@@ -73,29 +73,103 @@ body.loaded #hud-header, body.loaded #nav-panel, body.loaded #time-bar { opacity
 
 #ipo-countdown {
   display: inline-flex;
-  align-items: baseline;
-  gap: 10px;
-  margin-top: 10px;
-  padding: 4px 14px;
-  border: 1px solid var(--panel-edge);
-  border-radius: 4px;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 10px 22px;
+  border: 1px solid var(--amber-dim);
+  border-radius: 6px;
   background: var(--panel);
-  font-size: 11px;
-  letter-spacing: 0.14em;
+  animation: spcx-breathe 3s ease-in-out infinite;
 }
 
-#ipo-countdown #ipo-label { color: var(--ink-dim); text-transform: uppercase; }
+@keyframes spcx-breathe {
+  0%, 100% { box-shadow: 0 0 14px rgba(255, 179, 71, 0.10); }
+  50%       { box-shadow: 0 0 30px rgba(255, 179, 71, 0.30); }
+}
 
-#ipo-countdown #ipo-clock {
+#ipo-punchline {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  color: var(--amber);
+  text-shadow: 0 0 10px rgba(255, 179, 71, 0.4);
+  text-transform: uppercase;
+}
+
+#ipo-cells { display: flex; gap: 6px; }
+
+.ipo-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: rgba(2, 5, 10, 0.8);
+  border: 1px solid var(--amber-dim);
+  border-radius: 3px;
+  padding: 4px 12px;
+  min-width: 50px;
+}
+
+.ipo-cv {
+  font-family: var(--font-display);
+  font-size: 20px;
+  color: var(--amber);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.ipo-cl {
+  font-size: 7px;
+  letter-spacing: 0.16em;
+  color: var(--ink-dim);
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+
+#ipo-price {
+  align-items: baseline;
+  gap: 10px;
+}
+
+#ipo-price-val {
+  font-family: var(--font-display);
+  font-size: 26px;
+  color: var(--amber);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  text-shadow: 0 0 14px rgba(255, 179, 71, 0.45);
+}
+
+#ipo-price-change {
   font-family: var(--font-display);
   font-size: 12px;
-  color: var(--cyan);
   font-variant-numeric: tabular-nums;
 }
 
-#ipo-countdown.live { border-color: var(--amber-dim); }
-#ipo-countdown.live #ipo-label { color: var(--amber); }
-#ipo-countdown.live #ipo-clock { color: var(--amber); text-shadow: 0 0 14px rgba(255, 179, 71, 0.5); }
+#ipo-price-change.up   { color: #4dffb4; }
+#ipo-price-change.down { color: #ff6b6b; }
+
+.ipo-price-meta {
+  font-size: 8px;
+  letter-spacing: 0.16em;
+  color: var(--ink-dim);
+  text-transform: uppercase;
+  align-self: center;
+}
+
+#ipo-countdown.live {
+  animation: spcx-live-pulse 1.8s ease-in-out infinite;
+  border-color: rgba(255, 179, 71, 0.65);
+}
+
+@keyframes spcx-live-pulse {
+  0%, 100% { box-shadow: 0 0 16px rgba(255, 179, 71, 0.20); }
+  50%       { box-shadow: 0 0 40px rgba(255, 179, 71, 0.50); }
+}
 
 #ipo-countdown.celebrate { animation: spcx-pulse 1.2s ease-in-out 5; }
 
@@ -328,7 +402,7 @@ body.loaded #hud-header, body.loaded #nav-panel, body.loaded #time-bar { opacity
 
 /* ── Grand tour ─────────────────────────────────────────────────────── */
 
-#btn-tour, #btn-random {
+#btn-tour, #btn-spacex-tour, #btn-random {
   width: 100%;
   background: rgba(255, 179, 71, 0.08);
   border: 1px solid rgba(255, 179, 71, 0.35);
@@ -346,7 +420,7 @@ body.loaded #hud-header, body.loaded #nav-panel, body.loaded #time-bar { opacity
 
 #btn-tour { margin-bottom: 6px; }
 
-#btn-tour:hover, #btn-tour.on {
+#btn-tour:hover, #btn-tour.on, #btn-spacex-tour:hover, #btn-spacex-tour.on {
   background: rgba(255, 179, 71, 0.18);
   border-color: var(--amber);
 }
@@ -405,6 +479,30 @@ body.loaded #hud-header, body.loaded #nav-panel, body.loaded #time-bar { opacity
 }
 
 #tour-banner button:hover { color: var(--amber); }
+
+/* ── Mars transfer caption ──────────────────────────────────────────── */
+
+#transfer-caption {
+  position: fixed;
+  bottom: 140px;
+  left: 50%;
+  transform: translate(-50%, 16px);
+  z-index: 9;
+  background: var(--panel);
+  border: 1px solid rgba(255, 179, 71, 0.4);
+  border-radius: 30px;
+  padding: 8px 18px;
+  font-family: var(--font-display);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  color: var(--amber);
+  backdrop-filter: blur(8px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s, transform 0.3s;
+}
+
+#transfer-caption.show { opacity: 1; transform: translate(-50%, 0); }
 
 /* ── Time bar ───────────────────────────────────────────────────────── */
 
@@ -577,8 +675,11 @@ body.loaded #hud-header, body.loaded #nav-panel, body.loaded #time-bar { opacity
 @media (max-width: 720px) {
   #hud-header h1 { font-size: 15px; }
   #hud-header p { display: none; }
-  #ipo-countdown { margin-top: 7px; padding: 3px 10px; font-size: 9px; }
-  #ipo-countdown #ipo-clock { font-size: 10px; }
+  #ipo-countdown { margin-top: 7px; padding: 6px 12px; }
+  #ipo-punchline { font-size: 9px; letter-spacing: 0.12em; }
+  .ipo-cv { font-size: 14px; }
+  .ipo-cell { padding: 3px 8px; min-width: 38px; }
+  #ipo-price-val { font-size: 18px; }
 
   /* info panel becomes a bottom sheet */
   #info-panel {

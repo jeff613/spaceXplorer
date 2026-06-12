@@ -9,6 +9,7 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { daysSinceJ2000, TRUE_SCALE } from './data.js';
 import { buildSolarSystem } from './bodies.js';
 import { buildSpacecraft } from './spacecraft.js';
+import { createTransfer } from './transfer.js';
 import { createTour } from './tour.js';
 import { createSound } from './sound.js';
 import {
@@ -107,7 +108,8 @@ document.getElementById('btn-random').addEventListener('click', () => {
   userSelect(order[Math.floor(Math.random() * order.length)]);
 });
 const labels = createLabels(bodies, craft, userSelect);
-const tour = createTour(bodies, craft, select);
+const tour = createTour(bodies, craft, select, sim);
+const transfer = createTransfer(scene, bodies, sim);
 
 // fly-to viewing distance: surface rovers are tiny miniatures pinned to a
 // planet, so they get a much closer floor than free-flying bodies
@@ -288,9 +290,9 @@ canvas.addEventListener('pointerup', (e) => {
   const hits = raycastAt(e.clientX, e.clientY);
   if (hits.length === 0) { deselect(); return; }
 
-  // walk up to the named object, then find its body
+  // walk up to a known object id (skipping helpers like the pick proxy)
   let obj = hits[0].object;
-  while (obj && !obj.name) obj = obj.parent;
+  while (obj && !bodies.get(obj.name) && !craft.get(obj.name)) obj = obj.parent;
   const found = obj && (bodies.get(obj.name) || craft.get(obj.name));
   if (found) userSelect(found); else { tour.stop(); deselect(); }
 });
@@ -364,6 +366,7 @@ setupToggles({
   'toggle-starlink': (on) => {
     for (const c of craft.values()) if (c.isCloud) c.mesh.visible = on;
   },
+  'toggle-transfer': (on) => transfer.setEnabled(on),
   'toggle-sound': (on) => sound.setEnabled(on),
   'toggle-truescale': (on) => {
     const u = new URL(location.href);
@@ -412,6 +415,7 @@ function animate() {
   for (const body of bodies.values()) body.update(sim.days, stepDays);
   for (const c of craft.values()) c.update(sim.days, stepDays);
   belt.update(sim.days);
+  transfer.update(sim.days);
 
   // cinematic drift while the tour dwells; otherwise only after long idle —
   // suppressed entirely for prefers-reduced-motion users
@@ -429,7 +433,7 @@ function animate() {
   updateCamera(dt);
   controls.update();
   timeUI.updateDate();
-  if (selected) updateLiveStats(selected, bodies.get('earth'));
+  if (selected) updateLiveStats(selected, bodies.get('earth'), bodies.get('mars'), sim);
 
   // glints are far-visibility beacons — fade them out up close so the
   // actual spacecraft model is what you see
@@ -504,13 +508,16 @@ document.getElementById('onboard-tour').addEventListener('click', () => {
 });
 document.getElementById('onboard-close').addEventListener('click', dismissToast);
 canvas.addEventListener('pointerdown', dismissToast, { once: false });
+// the toast overlaps the tour banner — starting a tour must clear it
+document.getElementById('btn-tour').addEventListener('click', dismissToast);
+document.getElementById('btn-spacex-tour').addEventListener('click', dismissToast);
 
 // start focused on the whole system; fade in the HUD
 document.body.classList.add('loaded');
 
 // programmatic handle for the test suite (and console tinkering)
 window.__sx = {
-  bodies, craft, sim, camera, controls, scene, belt, tour, sound, idleState, finishing,
+  bodies, craft, sim, camera, controls, scene, belt, tour, transfer, sound, idleState, finishing,
   select, deselect, raycastAt,
   selected: () => selected,
   frame: () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))),

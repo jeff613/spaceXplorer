@@ -319,6 +319,97 @@ function makeRoadster() { // 2008 Tesla Roadster + Starman, Feb 2018 press-photo
   return g;
 }
 
+function makeDragon() { // white gumdrop capsule, PICA-X heatshield, trunk with solar fin
+  const g = new THREE.Group();
+  // matte off-white — brighter and the bloom turns the capsule into an orb
+  const white = new THREE.MeshStandardMaterial({ color: 0xd9d5cd, metalness: 0.15, roughness: 0.55, envMapIntensity: 0.9 });
+  const pica = new THREE.MeshStandardMaterial({ color: 0x3a2e26, metalness: 0.15, roughness: 0.85 });
+  // capsule hull, nose toward +z
+  const hull = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.095, 0.13, 28), white);
+  hull.rotation.x = Math.PI / 2;
+  g.add(hull);
+  const nose = new THREE.Mesh(new THREE.SphereGeometry(0.05, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2), white);
+  nose.rotation.x = Math.PI / 2;
+  nose.position.z = 0.065;
+  g.add(nose);
+  // docking hatch under the nosecone
+  const hatch = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.012, 16),
+    new THREE.MeshStandardMaterial({ color: 0x23262b, metalness: 0.6, roughness: 0.4 }));
+  hatch.rotation.x = Math.PI / 2;
+  hatch.position.z = 0.108;
+  g.add(hatch);
+  const shield = new THREE.Mesh(new THREE.CylinderGeometry(0.096, 0.085, 0.022, 28), pica);
+  shield.rotation.x = Math.PI / 2;
+  shield.position.z = -0.076;
+  g.add(shield);
+  // unpressurized trunk aft, half wrapped in solar cells
+  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.14, 28), matWhite());
+  trunk.rotation.x = Math.PI / 2;
+  trunk.position.z = -0.157;
+  g.add(trunk);
+  const array = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.093, 0.093, 0.13, 28, 1, true, -Math.PI / 2, Math.PI), matPanel());
+  array.rotation.x = Math.PI / 2;
+  array.position.z = -0.157;
+  g.add(array);
+  // four small trunk fins
+  for (let i = 0; i < 4; i++) {
+    const fin = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.005, 0.07), matWhite());
+    const a = (i + 0.5) * Math.PI / 2;
+    fin.position.set(Math.cos(a) * 0.11, Math.sin(a) * 0.11, -0.2);
+    fin.rotation.z = a;
+    g.add(fin);
+  }
+  return g;
+}
+
+export function makeStarship() { // stainless hull, domed nose, four flaps, tiled belly
+  const g = new THREE.Group();
+  // mid-gray steel — brighter and the bloom turns the hull into a glowing tube
+  const steel = new THREE.MeshStandardMaterial({ color: 0x8f969c, metalness: 0.9, roughness: 0.45, envMapIntensity: 0.9 });
+  const tiles = new THREE.MeshStandardMaterial({ color: 0x23262b, metalness: 0.25, roughness: 0.8 });
+  // hull along z, nose toward +z
+  const hull = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.42, 28), steel);
+  hull.rotation.x = Math.PI / 2;
+  g.add(hull);
+  const nose = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.05, 0.14, 28), steel);
+  nose.rotation.x = Math.PI / 2;
+  nose.position.z = 0.28;
+  g.add(nose);
+  const tip = new THREE.Mesh(new THREE.SphereGeometry(0.013, 12, 8), steel);
+  tip.position.z = 0.35;
+  g.add(tip);
+  // heat-shield tiles wrap the -y belly
+  const belly = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.053, 0.053, 0.4, 28, 1, true, -Math.PI / 2, Math.PI), tiles);
+  belly.rotation.x = Math.PI / 2;
+  g.add(belly);
+  // two fore + two aft flaps, hinged at the belly side
+  for (const x of [-1, 1]) {
+    const fore = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.008, 0.1), tiles);
+    fore.position.set(x * 0.075, -0.02, 0.18);
+    fore.rotation.z = x * 0.35;
+    g.add(fore);
+    const aft = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.008, 0.13), tiles);
+    aft.position.set(x * 0.1, -0.02, -0.15);
+    aft.rotation.z = x * 0.35;
+    g.add(aft);
+  }
+  // aft skirt and Raptor bells
+  const skirt = new THREE.Mesh(new THREE.CylinderGeometry(0.051, 0.051, 0.03, 28), tiles);
+  skirt.rotation.x = Math.PI / 2;
+  skirt.position.z = -0.2;
+  g.add(skirt);
+  for (let i = 0; i < 3; i++) {
+    const a = (i / 3) * Math.PI * 2;
+    const bell = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.016, 0.03, 14), matBronze());
+    bell.rotation.x = Math.PI / 2;
+    bell.position.set(Math.cos(a) * 0.024, Math.sin(a) * 0.024, -0.225);
+    g.add(bell);
+  }
+  return g;
+}
+
 function makeRover() { // Perseverance-class: chassis, rocker-bogie wheels, mast, arm, RTG
   // origin sits at ground level under the chassis (+y up, +x forward) so the
   // surface placement can drop it straight onto the sphere, wheels touching
@@ -407,6 +498,34 @@ function makeRover() { // Perseverance-class: chassis, rocker-bogie wheels, mast
   return g;
 }
 
+function makeLaunchPad() { // concrete apron, launch mount, tower with amber beacons
+  const g = new THREE.Group();
+  const concrete = new THREE.MeshStandardMaterial({ color: 0xb8b4ac, metalness: 0.05, roughness: 0.9 });
+  const apron = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.055, 0.008, 24), concrete);
+  apron.position.y = 0.004;
+  g.add(apron);
+  const mount = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.018, 0.018, 6), matMetal());
+  mount.position.y = 0.017;
+  g.add(mount);
+  const tower = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.085, 0.012), matMetal());
+  tower.position.set(0.03, 0.05, 0);
+  g.add(tower);
+  // emissive amber lights so the pad still reads on the night side
+  const amber = new THREE.MeshStandardMaterial({
+    color: 0xffb347, emissive: 0xff9a28, emissiveIntensity: 1.6, roughness: 0.6,
+  });
+  const beacon = new THREE.Mesh(new THREE.SphereGeometry(0.006, 10, 8), amber);
+  beacon.position.set(0.03, 0.096, 0);
+  g.add(beacon);
+  for (let i = 0; i < 4; i++) {
+    const a = (i / 4) * Math.PI * 2 + Math.PI / 4;
+    const lamp = new THREE.Mesh(new THREE.SphereGeometry(0.004, 8, 6), amber);
+    lamp.position.set(Math.cos(a) * 0.044, 0.01, Math.sin(a) * 0.044);
+    g.add(lamp);
+  }
+  return g;
+}
+
 function makeISSMesh() { // truss, bronze-gold arrays, module stack, radiators
   const g = new THREE.Group();
   const truss = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.035, 0.035), matMetal());
@@ -472,6 +591,22 @@ function craftMesh(data) {
       r.scale.setScalar(6);
       return r;
     }
+    case 'dragon': {
+      // modeled at ~0.3 units long; kit scale on an inner group so the
+      // pick proxy and glint stay standard-sized in the crowded LEO band
+      const d = new THREE.Group();
+      const kit = makeDragon();
+      kit.scale.setScalar(3);
+      d.add(kit);
+      return d;
+    }
+    case 'starship': {
+      const s = new THREE.Group();
+      const kit = makeStarship();
+      kit.scale.setScalar(2.4); // largest rocket ever flown — biggest Earth orbiter here
+      s.add(kit);
+      return s;
+    }
     case 'perseverance':
     case 'curiosity': {
       // ~0.28 units long — a miniature against Mars's 1.28-unit radius,
@@ -479,6 +614,13 @@ function craftMesh(data) {
       const r = makeRover();
       r.scale.setScalar(0.85);
       return r;
+    }
+    case 'starbase':
+    case 'lc39a':
+    case 'slc4e': {
+      const p = makeLaunchPad();
+      p.scale.setScalar(2.5);
+      return p;
     }
     case 'juno': return makeProbe({ dish: 0.16, panels: 3 });
     case 'cassini': return makeProbe({ dish: 0.22 });

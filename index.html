@@ -49,8 +49,18 @@
     <h1>SPACE<span>XPLORER</span></h1>
     <p>Interactive Solar System — drag to orbit · scroll to zoom · click anything</p>
     <div id="ipo-countdown">
-      <span id="ipo-label"></span>
-      <span id="ipo-clock"></span>
+      <div id="ipo-punchline"><span>🚀</span><span id="ipo-label">Explore Space While Waiting for SPCX</span></div>
+      <div id="ipo-cells">
+        <div class="ipo-cell"><span class="ipo-cv" id="ipo-days">00</span><span class="ipo-cl">Days</span></div>
+        <div class="ipo-cell"><span class="ipo-cv" id="ipo-hrs">00</span><span class="ipo-cl">Hrs</span></div>
+        <div class="ipo-cell"><span class="ipo-cv" id="ipo-min">00</span><span class="ipo-cl">Min</span></div>
+        <div class="ipo-cell"><span class="ipo-cv" id="ipo-sec">00</span><span class="ipo-cl">Sec</span></div>
+      </div>
+      <div id="ipo-price" style="display:none">
+        <span id="ipo-price-val">—</span>
+        <span id="ipo-price-change"></span>
+        <span class="ipo-price-meta">Nasdaq · Real-time</span>
+      </div>
     </div>
   </header>
 
@@ -59,6 +69,7 @@
     <button id="nav-toggle" title="Toggle navigator" aria-label="Toggle navigator">☰</button>
     <div id="nav-scroll">
       <button id="btn-tour" title="Autoplay a tour of the highlights">✦ Grand Tour</button>
+      <button id="btn-spacex-tour" title="Time-travel through SpaceX history, Falcon 1 to the IPO">🚀 SpaceX Story</button>
       <button id="btn-random" title="Fly to a random object" aria-label="Fly to a random object">✧ Surprise Me</button>
       <input type="search" id="nav-search" placeholder="Search objects…" autocomplete="off" aria-label="Search objects" />
       <div id="nav-list"></div>
@@ -67,6 +78,7 @@
       <label class="toggle"><input type="checkbox" id="toggle-labels" checked /><span>Labels</span></label>
       <label class="toggle"><input type="checkbox" id="toggle-belt" checked /><span>Asteroid &amp; Kuiper belts</span></label>
       <label class="toggle"><input type="checkbox" id="toggle-starlink" checked /><span>Satellite constellations</span></label>
+      <label class="toggle"><input type="checkbox" id="toggle-transfer" /><span>Mars transfer window</span></label>
       <label class="toggle"><input type="checkbox" id="toggle-sound" checked /><span>Sound</span></label>
       <label class="toggle"><input type="checkbox" id="toggle-truescale" /><span>True scale</span></label>
     </div>
@@ -96,6 +108,9 @@
     <button id="tour-next" title="Next stop" aria-label="Next tour stop">⏭</button>
     <button id="tour-exit" title="End tour" aria-label="End tour">✕</button>
   </div>
+
+  <!-- mars transfer window caption -->
+  <div id="transfer-caption"></div>
 
   <!-- time controls -->
   <footer id="time-bar">

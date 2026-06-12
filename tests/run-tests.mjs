@@ -14,7 +14,7 @@ import pixelmatch from 'pixelmatch';
 import { PNG } from 'pngjs';
 
 const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
-const PORT = Number(process.env.SX_TEST_PORT ?? 8643);
+const PORT = Number(process.env.SX_TEST_PORT ?? 8643); // override when worktrees test in parallel
 const BASE = `http://127.0.0.1:${PORT}`;
 const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 
@@ -47,6 +47,14 @@ async function openPage(browser, url, consoleErrors) {
   await page.setViewport({ width: 1440, height: 900 });
   page.on('console', (m) => { if (m.type() === 'error') consoleErrors.push(m.text()); });
   page.on('pageerror', (e) => consoleErrors.push(`pageerror: ${e.message}`));
+  // tests must never hit Finnhub (real clock is post-IPO, so the badge polls on
+  // load once a real key is configured) — serve a canned SPCX quote instead
+  await page.evaluateOnNewDocument(() => {
+    const realFetch = window.fetch;
+    window.fetch = (url, ...args) => String(url).includes('finnhub.io')
+      ? Promise.resolve(new Response(JSON.stringify({ c: 185.42, d: 3.87, dp: 2.14 })))
+      : realFetch(url, ...args);
+  });
   await page.goto(url, { waitUntil: 'networkidle0', timeout: 30000 });
   await page.waitForFunction('window.__sx !== undefined', { timeout: 15000 });
   await page.evaluate(() => window.__sx.frame());
@@ -131,7 +139,7 @@ try {
     return ['vesta', 'pallas', 'bennu', 'apophis', 'makemake', 'haumea', 'sedna', 'arrokoth', 'churyumov']
       .every((id) => sx.bodies.has(id))
       && ['juno', 'cassini', 'gps', 'geo', 'pioneer10', 'pioneer11',
-        'mro', 'perseverance', 'curiosity', 'gaia', 'soho'].every((id) => sx.craft.has(id));
+        'mro', 'perseverance', 'curiosity', 'gaia', 'soho', 'dragon', 'starship'].every((id) => sx.craft.has(id));
   }));
   // rovers ride the planet's rotation; SOHO sits sunward of Earth
   const marsFleet = await page.evaluate(() => {
@@ -175,6 +183,57 @@ try {
   check('rovers are surface miniatures (0.15–0.45 units, < ⅓ Mars radius)',
     roverPose.every((r) => r.size > 0.15 && r.size < 0.45), JSON.stringify(roverPose));
   check('SOHO sits sunward of Earth (L1)', marsFleet.sohoInside);
+  // SpaceX launch sites: pinned to Earth's surface, riding its rotation
+  const sites = await page.evaluate(async () => {
+    const sx = window.__sx;
+    const earth = sx.bodies.get('earth');
+    const ids = ['starbase', 'lc39a', 'slc4e'];
+    if (!ids.every((id) => sx.craft.has(id))) return null;
+    const v = earth.anchor.position.constructor;
+    const w = new v();
+    const radii = ids.map((id) => {
+      sx.craft.get(id).mesh.getWorldPosition(w);
+      return +(w.distanceTo(earth.anchor.position) / earth.displayRadius).toFixed(3);
+    });
+    // advance sim time a quarter-day: the pad must move with the spin
+    // but keep its surface radius
+    const save = sx.sim.days;
+    const before = new v();
+    sx.craft.get('starbase').mesh.getWorldPosition(before);
+    before.sub(earth.anchor.position);
+    earth.update(save + 0.25);
+    const after = new v();
+    sx.craft.get('starbase').mesh.getWorldPosition(after);
+    after.sub(earth.anchor.position);
+    earth.update(save);
+    await sx.frame();
+    return {
+      radii,
+      moved: before.distanceTo(after) / earth.displayRadius,
+      radiusAfter: after.length() / earth.displayRadius,
+    };
+  });
+  check(`SpaceX launch sites pinned to Earth surface (${sites ? sites.radii.join(', ') : 'missing'} R)`,
+    sites !== null && sites.radii.every((r) => r > 0.95 && r < 1.1));
+  check(`launch sites ride Earth's rotation (moved ${(sites?.moved ?? 0).toFixed(2)} R, radius ${(sites?.radiusAfter ?? 0).toFixed(2)} R)`,
+    sites !== null && sites.moved > 0.5 && sites.radiusAfter > 0.95 && sites.radiusAfter < 1.1);
+  const sitePanel = await page.evaluate(async () => {
+    const sx = window.__sx;
+    if (!sx.craft.has('starbase')) return null;
+    sx.select(sx.craft.get('starbase'));
+    for (let i = 0; i < 3; i++) await sx.frame();
+    const out = {
+      open: document.getElementById('info-panel').classList.contains('open'),
+      name: document.querySelector('.info-name').textContent,
+      type: document.querySelector('.info-type').textContent,
+    };
+    sx.deselect();
+    await sx.frame();
+    return out;
+  });
+  check('selecting Starbase opens its Launch site panel',
+    sitePanel !== null && sitePanel.open && sitePanel.name === 'Starbase'
+    && sitePanel.type === 'Launch site', JSON.stringify(sitePanel));
   // LRO must circle the Moon, not the Earth
   const lro = await page.evaluate(() => {
     const sx = window.__sx;
@@ -213,6 +272,23 @@ try {
     recede.tenYears - recede.now > 30 && recede.tenYears - recede.now < 42,
     JSON.stringify(recede));
   check('Tiangong present', await page.evaluate(() => window.__sx.craft.has('tiangong')));
+  // SpaceX fleet must circle Earth in the LEO display band
+  const spacex = await page.evaluate(() => {
+    const sx = window.__sx;
+    const out = {};
+    for (const id of ['dragon', 'starship']) {
+      if (!sx.craft.has(id)) { out[id] = -1; continue; }
+      const v = sx.craft.get(id).mesh.position.constructor;
+      const w = new v(); sx.craft.get(id).mesh.getWorldPosition(w);
+      const earthW = new v(); sx.bodies.get('earth').mesh.getWorldPosition(earthW);
+      out[id] = w.distanceTo(earthW) / sx.bodies.get('earth').displayRadius;
+    }
+    return out;
+  });
+  check(`Crew Dragon orbits Earth (${spacex.dragon.toFixed(2)} Earth radii, 1.2–2.0)`,
+    spacex.dragon > 1.2 && spacex.dragon < 2.0);
+  check(`Starship orbits Earth (${spacex.starship.toFixed(2)} Earth radii, 1.2–2.0)`,
+    spacex.starship > 1.2 && spacex.starship < 2.0);
   // P0 (user): craft must read as models, not glowing orbs — when focused,
   // the visibility glint must be faded out and the model must have detail
   const orbCheck = await page.evaluate(async () => {
@@ -246,7 +322,7 @@ try {
     };
     // rovers are deliberately smaller (surface miniatures) — sized against
     // Mars in the rover pose check above
-    return ['iss', 'roadster', 'hubble', 'jwst', 'parker'].map(
+    return ['iss', 'roadster', 'hubble', 'jwst', 'parker', 'dragon', 'starship'].map(
       (id) => [id, visibleSize(sx.craft.get(id).mesh)],
     );
   });
@@ -885,7 +961,7 @@ try {
   check('click on empty space deselects', await page.evaluate(
     () => window.__sx.selected() === null
       && !document.getElementById('info-panel').classList.contains('open'),
-  ));
+  ), await page.evaluate(() => `selected=${window.__sx.selected()?.data.id}`));
 
   // click directly on a planet selects it
   await page.evaluate(() => window.__sx.select(window.__sx.bodies.get('earth')));
@@ -1023,6 +1099,60 @@ try {
   ));
   await page.click('#toggle-labels');
 
+  console.log('\n— Mars transfer window');
+  await page.click('#toggle-transfer');
+  await frames(page, 2);
+  const tw = await page.evaluate(() => {
+    const sx = window.__sx;
+    const st = sx.transfer.state();
+    return {
+      arc: !!sx.scene.getObjectByName('transfer-arc'),
+      caption: document.getElementById('transfer-caption').classList.contains('show'),
+      text: document.getElementById('transfer-caption').textContent,
+      dep: st.depDate,
+      arr: st.arrDate,
+      span: +(st.arr - st.dep).toFixed(0),
+    };
+  });
+  check(`transfer toggle draws arc + caption (${tw.text})`,
+    tw.arc && tw.caption && tw.text.includes(tw.dep) && tw.text.includes(tw.arr));
+  check(`next launch window departs Nov 2026 – Jan 2027 (${tw.dep})`,
+    tw.dep >= '2026-11-01' && tw.dep <= '2027-01-31');
+  check(`transfer time ≈ 8.5 months (${tw.span} days in 230–290)`,
+    tw.span > 230 && tw.span < 290);
+  // jump mid-window: the Starship fleet must be riding the arc
+  const fleet = await page.evaluate(async () => {
+    const sx = window.__sx;
+    const st = sx.transfer.state();
+    const wasPlaying = sx.sim.playing;
+    sx.sim.playing = false;
+    sx.sim.days = (st.dep + st.arr) / 2;
+    await sx.frame();
+    const pos = sx.scene.getObjectByName('transfer-arc').geometry.attributes.position;
+    const V = sx.camera.position.constructor;
+    const ships = sx.transfer.ships().map((s) => {
+      const w = new V();
+      s.getWorldPosition(w);
+      let min = 1e9;
+      for (let i = 0; i < pos.count; i++) {
+        min = Math.min(min, w.distanceTo(new V(pos.getX(i), pos.getY(i), pos.getZ(i))));
+      }
+      return { finite: Number.isFinite(w.x + w.y + w.z), offArc: +min.toFixed(2) };
+    });
+    document.getElementById('btn-now').click();
+    sx.sim.playing = wasPlaying;
+    await sx.frame();
+    return ships;
+  });
+  check(`fleet of 3 rides the arc mid-transfer (off-arc ${fleet.map((f) => f.offArc).join(', ')})`,
+    fleet.length === 3 && fleet.every((f) => f.finite && f.offArc < 1.5));
+  await page.click('#toggle-transfer');
+  await frames(page, 1);
+  check('transfer toggle OFF removes arc and caption', await page.evaluate(
+    () => !window.__sx.scene.getObjectByName('transfer-arc')
+      && !document.getElementById('transfer-caption').classList.contains('show'),
+  ));
+
   console.log('\n— Time controls');
   const t = await page.evaluate(async () => {
     const sx = window.__sx;
@@ -1101,26 +1231,36 @@ try {
     const sx = window.__sx;
     const realNow = Date.now;
     const read = () => ({
-      label: document.getElementById('ipo-label').textContent,
-      clock: document.getElementById('ipo-clock').textContent,
-      live: document.getElementById('ipo-countdown').classList.contains('live'),
+      label:      document.getElementById('ipo-label').textContent,
+      days:       document.getElementById('ipo-days').textContent,
+      min:        document.getElementById('ipo-min').textContent,
+      price:      document.getElementById('ipo-price-val').textContent,
+      cellsShown: document.getElementById('ipo-cells').style.display !== 'none',
+      priceShown: document.getElementById('ipo-price').style.display !== 'none',
+      live:       document.getElementById('ipo-countdown').classList.contains('live'),
     });
     Date.now = () => Date.UTC(2026, 5, 12, 13, 0); // T−30 min
     await sx.frame();
     const before = read();
     Date.now = () => Date.UTC(2026, 5, 12, 14, 0); // T+30 min
     await sx.frame();
+    await new Promise((r) => setTimeout(r, 80)); // let the (stubbed) quote land
+    await sx.frame();
     const after = read();
     Date.now = realNow;
     await sx.frame();
     return { before, after };
   });
-  check(`IPO badge counts down pre-open (${ipo.before.clock})`,
-    !ipo.before.live && ipo.before.clock === 'T−00:30:00'
-    && ipo.before.label === 'SPCX IPO · NASDAQ');
-  check(`IPO badge flips to trading post-open (${ipo.after.clock})`,
-    ipo.after.live && ipo.after.clock === 'T+00:30:00'
-    && ipo.after.label.includes('TRADING ON NASDAQ'));
+  check(`IPO badge counts down pre-open (${ipo.before.days}d ${ipo.before.min}m)`,
+    !ipo.before.live && ipo.before.days === '00' && ipo.before.min === '30'
+    && ipo.before.label === 'Explore Space While Waiting for SPCX'
+    && ipo.before.cellsShown && !ipo.before.priceShown);
+  // post-open: placeholder key → cells tick T+ elapsed; real key → stubbed quote
+  // swaps in the price. Either way exactly one of the two is visible.
+  check('IPO badge flips to live post-open',
+    ipo.after.live && ipo.after.label.includes('SPCX is Live')
+    && ipo.after.cellsShown !== ipo.after.priceShown
+    && (ipo.after.priceShown ? ipo.after.price === '$185.42' : ipo.after.min === '30'));
 
   // celebration must be asserted on a fresh page: the badge test above
   // already crossed T-0 on the main page, consuming the one-shot
@@ -1147,6 +1287,92 @@ try {
   await celPage.close();
   check('T-0 crossing fires one-time celebration', cel.fired && !cel.refired,
     JSON.stringify(cel));
+
+  // ticker easter egg: searching SPCX surfaces and selects the Roadster
+  const egg = await page.evaluate(async () => {
+    const search = document.getElementById('nav-search');
+    search.value = 'SPCX';
+    search.dispatchEvent(new Event('input'));
+    search.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    await window.__sx.frame();
+    const sel = window.__sx.selected()?.data.id;
+    search.value = '';
+    search.dispatchEvent(new Event('input'));
+    window.__sx.deselect();
+    await window.__sx.frame();
+    return sel;
+  });
+  check('SPCX ticker easter egg selects the Roadster', egg === 'roadster', `got ${egg}`);
+
+  // Where is Starman: roadster-only live rows with physically plausible values
+  const starman = await page.evaluate(async () => {
+    const sx = window.__sx;
+    sx.select(sx.craft.get('roadster'));
+    await sx.frame();
+    const num = (id) => parseFloat(document.getElementById(id).textContent.replace(/,/g, ''));
+    const out = {
+      speedKmh: num('live-extra'),
+      speedKey: document.getElementById('live-extra-key').textContent,
+      marsAU: num('live-extra2'),
+      warranties: num('live-extra3'),
+      visible: ['live-extra-row', 'live-extra2-row', 'live-extra3-row']
+        .every((id) => document.getElementById(id).style.display !== 'none'),
+    };
+    sx.deselect();
+    await sx.frame();
+    // rows must hide again for other bodies
+    sx.select(sx.bodies.get('mars'));
+    await sx.frame();
+    out.hiddenAfter = document.getElementById('live-extra3-row').style.display === 'none';
+    sx.deselect();
+    await sx.frame();
+    return out;
+  });
+  check(`Starman speed plausible (${starman.speedKmh.toLocaleString('en-US')} km/h)`,
+    starman.visible && starman.speedKey === 'Speed (now)'
+    && starman.speedKmh > 60000 && starman.speedKmh < 140000);
+  check(`Starman Mars distance finite (${starman.marsAU} AU)`,
+    Number.isFinite(starman.marsAU) && starman.marsAU > 0 && starman.marsAU < 5);
+  check(`Starman warranty counter sane (${starman.warranties}×)`,
+    starman.warranties > 100000 && starman.warranties < 140000 && starman.hiddenAfter);
+
+  // SpaceX Story: a time-traveling tour from Falcon 1 to the IPO
+  const story = await page.evaluate(async () => {
+    const sx = window.__sx;
+    const wasPlaying = sx.sim.playing;
+    sx.sim.playing = false;
+    document.getElementById('btn-spacex-tour').click();
+    await sx.frame();
+    const first = {
+      date: document.getElementById('date-label').textContent,
+      name: document.getElementById('tour-name').textContent,
+      step: document.getElementById('tour-step').textContent,
+      sel: sx.selected()?.data.id,
+    };
+    document.getElementById('tour-next').click();
+    document.getElementById('tour-next').click();
+    await sx.frame();
+    const third = {
+      date: document.getElementById('date-label').textContent,
+      name: document.getElementById('tour-name').textContent,
+      sel: sx.selected()?.data.id,
+    };
+    document.getElementById('tour-exit').click();
+    const exited = !document.getElementById('tour-banner').classList.contains('open')
+      && !document.getElementById('btn-spacex-tour').classList.contains('on');
+    sx.sim.playing = wasPlaying;
+    document.getElementById('btn-now').click();
+    sx.deselect();
+    await sx.frame();
+    return { first, third, exited };
+  });
+  check(`SpaceX Story opens on Falcon 1 in 2008 (${story.first.date})`,
+    story.first.date.startsWith('2008-09-28') && story.first.name === 'Falcon 1 reaches orbit'
+    && story.first.step === '1 / 7' && story.first.sel === 'earth');
+  check(`SpaceX Story stop 3 = Starman departure (${story.third.date})`,
+    story.third.date.startsWith('2018-02-06') && story.third.sel === 'roadster'
+    && story.third.name === 'Starman leaves Earth');
+  check('SpaceX Story exits cleanly', story.exited);
 
   console.log('\n— Numeric stability under stress');
   const stable = await page.evaluate(async () => {

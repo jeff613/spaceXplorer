@@ -502,6 +502,29 @@ export const SPACECRAFT = [
     fact: 'The second permanently crewed outpost in orbit — its name means "Heavenly Palace", and it hosts experiments from 17 nations.',
   },
   {
+    id: 'dragon', name: 'Crew Dragon', type: 'Crew capsule (SpaceX)', kind: 'orbiter', parent: 'earth',
+    orbitRadii: 1.48, periodDays: 0.0648, inclination: 51.6, color: 0xf0f4f8,
+    info: {
+      'First crewed flight': 'Demo-2 — May 30, 2020',
+      'First': 'First commercial spacecraft to carry humans to orbit',
+      'Crew': '4 on NASA missions (designed for up to 7)',
+      'Heat shield': 'PICA-X ablative', 'Docks with': 'The ISS, autonomously',
+    },
+    fact: 'Ended America\'s nine-year human-launch gap after the Shuttle retired — the first crewed orbital spacecraft ever built and flown by a private company.',
+  },
+  {
+    id: 'starship', name: 'Starship', type: 'Super heavy-lift rocket (SpaceX)', kind: 'orbiter', parent: 'earth',
+    orbitRadii: 1.52, periodDays: 0.0655, inclination: 26.5, color: 0xd8dde2,
+    info: {
+      'Height': '~121 m full stack — largest rocket ever flown',
+      'First integrated flight': 'Apr 20, 2023, from Starbase, Texas',
+      'Booster': 'Super Heavy — 33 Raptor engines',
+      'Skin': 'Stainless steel, dark heat-shield tiles on the belly',
+      'Design goal': 'Full and rapid reusability',
+    },
+    fact: 'Twice the thrust of the Saturn V — and in 2024 its Super Heavy booster flew home and was caught in mid-air by the launch tower\'s "chopstick" arms.',
+  },
+  {
     id: 'danuri', name: 'Danuri (KPLO)', type: 'Lunar orbiter (KARI)', kind: 'orbiter', parent: 'moon',
     orbitRadii: 1.85, periodDays: 0.082, inclination: 90, color: 0xb8e0c8,
     info: {
@@ -566,6 +589,40 @@ export const SPACECRAFT = [
       'Distance driven': '> 30 km', 'Status': 'Still climbing Mount Sharp',
     },
     fact: 'Sings "Happy Birthday" to itself every August 6th by vibrating its sample-analysis unit — alone, on another planet.',
+  },
+  {
+    id: 'starbase', name: 'Starbase', type: 'Launch site', kind: 'surface',
+    parent: 'earth', lat: 25.997, lon: -97.155, color: 0xffb347,
+    info: {
+      'Location': 'Boca Chica, Texas — 25.997° N, 97.155° W',
+      'Role': 'Starship build, test and launch site',
+      'First flight': 'Starhopper\'s 150 m hop, Aug 27, 2019',
+      'First orbital attempt': 'Starship IFT-1, Apr 20, 2023',
+      'Milestone': 'First Super Heavy caught by the tower arms, Oct 13, 2024',
+    },
+    fact: 'Its launch tower\'s "chopstick" arms catch returning Super Heavy boosters out of mid-air — a falling 20-story building, plucked from the sky.',
+  },
+  {
+    id: 'lc39a', name: 'Kennedy LC-39A', type: 'Launch site', kind: 'surface',
+    parent: 'earth', lat: 28.608, lon: -80.604, color: 0xffb347,
+    info: {
+      'Location': 'Kennedy Space Center, Florida — 28.608° N, 80.604° W',
+      'Heritage': 'Apollo 11 left for the Moon from here, Jul 16, 1969',
+      'SpaceX era': 'Leased 2014; first Falcon 9 flight Feb 19, 2017 (CRS-10)',
+      'Firsts': 'Falcon Heavy debut Feb 6, 2018; Crew Dragon Demo-2 May 30, 2020',
+    },
+    fact: 'The pad that sent Apollo 11 to the Moon now flies Falcon crews — Demo-2 in 2020 was the first astronaut launch from US soil since the Shuttle retired.',
+  },
+  {
+    id: 'slc4e', name: 'Vandenberg SLC-4E', type: 'Launch site', kind: 'surface',
+    parent: 'earth', lat: 34.632, lon: -120.611, color: 0xffb347,
+    info: {
+      'Location': 'Vandenberg SFB, California — 34.632° N, 120.611° W',
+      'Specialty': 'Polar and sun-synchronous orbits, launched south over the Pacific',
+      'Heritage': 'Former Titan pad, rebuilt by SpaceX after a 2011 lease',
+      'First SpaceX launch': 'Falcon 9 v1.1 with CASSIOPE, Sep 29, 2013',
+    },
+    fact: 'Florida can\'t launch south without overflying land, so polar-orbit Falcons fly from this Pacific-coast pad — landing back at the old Titan pad next door.',
   },
   {
     id: 'jwst', name: 'JWST', type: 'Space telescope', kind: 'lagrange', factor: 1.06,
