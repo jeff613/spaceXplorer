@@ -707,16 +707,18 @@ export const SPACECRAFT = [
   },
   {
     id: 'gps', name: 'GPS constellation', type: 'Navigation satellites', kind: 'constellation',
-    count: 31, orbitRadii: 2.7, periodDays: 0.4988, inclination: 55, color: 0xa8ffc8,
+    count: 31, planes: 6, orbitRadii: 2.2, trueOrbitRadii: 4.17,
+    periodDays: 0.4988, inclination: 55, color: 0x55e87f, pointSize: 4.0,
     info: {
       'Satellites': '31 active', 'Altitude': '20,200 km', 'Orbital period': '11 h 58 min',
-      'Inclination': '55°', 'Operator': 'US Space Force',
+      'Orbits': '6 planes spaced 60° apart, tilted 55°', 'Operator': 'US Space Force',
     },
     fact: 'GPS clocks run 38 microseconds fast per day from relativity — uncorrected, your map position would drift 10 km every day.',
   },
   {
     id: 'geo', name: 'Geostationary ring', type: 'Communications satellites', kind: 'constellation',
-    count: 28, orbitRadii: 3.5, periodDays: 0.9973, inclination: 0.5, color: 0xffd0a0,
+    count: 28, orbitRadii: 2.8, trueOrbitRadii: 6.62,
+    periodDays: 0.9973, inclination: 0.5, color: 0xffb255, pointSize: 3.5,
     info: {
       'Altitude': '35,786 km', 'Orbital period': '23 h 56 min — one sidereal day',
       'Result': 'Each satellite hangs over one fixed spot on the equator',

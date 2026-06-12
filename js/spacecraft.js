@@ -686,7 +686,9 @@ export function buildSpacecraft(scene, bodies) {
       const plane = new THREE.Group();
       plane.rotation.x = data.inclination * DEG;
       plane.add(mesh);
-      parent.anchor.add(plane);
+      // inclination is measured from the parent's equator, so the orbit
+      // plane rides the tilt group (moons don't have one)
+      (parent.tiltGroup ?? parent.anchor).add(plane);
       const pick = addPickProxy(mesh, 1.0);
       const phase = rand() * Math.PI * 2;
       const orbitClock = makeSmoothClock(data.periodDays);
@@ -694,8 +696,9 @@ export function buildSpacecraft(scene, bodies) {
         data, mesh, pick, displayRadius,
         update(days, stepDays) {
           const a = phase + (orbitClock(days, stepDays) / data.periodDays) * Math.PI * 2;
-          mesh.position.set(Math.cos(a) * orbitR, 0, Math.sin(a) * orbitR);
-          mesh.rotation.y = -a;
+          // -z: prograde, the same direction the parent spins
+          mesh.position.set(Math.cos(a) * orbitR, 0, -Math.sin(a) * orbitR);
+          mesh.rotation.y = a;
         },
       });
     } else if (data.kind === 'lagrange') {
@@ -831,18 +834,40 @@ export function buildSpacecraft(scene, bodies) {
 // period plus a downsampled per-sat RAAN+phase list, so the dense ~53°
 // band edges and the polar shells render true. GPS and the GEO ring stay
 // procedural (one uniform shell from count/orbitRadii/periodDays).
+// one orbital-plane circle, same transform as the satellite update below
+function planeRing(R, incDeg, raanDeg, color) {
+  const inc = incDeg * DEG, cI = Math.cos(inc), sI = Math.sin(inc);
+  const cR = Math.cos(raanDeg * DEG), sR = Math.sin(raanDeg * DEG);
+  const pts = [];
+  for (let k = 0; k <= 128; k++) {
+    const a = (k / 128) * Math.PI * 2;
+    const xo = Math.cos(a) * R, zo = -Math.sin(a) * R;
+    const yi = -zo * sI, zi = zo * cI;
+    pts.push(new THREE.Vector3(xo * cR - zi * sR, yi, xo * sR + zi * cR));
+  }
+  const line = new THREE.Line(
+    new THREE.BufferGeometry().setFromPoints(pts),
+    new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.16 }),
+  );
+  line.userData.isOrbit = true;
+  return line;
+}
+
 function buildStarlink(earth, data) {
   let N = 0;
   let positions, raan, phase, orbitR, w, cosI, sinI;
   const geo = new THREE.BufferGeometry();
   geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(0), 3));
   const points = new THREE.Points(geo, new THREE.PointsMaterial({
-    color: data.color, size: 2.2, sizeAttenuation: false,
+    color: data.color, size: data.pointSize ?? 2.2, sizeAttenuation: false,
     map: roundPointTexture(), alphaTest: 0.25,
     transparent: true, opacity: 0.9, depthWrite: false,
   }));
   points.name = data.id;
-  earth.anchor.add(points);
+  // inclinations are measured from the equator, so the cloud rides the tilt
+  // group — the GEO ring hugs the displayed equator, polar shells cross the
+  // actual poles
+  earth.tiltGroup.add(points);
 
   // anti-strobe clock shared by the cloud; rebuilt from the shortest shell
   // period once the baked shells arrive (procedural clouds keep data's)
@@ -883,22 +908,40 @@ function buildStarlink(earth, data) {
       data.info['Satellites'] = `${json.totalTracked.toLocaleString('en-US')} tracked (constellation snapshot ${json.snapshot})`;
     });
   } else {
+    const shellR = earth.displayRadius
+      * ((TRUE_SCALE && data.trueOrbitRadii) || data.orbitRadii);
+    const perPlane = Math.ceil(data.count / (data.planes ?? 1));
     fill([{
-      orbitR: earth.displayRadius * data.orbitRadii,
+      orbitR: shellR,
       periodDays: data.periodDays,
       incDeg: data.inclination,
-      sats: Array.from({ length: data.count }, () => [rand() * 360, rand() * 360]),
+      // planes: the real slot architecture (GPS flies 6 planes 60° apart)
+      // instead of a random swarm; phases spread evenly with a little jitter
+      sats: Array.from({ length: data.count }, (_, k) => (data.planes
+        ? [(k % data.planes) * (360 / data.planes),
+          (Math.floor(k / data.planes) / perPlane) * 360 + rand() * 30]
+        : [rand() * 360, rand() * 360])),
     }]);
+    // faint ring per orbital plane so the architecture reads at a glance —
+    // GPS's 6-plane birdcage vs the single equatorial GEO ring
+    for (let p = 0; p < (data.planes ?? 1); p++) {
+      points.add(planeRing(shellR, data.inclination, p * (360 / (data.planes ?? 1)), data.color));
+    }
   }
 
   return {
-    data, mesh: points, displayRadius: earth.displayRadius * 1.8, isCloud: true,
+    data, mesh: points, isCloud: true,
+    // frame the whole shell when focused (Starlink has no orbitRadii — its
+    // baked shells top out near 1.6 R)
+    displayRadius: earth.displayRadius
+      * ((TRUE_SCALE && data.trueOrbitRadii) || data.orbitRadii || 1.8),
     update(days, stepDays) {
       const t = orbitClock(days, stepDays);
       for (let i = 0; i < N; i++) {
         const a = phase[i] + t * w[i];
         const xo = Math.cos(a) * orbitR[i];
-        const zo = Math.sin(a) * orbitR[i];
+        // -z: prograde, the same direction Earth spins (GEO co-rotates)
+        const zo = -Math.sin(a) * orbitR[i];
         // incline, then rotate plane by RAAN
         const yi = -zo * sinI[i];
         const zi = zo * cosI[i];
