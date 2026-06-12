@@ -1430,6 +1430,46 @@ try {
   check('Grand Tour restores the speed slider on exit',
     tourSpeed.after.v === tourSpeed.before.v && tourSpeed.after.speed === tourSpeed.before.speed);
 
+  // focusing an Earth-bound object at high warp clamps the clock to ~1 min/s
+  // (even with the rotating-frame follow, the planet's spin, terminator, and
+  // neighbor satellites whirl unwatchably); leaving Earth orbit restores it
+  const clamp = await page.evaluate(async () => {
+    const sx = window.__sx;
+    const slider = document.getElementById('speed-slider');
+    const setSlider = (v) => { slider.value = v; slider.dispatchEvent(new Event('input')); };
+    const sps = () => sx.sim.speed * 86400;
+    setSlider(100); // 100 days/s
+    sx.select(sx.craft.get('iss'), { instant: true });
+    await sx.frame();
+    const issClamped = { sps: sps(), label: document.getElementById('speed-label').textContent };
+    sx.select(sx.bodies.get('mars'), { instant: true });
+    await sx.frame();
+    const marsRestored = sx.sim.speed; // days/s
+    setSlider(100);
+    sx.select(sx.craft.get('hubble'), { instant: true });
+    await sx.frame();
+    const hubbleClamped = sps();
+    sx.deselect();
+    await sx.frame();
+    const deselectRestored = sx.sim.speed;
+    setSlider(0); // real time — already calm, must not be touched
+    sx.select(sx.craft.get('iss'), { instant: true });
+    await sx.frame();
+    const realtimeKept = sps();
+    sx.deselect();
+    setSlider(50); // back to the 1 day/s default
+    await sx.frame();
+    return { issClamped, marsRestored, hubbleClamped, deselectRestored, realtimeKept };
+  });
+  check(`focusing ISS at 100 days/s clamps to 1 min/s (${clamp.issClamped.sps.toFixed(1)} s/s, "${clamp.issClamped.label}")`,
+    clamp.issClamped.sps > 55 && clamp.issClamped.sps < 65);
+  check(`selecting Mars restores the clamped speed (${clamp.marsRestored} days/s)`,
+    clamp.marsRestored === 100);
+  check(`deselecting restores the clamped speed (${clamp.hubbleClamped.toFixed(1)} s/s → ${clamp.deselectRestored} days/s)`,
+    clamp.hubbleClamped > 55 && clamp.hubbleClamped < 65 && clamp.deselectRestored === 100);
+  check(`real-time focus on ISS is left alone (${clamp.realtimeKept.toFixed(2)} s/s)`,
+    clamp.realtimeKept > 0.9 && clamp.realtimeKept < 1.1);
+
   console.log('\n— Numeric stability under stress');
   const stable = await page.evaluate(async () => {
     const sx = window.__sx;

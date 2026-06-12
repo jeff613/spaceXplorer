@@ -189,8 +189,33 @@ function setOrbitHighlight(body, on) {
   }
 }
 
+// even with the rotating-frame follow, focusing an Earth-bound object at
+// high warp is unwatchable — the planet's spin, terminator, and neighbor
+// satellites all whirl at the smooth-clock cap. Clamp the clock to ~1 min/s
+// (slider 18) while such an object is focused; restore on leaving, unless
+// the visitor moved the slider themselves meanwhile. Tours already run at
+// this speed, so the clamp never engages during them.
+const CLAMP_SLIDER_VALUE = 18;
+const CLAMP_DPS = 65 / 86400; // engage only above ~1 min/s, in days/s
+let preClampSlider = null;
+
+function clampSpeedFor(body) {
+  const slider = document.getElementById('speed-slider');
+  const setSlider = (v) => { slider.value = v; slider.dispatchEvent(new Event('input')); };
+  if (body && body.data.parent === 'earth') {
+    if (preClampSlider === null && sim.speed > CLAMP_DPS) {
+      preClampSlider = slider.value;
+      setSlider(CLAMP_SLIDER_VALUE);
+    }
+  } else if (preClampSlider !== null) {
+    if (Number(slider.value) === CLAMP_SLIDER_VALUE) setSlider(preClampSlider);
+    preClampSlider = null;
+  }
+}
+
 function select(body, { instant = false } = {}) {
   if (selected !== body) sound.select();
+  clampSpeedFor(body);
   setOrbitHighlight(selected, false);
   setOrbitHighlight(body, true);
   selected = body;
@@ -214,6 +239,7 @@ function select(body, { instant = false } = {}) {
 
 function deselect() {
   if (selected) sound.deselect();
+  clampSpeedFor(null);
   setOrbitHighlight(selected, false);
   selected = null;
   flight = null;
