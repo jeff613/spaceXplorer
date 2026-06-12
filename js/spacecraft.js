@@ -319,6 +319,40 @@ function makeRoadster() { // 2008 Tesla Roadster + Starman, Feb 2018 press-photo
   return g;
 }
 
+export function makeFalcon9() { // white first stage: interstage band, grid fins, Merlin bell
+  const g = new THREE.Group();
+  const white = new THREE.MeshStandardMaterial({ color: 0xd9d5cd, metalness: 0.15, roughness: 0.55 });
+  const dark = new THREE.MeshStandardMaterial({ color: 0x23262b, roughness: 0.8 });
+  const core = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.75, 20), white);
+  core.rotation.x = Math.PI / 2;
+  g.add(core);
+  const inter = new THREE.Mesh(new THREE.CylinderGeometry(0.102, 0.102, 0.07, 20), dark);
+  inter.rotation.x = Math.PI / 2;
+  inter.position.z = 0.34;
+  g.add(inter);
+  // four grid fins below the interstage
+  for (let i = 0; i < 4; i++) {
+    const a = (i / 4) * Math.PI * 2 + Math.PI / 4;
+    const fin = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.012, 0.07), dark);
+    fin.position.set(Math.cos(a) * 0.11, Math.sin(a) * 0.11, 0.28);
+    fin.rotation.z = a;
+    g.add(fin);
+  }
+  // four landing legs folded along the base
+  for (let i = 0; i < 4; i++) {
+    const a = (i / 4) * Math.PI * 2;
+    const leg = new THREE.Mesh(new THREE.BoxGeometry(0.025, 0.012, 0.2), white);
+    leg.position.set(Math.cos(a) * 0.105, Math.sin(a) * 0.105, -0.26);
+    leg.rotation.z = a;
+    g.add(leg);
+  }
+  const bell = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.05, 0.06, 12), matBronze());
+  bell.rotation.x = Math.PI / 2;
+  bell.position.z = -0.395;
+  g.add(bell);
+  return g;
+}
+
 function makeDragon() { // white gumdrop capsule, PICA-X heatshield, trunk with solar fin
   const g = new THREE.Group();
   // matte off-white — brighter and the bloom turns the capsule into an orb
@@ -568,27 +602,27 @@ function craftMesh(data) {
     case 'iss': return makeISSMesh();
     case 'tiangong': {
       const t = makeISSMesh();
-      t.scale.setScalar(0.55);
+      t.scale.setScalar(0.85); // 55 m — on the shared size curve, half-an-ISS
       return t;
     }
     case 'danuri': return makeProbe({ dish: 0.07, panels: 2, scale: 0.5 });
     case 'lro': return makeProbe({ dish: 0.08, panels: 1, scale: 0.55 });
-    case 'hubble': return makeTelescope();
-    case 'jwst': return makeJWST();
+    case 'hubble': { const h = makeTelescope(); h.scale.setScalar(1.22); return h; } // 13 m
+    case 'jwst': { const j = makeJWST(); j.scale.setScalar(1.45); return j; } // 21 m
     case 'gaia': return makeProbe({ dish: 0.14, scale: 0.8 });
     case 'soho': return makeProbe({ dish: 0.1, panels: 2, scale: 0.8 });
     case 'parker': {
       // modeled at ~0.34 units — without kit scale the bloom halo around
       // the white shield reads as a glowing orb when focused
       const p = makeParker();
-      p.scale.setScalar(5);
+      p.scale.setScalar(1.4); // 3 m — smallest craft on the curve
       return p;
     }
     case 'roadster': {
       // the car is modeled at ~0.3 units; bring it up to kit scale so a
       // focused close-up fills the frame like every other craft
       const r = makeRoadster();
-      r.scale.setScalar(6);
+      r.scale.setScalar(1.65); // a car really is tiny next to a station
       return r;
     }
     case 'dragon': {
@@ -601,10 +635,17 @@ function craftMesh(data) {
       d.add(kit);
       return d;
     }
+    case 'falcon9': {
+      const f = new THREE.Group();
+      const kit = makeFalcon9();
+      kit.scale.setScalar(1.25); // 47 m booster on the shared size curve
+      f.add(kit);
+      return f;
+    }
     case 'starship': {
       const s = new THREE.Group();
       const kit = makeStarship();
-      kit.scale.setScalar(2.4); // largest rocket ever flown — biggest Earth orbiter here
+      kit.scale.setScalar(2.04); // staged full stack, 121 m on the size curve
       s.add(kit);
       return s;
     }

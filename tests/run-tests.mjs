@@ -272,23 +272,65 @@ try {
     recede.tenYears - recede.now > 30 && recede.tenYears - recede.now < 42,
     JSON.stringify(recede));
   check('Tiangong present', await page.evaluate(() => window.__sx.craft.has('tiangong')));
-  // SpaceX fleet must circle Earth in the LEO display band
-  const spacex = await page.evaluate(() => {
+  // Starship stands at Starbase between transfer windows, riding Earth's spin
+  const staged = await page.evaluate(() => {
     const sx = window.__sx;
-    const out = {};
-    for (const id of ['dragon', 'starship']) {
-      if (!sx.craft.has(id)) { out[id] = -1; continue; }
-      const v = sx.craft.get(id).mesh.position.constructor;
-      const w = new v(); sx.craft.get(id).mesh.getWorldPosition(w);
-      const earthW = new v(); sx.bodies.get('earth').mesh.getWorldPosition(earthW);
-      out[id] = w.distanceTo(earthW) / sx.bodies.get('earth').displayRadius;
-    }
-    return out;
+    const v = sx.camera.position.constructor;
+    const ship = new v(); sx.craft.get('starship').mesh.getWorldPosition(ship);
+    const pad = new v(); sx.craft.get('starbase').mesh.getWorldPosition(pad);
+    return +ship.distanceTo(pad).toFixed(2);
   });
-  check(`Crew Dragon orbits Earth (${spacex.dragon.toFixed(2)} Earth radii, 1.2–2.0)`,
-    spacex.dragon > 1.2 && spacex.dragon < 2.0);
-  check(`Starship orbits Earth (${spacex.starship.toFixed(2)} Earth radii, 1.2–2.0)`,
-    spacex.starship > 1.2 && spacex.starship < 2.0);
+  check(`Starship stands at Starbase (${staged} units from the pad)`, staged < 1.2);
+  // Crew Dragon flies LC-39A → ISS cycles — every phase a function of sim days
+  const mission = await page.evaluate(async () => {
+    const sx = window.__sx;
+    const THREE = await import('three');
+    const wasPlaying = sx.sim.playing;
+    sx.sim.playing = false;
+    const dragon = sx.craft.get('dragon');
+    const d = (a, b) => {
+      const va = new THREE.Vector3(), vb = new THREE.Vector3();
+      a.getWorldPosition(va); b.getWorldPosition(vb);
+      return +va.distanceTo(vb).toFixed(3);
+    };
+    const base = Math.floor(sx.sim.days);
+    const at = async (frac) => { sx.sim.days = base + frac; await sx.frame(); };
+    await at(0.1);
+    const pad = {
+      phase: dragon.missionPhase(sx.sim.days),
+      dPad: d(dragon.mesh, sx.craft.get('lc39a').mesh),
+      booster: dragon.booster.visible,
+    };
+    await at(0.6);
+    const boosterW = new THREE.Vector3();
+    dragon.booster.getWorldPosition(boosterW);
+    const padW = new THREE.Vector3();
+    sx.craft.get('lc39a').mesh.getWorldPosition(padW);
+    const docked = {
+      phase: dragon.missionPhase(sx.sim.days),
+      dISS: d(dragon.mesh, sx.craft.get('iss').mesh),
+      boosterHome: dragon.booster.visible && boosterW.distanceTo(padW) < 1.5,
+    };
+    // the climb + rendezvous must never dip inside the planet
+    let minRadii = 1e9;
+    const earthW = new THREE.Vector3(); const dw = new THREE.Vector3();
+    for (let f = 0.30; f <= 0.412; f += 0.002) {
+      await at(f);
+      sx.bodies.get('earth').anchor.getWorldPosition(earthW);
+      dragon.mesh.getWorldPosition(dw);
+      minRadii = Math.min(minRadii, dw.distanceTo(earthW) / sx.bodies.get('earth').displayRadius);
+    }
+    document.getElementById('btn-now').click();
+    sx.sim.playing = wasPlaying;
+    await sx.frame();
+    return { pad, docked, minRadii: +minRadii.toFixed(3) };
+  });
+  check(`launch trajectory clears the surface (min ${mission.minRadii} Earth radii)`,
+    mission.minRadii >= 0.99);
+  check(`Crew Dragon waits atop its Falcon 9 on LC-39A (phase ${mission.pad.phase}, ${mission.pad.dPad} from pad)`,
+    mission.pad.phase === 'pad' && mission.pad.dPad < 1.5 && mission.pad.booster);
+  check(`Crew Dragon docks with the ISS, Falcon 9 landed back home (phase ${mission.docked.phase}, ${mission.docked.dISS} off station)`,
+    mission.docked.phase === 'docked' && mission.docked.dISS < 0.2 && mission.docked.boosterHome);
   // P0 (user): craft must read as models, not glowing orbs — when focused,
   // the visibility glint must be faded out and the model must have detail
   const orbCheck = await page.evaluate(async () => {
@@ -1152,6 +1194,37 @@ try {
   });
   check(`fleet of 3 rides the arc mid-transfer (off-arc ${fleet.map((f) => f.offArc).join(', ')})`,
     fleet.length === 3 && fleet.every((f) => f.finite && f.offArc < 1.5));
+  // ships launch from Starbase: queued on the ground pre-window, climbing mid-ascent
+  const launch = await page.evaluate(async () => {
+    const sx = window.__sx;
+    const THREE = await import('three');
+    const st = sx.transfer.state();
+    const wasPlaying = sx.sim.playing;
+    sx.sim.playing = false;
+    const pad = new THREE.Vector3();
+    const read = () => {
+      sx.craft.get('starbase').mesh.getWorldPosition(pad);
+      return sx.transfer.ships().map((s) => +s.position.distanceTo(pad).toFixed(2));
+    };
+    sx.sim.days = st.dep - 5; // before any launch: no ships exist yet
+    await sx.frame();
+    const preWindow = sx.transfer.ships().map((s) => s.visible);
+    sx.sim.days = st.dep - 0.75; // ship 0 halfway up its 1.5-day climb
+    await sx.frame();
+    const climbing = read();
+    const visible = sx.transfer.ships().map((s) => s.visible);
+    const earthDist = +sx.transfer.ships()[0].position
+      .distanceTo(sx.bodies.get('earth').anchor.position).toFixed(2);
+    document.getElementById('btn-now').click();
+    sx.sim.playing = wasPlaying;
+    await sx.frame();
+    return { preWindow, climbing, visible, earthDist };
+  });
+  check('no ships before the window opens',
+    launch.preWindow.length === 3 && launch.preWindow.every((v) => !v));
+  check(`ship 0 climbs alone mid-ascent (${launch.climbing[0]} from pad, ${launch.earthDist} from Earth center)`,
+    launch.visible[0] && !launch.visible[1] && !launch.visible[2]
+    && launch.climbing[0] > 0.8 && launch.earthDist > 2 && launch.earthDist < 12);
   await page.click('#toggle-transfer');
   await frames(page, 1);
   check('transfer toggle OFF removes arc and caption', await page.evaluate(
