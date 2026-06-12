@@ -61,6 +61,41 @@ export function attachDragonMission(craft, bodies) {
   const incl = iss.mesh.parent.rotation.x;
   const planeNormal = new THREE.Vector3(0, Math.cos(incl), Math.sin(incl));
 
+  // Falcon 9 first stage: Dragon rides it off the pad, separation mid-climb
+  const B_LEN = 0.75;
+  const DRAGON_TAIL = 0.36; // capsule+trunk extent below the model origin
+  const SEP = 0.55;         // booster cuts off this far up the ascent
+  const booster = (() => {
+    const g = new THREE.Group();
+    const white = new THREE.MeshStandardMaterial({ color: 0xd9d5cd, metalness: 0.15, roughness: 0.55 });
+    const core = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, B_LEN, 20), white);
+    core.rotation.x = Math.PI / 2;
+    g.add(core);
+    const inter = new THREE.Mesh(new THREE.CylinderGeometry(0.102, 0.102, 0.07, 20),
+      new THREE.MeshStandardMaterial({ color: 0x23262b, roughness: 0.8 }));
+    inter.rotation.x = Math.PI / 2;
+    inter.position.z = B_LEN / 2 - 0.035;
+    g.add(inter);
+    const bell = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.05, 0.06, 12),
+      new THREE.MeshStandardMaterial({ color: 0x6b5a40, metalness: 0.8, roughness: 0.4 }));
+    bell.rotation.x = Math.PI / 2;
+    bell.position.z = -B_LEN / 2 - 0.02;
+    g.add(bell);
+    earth.anchor.add(g);
+    return g;
+  })();
+  dragon.booster = booster;
+  const noseDir = new THREE.Vector3();
+
+  // booster rides under the capsule while attached, vanishes at separation
+  function placeBooster(attached) {
+    booster.visible = attached;
+    if (!attached) return;
+    noseDir.set(0, 0, 1).applyQuaternion(mesh.quaternion);
+    booster.position.copy(mesh.position).addScaledVector(noseDir, -(DRAGON_TAIL + B_LEN / 2));
+    booster.quaternion.copy(mesh.quaternion);
+  }
+
   const issPos = new THREE.Vector3();
   const padPos = new THREE.Vector3();
   const padUp = new THREE.Vector3();
@@ -101,12 +136,16 @@ export function attachDragonMission(craft, bodies) {
     padUp.copy(padPos).normalize();
 
     let onPad = false;
+    let attached = false;
     if (t < PAD_END || t >= DESC_END) {
-      mesh.position.copy(padPos).addScaledVector(padUp, 0.06);
+      // capsule rides atop the Falcon 9 stack on the pad
+      mesh.position.copy(padPos).addScaledVector(padUp, 0.02 + B_LEN + DRAGON_TAIL);
       onPad = true;
+      attached = true;
     } else if (t < ASC_END) {
       const u = smooth(clamp01((t - PAD_END) / (ASC_END - PAD_END)));
-      p.copy(padPos).addScaledVector(padUp, 0.06);
+      attached = u < SEP; // staging: the booster falls away mid-climb
+      p.copy(padPos).addScaledVector(padUp, 0.02 + B_LEN + DRAGON_TAIL);
       c1.copy(padPos).addScaledVector(padUp, R * 0.7);
       chase(c2, BEHIND, R * CHASE_RADII);
       bezier(mesh.position, u, p, c1, c2);
@@ -133,6 +172,7 @@ export function attachDragonMission(craft, bodies) {
       mesh.lookAt(earth.anchor.localToWorld(aim));
     }
     last.copy(mesh.position);
+    placeBooster(attached);
   };
 
   // mission phase for tests/UI: where in the cycle a given day falls

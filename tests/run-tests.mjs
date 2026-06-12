@@ -296,18 +296,26 @@ try {
     const base = Math.floor(sx.sim.days);
     const at = async (frac) => { sx.sim.days = base + frac; await sx.frame(); };
     await at(0.1);
-    const pad = { phase: dragon.missionPhase(sx.sim.days), dPad: d(dragon.mesh, sx.craft.get('lc39a').mesh) };
+    const pad = {
+      phase: dragon.missionPhase(sx.sim.days),
+      dPad: d(dragon.mesh, sx.craft.get('lc39a').mesh),
+      booster: dragon.booster.visible,
+    };
     await at(0.6);
-    const docked = { phase: dragon.missionPhase(sx.sim.days), dISS: d(dragon.mesh, sx.craft.get('iss').mesh) };
+    const docked = {
+      phase: dragon.missionPhase(sx.sim.days),
+      dISS: d(dragon.mesh, sx.craft.get('iss').mesh),
+      booster: dragon.booster.visible,
+    };
     document.getElementById('btn-now').click();
     sx.sim.playing = wasPlaying;
     await sx.frame();
     return { pad, docked };
   });
-  check(`Crew Dragon waits on LC-39A (phase ${mission.pad.phase}, ${mission.pad.dPad} from pad)`,
-    mission.pad.phase === 'pad' && mission.pad.dPad < 0.2);
-  check(`Crew Dragon docks with the ISS (phase ${mission.docked.phase}, ${mission.docked.dISS} off station)`,
-    mission.docked.phase === 'docked' && mission.docked.dISS < 0.2);
+  check(`Crew Dragon waits atop its Falcon 9 on LC-39A (phase ${mission.pad.phase}, ${mission.pad.dPad} from pad)`,
+    mission.pad.phase === 'pad' && mission.pad.dPad < 1.5 && mission.pad.booster);
+  check(`Crew Dragon docks with the ISS, booster long gone (phase ${mission.docked.phase}, ${mission.docked.dISS} off station)`,
+    mission.docked.phase === 'docked' && mission.docked.dISS < 0.2 && !mission.docked.booster);
   // P0 (user): craft must read as models, not glowing orbs — when focused,
   // the visibility glint must be faded out and the model must have detail
   const orbCheck = await page.evaluate(async () => {
