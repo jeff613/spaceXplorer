@@ -12,14 +12,18 @@ const STOPS = [
   'pluto', 'halley', 'bennu', 'roadster', 'voyager1',
 ];
 
-// SpaceX history, Falcon 1 to the IPO — every date a real milestone (UTC)
+// SpaceX history, Falcon 1 to the IPO — every date a real milestone (UTC).
+// Curated to 10 stops: the Falcon era (orbit, ISS, landing, reuse), the
+// crowd-pleasers (Starman, Starlink, Demo-2), the Starship triumphs
+// (reentry, catch), and the bell.
 const SPACEX_STOPS = [
   { id: 'earth', title: 'Falcon 1 reaches orbit', date: Date.UTC(2008, 8, 28, 23, 15) },
+  { id: 'dragon', title: 'Dragon reaches the ISS', date: Date.UTC(2012, 4, 25, 13, 56) },
   { id: 'earth', title: 'First booster landing', date: Date.UTC(2015, 11, 22, 1, 29) },
+  { id: 'lc39a', title: 'A flown booster flies again', date: Date.UTC(2017, 2, 30, 22, 27) },
   { id: 'roadster', title: 'Starman leaves Earth', date: Date.UTC(2018, 1, 6, 20, 45) },
   { id: 'starlink', title: 'First Starlink batch', date: Date.UTC(2019, 4, 24, 2, 30) },
   { id: 'iss', title: 'Demo-2: crew flies from US soil again', date: Date.UTC(2020, 4, 30, 19, 22) },
-  { id: 'earth', title: 'Starship first integrated flight', date: Date.UTC(2023, 3, 20, 13, 33) },
   { id: 'starship', title: 'Starship survives reentry', date: Date.UTC(2024, 5, 6, 14, 6) },
   { id: 'starbase', title: 'Chopsticks catch the booster', date: Date.UTC(2024, 9, 13, 12, 32) },
   { id: 'earth', title: 'SPCX rings the Nasdaq bell', date: Date.UTC(2026, 5, 12, 13, 30) },

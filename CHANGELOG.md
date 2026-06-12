@@ -58,9 +58,10 @@ loop iterations (see PRD.md).
 - Cinematic camera drift during Grand Tour dwells (50); tour curated to 21
   stops (61)
 - SpaceX Story: every step shows its milestone date in the tour banner;
-  the IPO finale flies home to Earth instead of the Roadster; two Starship
-  milestones added — first surviving reentry (flight 4, focuses Starship)
-  and the chopsticks booster catch (flight 5, focuses Starbase)
+  the IPO finale flies home to Earth instead of the Roadster; curated to
+  10 stops spanning Falcon (first orbit, Dragon to ISS, first landing,
+  first reflight), Starman, Starlink, Demo-2, Starship (reentry survival,
+  chopsticks catch), and the bell
 - Both tours slow the clock to 60 sec/s while touring (planets turn,
   orbiters glide) and restore the visitor's speed on exit
 - Surprise me: fly to a random object (87); info-panel ‹ › cycling for touch users (88, mobile-gated 89); CSS boot splash for slow connections (90); Space bar play/pause (57); zoom floor prevents clipping inside bodies (59)

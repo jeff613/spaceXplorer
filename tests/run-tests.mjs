@@ -1352,19 +1352,15 @@ try {
       sel: sx.selected()?.data.id,
       secPerSec: sx.sim.speed * 86400,
     });
-    const first = snap();
-    document.getElementById('tour-next').click();
-    document.getElementById('tour-next').click();
-    await sx.frame();
-    const third = snap();
-    const rest = [];
-    for (let i = 3; i < 9; i++) {
+    const stopsSeen = [snap()];
+    for (let i = 1; i < 10; i++) {
       document.getElementById('tour-next').click();
       await sx.frame();
-      rest.push(snap());
+      stopsSeen.push(snap());
     }
-    const last = rest[rest.length - 1];
-    const badges = [first.badge, third.badge, ...rest.map((s) => s.badge)];
+    const first = stopsSeen[0];
+    const last = stopsSeen[stopsSeen.length - 1];
+    const badges = stopsSeen.map((s) => s.badge);
     document.getElementById('tour-exit').click();
     const exited = !document.getElementById('tour-banner').classList.contains('open')
       && !document.getElementById('btn-spacex-tour').classList.contains('on');
@@ -1378,25 +1374,31 @@ try {
     document.getElementById('btn-now').click();
     sx.deselect();
     await sx.frame();
-    return { first, third, rest, last, badges, grandBadge, exited, speedRestored };
+    return { first, stopsSeen, last, badges, grandBadge, exited, speedRestored };
   });
   check(`SpaceX Story opens on Falcon 1 in 2008 (${story.first.date})`,
     story.first.date.startsWith('2008-09-28') && story.first.name === 'Falcon 1 reaches orbit'
-    && story.first.step === '1 / 9' && story.first.sel === 'earth');
-  check(`SpaceX Story stop 3 = Starman departure (${story.third.date})`,
-    story.third.date.startsWith('2018-02-06') && story.third.sel === 'roadster'
-    && story.third.name === 'Starman leaves Earth');
+    && story.first.step === '1 / 10' && story.first.sel === 'earth');
+  check(`SpaceX Story stop 2 = Dragon reaches the ISS (${story.stopsSeen[1]?.sel}, ${story.stopsSeen[1]?.badge})`,
+    story.stopsSeen[1]?.name === 'Dragon reaches the ISS' && story.stopsSeen[1]?.sel === 'dragon'
+    && story.stopsSeen[1]?.badge === 'May 25, 2012');
+  check(`SpaceX Story stop 4 = flown booster reflies (${story.stopsSeen[3]?.sel}, ${story.stopsSeen[3]?.badge})`,
+    story.stopsSeen[3]?.name === 'A flown booster flies again' && story.stopsSeen[3]?.sel === 'lc39a'
+    && story.stopsSeen[3]?.badge === 'Mar 30, 2017');
+  check(`SpaceX Story stop 5 = Starman departure (${story.stopsSeen[4]?.date})`,
+    story.stopsSeen[4]?.date.startsWith('2018-02-06') && story.stopsSeen[4]?.sel === 'roadster'
+    && story.stopsSeen[4]?.name === 'Starman leaves Earth');
   check(`SpaceX Story shows a date badge on every step (${JSON.stringify(story.badges)})`,
-    story.badges.length === 8 && story.badges.every((b) => /\b(20\d\d)\b/.test(b))
-    && story.first.badge === 'Sep 28, 2008' && story.third.badge === 'Feb 6, 2018');
-  check(`SpaceX Story stop 7 = Starship survives reentry (${story.rest[3]?.sel}, ${story.rest[3]?.badge})`,
-    story.rest[3]?.name === 'Starship survives reentry' && story.rest[3]?.sel === 'starship'
-    && story.rest[3]?.badge === 'Jun 6, 2024');
-  check(`SpaceX Story stop 8 = chopsticks booster catch (${story.rest[4]?.sel}, ${story.rest[4]?.badge})`,
-    story.rest[4]?.name === 'Chopsticks catch the booster' && story.rest[4]?.sel === 'starbase'
-    && story.rest[4]?.badge === 'Oct 13, 2024');
+    story.badges.length === 10 && story.badges.every((b) => /\b(20\d\d)\b/.test(b))
+    && story.first.badge === 'Sep 28, 2008');
+  check(`SpaceX Story stop 8 = Starship survives reentry (${story.stopsSeen[7]?.sel}, ${story.stopsSeen[7]?.badge})`,
+    story.stopsSeen[7]?.name === 'Starship survives reentry' && story.stopsSeen[7]?.sel === 'starship'
+    && story.stopsSeen[7]?.badge === 'Jun 6, 2024');
+  check(`SpaceX Story stop 9 = chopsticks booster catch (${story.stopsSeen[8]?.sel}, ${story.stopsSeen[8]?.badge})`,
+    story.stopsSeen[8]?.name === 'Chopsticks catch the booster' && story.stopsSeen[8]?.sel === 'starbase'
+    && story.stopsSeen[8]?.badge === 'Oct 13, 2024');
   check(`SpaceX Story IPO finale focuses Earth (${story.last.sel}, ${story.last.badge})`,
-    story.last.step === '9 / 9' && story.last.sel === 'earth'
+    story.last.step === '10 / 10' && story.last.sel === 'earth'
     && story.last.name === 'SPCX rings the Nasdaq bell' && story.last.badge === 'Jun 12, 2026');
   check(`Grand Tour shows no date badge ("${story.grandBadge}")`, story.grandBadge === '');
   check(`SpaceX Story dwells at 60 sec/s (${story.first.secPerSec.toFixed(1)} s/s)`,
