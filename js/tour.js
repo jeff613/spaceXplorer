@@ -20,7 +20,7 @@ const SPACEX_STOPS = [
   { id: 'starlink', title: 'First Starlink batch', date: Date.UTC(2019, 4, 24, 2, 30) },
   { id: 'iss', title: 'Demo-2: crew flies from US soil again', date: Date.UTC(2020, 4, 30, 19, 22) },
   { id: 'earth', title: 'Starship first integrated flight', date: Date.UTC(2023, 3, 20, 13, 33) },
-  { id: 'roadster', title: 'SPCX rings the Nasdaq bell', date: Date.UTC(2026, 5, 12, 13, 30) },
+  { id: 'earth', title: 'SPCX rings the Nasdaq bell', date: Date.UTC(2026, 5, 12, 13, 30) },
 ];
 
 const DWELL_MS = 9000;
@@ -28,6 +28,7 @@ const DWELL_MS = 9000;
 export function createTour(bodies, craft, select, sim) {
   const banner = document.getElementById('tour-banner');
   const nameEl = document.getElementById('tour-name');
+  const dateEl = document.getElementById('tour-date');
   const stepEl = document.getElementById('tour-step');
 
   let stops = STOPS;
@@ -45,6 +46,8 @@ export function createTour(bodies, craft, select, sim) {
     const body = get(stop.id);
     select(body);
     nameEl.textContent = stop.title ?? body.data.name;
+    dateEl.textContent = stop.date === undefined ? '' : new Date(stop.date)
+      .toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
     stepEl.textContent = `${idx + 1} / ${stops.length}`;
     clearTimeout(timer);
     timer = setTimeout(() => { if (active) show(idx + 1); }, DWELL_MS);

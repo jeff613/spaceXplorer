@@ -1343,28 +1343,38 @@ try {
     sx.sim.playing = false;
     document.getElementById('btn-spacex-tour').click();
     await sx.frame();
-    const first = {
+    const snap = () => ({
       date: document.getElementById('date-label').textContent,
+      badge: document.getElementById('tour-date')?.textContent ?? '(no element)',
       name: document.getElementById('tour-name').textContent,
       step: document.getElementById('tour-step').textContent,
       sel: sx.selected()?.data.id,
-    };
+    });
+    const first = snap();
     document.getElementById('tour-next').click();
     document.getElementById('tour-next').click();
     await sx.frame();
-    const third = {
-      date: document.getElementById('date-label').textContent,
-      name: document.getElementById('tour-name').textContent,
-      sel: sx.selected()?.data.id,
-    };
+    const third = snap();
+    const badges = [first.badge, third.badge];
+    for (let i = 3; i < 7; i++) {
+      document.getElementById('tour-next').click();
+      await sx.frame();
+      badges.push(document.getElementById('tour-date')?.textContent ?? '(no element)');
+    }
+    const last = snap();
     document.getElementById('tour-exit').click();
     const exited = !document.getElementById('tour-banner').classList.contains('open')
       && !document.getElementById('btn-spacex-tour').classList.contains('on');
+    // grand tour stops carry no milestone date — the badge must clear
+    sx.tour.start();
+    await sx.frame();
+    const grandBadge = document.getElementById('tour-date')?.textContent ?? '(no element)';
+    sx.tour.stop();
     sx.sim.playing = wasPlaying;
     document.getElementById('btn-now').click();
     sx.deselect();
     await sx.frame();
-    return { first, third, exited };
+    return { first, third, last, badges, grandBadge, exited };
   });
   check(`SpaceX Story opens on Falcon 1 in 2008 (${story.first.date})`,
     story.first.date.startsWith('2008-09-28') && story.first.name === 'Falcon 1 reaches orbit'
@@ -1372,6 +1382,13 @@ try {
   check(`SpaceX Story stop 3 = Starman departure (${story.third.date})`,
     story.third.date.startsWith('2018-02-06') && story.third.sel === 'roadster'
     && story.third.name === 'Starman leaves Earth');
+  check(`SpaceX Story shows a date badge on every step (${JSON.stringify(story.badges)})`,
+    story.badges.length === 6 && story.badges.every((b) => /\b(20\d\d)\b/.test(b))
+    && story.first.badge === 'Sep 28, 2008' && story.third.badge === 'Feb 6, 2018');
+  check(`SpaceX Story IPO finale focuses Earth (${story.last.sel}, ${story.last.badge})`,
+    story.last.step === '7 / 7' && story.last.sel === 'earth'
+    && story.last.name === 'SPCX rings the Nasdaq bell' && story.last.badge === 'Jun 12, 2026');
+  check(`Grand Tour shows no date badge ("${story.grandBadge}")`, story.grandBadge === '');
   check('SpaceX Story exits cleanly', story.exited);
 
   console.log('\n— Numeric stability under stress');

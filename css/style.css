@@ -467,6 +467,9 @@ body.loaded #hud-header, body.loaded #nav-panel, body.loaded #time-bar { opacity
   color: var(--amber);
 }
 
+#tour-date { font-size: 10px; letter-spacing: 0.14em; color: var(--ink); margin-top: 2px; }
+#tour-date:empty { display: none; }
+
 #tour-step { font-size: 10px; letter-spacing: 0.2em; color: var(--ink-dim); margin-top: 2px; }
 
 #tour-banner button {
