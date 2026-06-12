@@ -673,6 +673,13 @@ body.loaded #hud-header, body.loaded #nav-panel, body.loaded #time-bar { opacity
 .help-row span:first-child { color: var(--cyan); white-space: nowrap; }
 .help-row span:last-child { color: var(--ink); text-align: right; }
 
+#help-about {
+  margin: 12px 0 0;
+  font-size: 11px;
+  line-height: 1.55;
+  color: var(--ink-dim);
+}
+
 /* ── Small screens ──────────────────────────────────────────────────── */
 
 @media (max-width: 720px) {

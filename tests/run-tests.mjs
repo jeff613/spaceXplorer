@@ -6,7 +6,7 @@
 // Run: npm test
 
 import { spawn } from 'node:child_process';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import fs from 'node:fs';
 import path from 'node:path';
 import puppeteer from 'puppeteer-core';
@@ -1995,7 +1995,92 @@ try {
   const copied = await sp.evaluate(() => window.__lastShareUrl ?? '');
   check('share button builds focus+date URL',
     copied.includes('focus=halley') && copied.includes('date=1986-02-09'), copied);
+  const clipboardText = await sp.evaluate(() => navigator.clipboard.readText().catch(() => ''));
+  check('share button actually copies the URL to the clipboard', clipboardText === copied, clipboardText);
   await sp.close();
+
+  console.log('\n— SEO & sharing surface');
+  const robotsRes = await fetch(`${BASE}/robots.txt`);
+  const robotsTxt = robotsRes.ok ? await robotsRes.text() : '';
+  check('robots.txt served and points at sitemap', robotsRes.ok && robotsTxt.includes('Sitemap:'));
+  const sitemapRes = await fetch(`${BASE}/sitemap.xml`);
+  const sitemapXml = sitemapRes.ok ? await sitemapRes.text() : '';
+  const sitemapLocs = [...sitemapXml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
+  check('sitemap.xml served with homepage + object URLs',
+    sitemapRes.ok && sitemapLocs.length > 10 && sitemapLocs.some((u) => !u.includes('?')));
+  const seoData = await import(pathToFileURL(path.join(ROOT, 'js', 'data.js')).href);
+  const seoIds = new Set(
+    [seoData.SUN, ...seoData.PLANETS, ...seoData.MOONS, ...seoData.COMETS, ...seoData.SPACECRAFT]
+      .map((b) => b.id),
+  );
+  const sitemapFocusIds = sitemapLocs
+    .map((u) => new URL(u).searchParams.get('focus'))
+    .filter(Boolean);
+  check('every sitemap ?focus id exists in data.js',
+    sitemapFocusIds.length > 0 && sitemapFocusIds.every((id) => seoIds.has(id)),
+    sitemapFocusIds.filter((id) => !seoIds.has(id)).join(','));
+
+  const indexHtml = await (await fetch(`${BASE}/`)).text();
+  check('canonical + og:url + og:site_name in head',
+    indexHtml.includes('rel="canonical"') && indexHtml.includes('property="og:url"')
+    && indexHtml.includes('property="og:site_name"'));
+  check('og:image has width/height/alt',
+    indexHtml.includes('og:image:width') && indexHtml.includes('og:image:height')
+    && indexHtml.includes('og:image:alt'));
+  check('twitter:title + twitter:description present',
+    indexHtml.includes('twitter:title') && indexHtml.includes('twitter:description'));
+  const ldMatch = indexHtml.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/);
+  let ldType = '';
+  try { ldType = JSON.parse(ldMatch?.[1] ?? '')['@type']; } catch { /* unparseable */ }
+  check('JSON-LD WebApplication parses', ldType === 'WebApplication', ldType);
+  check('help overlay carries crawlable about text',
+    indexHtml.includes('id="help-about"') && /Voyager 1/.test(indexHtml));
+
+  const manifestRes = await fetch(`${BASE}/site.webmanifest`);
+  let manifest = null;
+  try { manifest = await manifestRes.json(); } catch { /* unparseable */ }
+  check('site.webmanifest linked, served, has icons',
+    indexHtml.includes('rel="manifest"') && manifestRes.ok && (manifest?.icons?.length ?? 0) >= 2);
+  let iconsOk = indexHtml.includes('rel="apple-touch-icon"');
+  for (const icon of manifest?.icons ?? []) {
+    const r = await fetch(`${BASE}/${icon.src.replace(/^\//, '')}`);
+    iconsOk = iconsOk && r.ok;
+  }
+  const touchIconRes = await fetch(`${BASE}/icons/apple-touch-icon.png`);
+  check('manifest + apple-touch icons all served', iconsOk && touchIconRes.ok);
+
+  const canonPage = await openPage(browser, `${BASE}/?focus=halley`, consoleErrors);
+  const canonState = await canonPage.evaluate(() => ({
+    canonical: document.querySelector('link[rel="canonical"]')?.href ?? '',
+    ogUrl: document.querySelector('meta[property="og:url"]')?.content ?? '',
+  }));
+  check('canonical + og:url follow ?focus deep link',
+    canonState.canonical.includes('focus=halley') && canonState.ogUrl.includes('focus=halley'),
+    JSON.stringify(canonState));
+  await canonPage.close();
+
+  // a touch device with the Web Share API gets the native sheet, with text
+  const mobShare = await browser.newPage();
+  await mobShare.setViewport({ width: 390, height: 844, isMobile: true, hasTouch: true });
+  await mobShare.evaluateOnNewDocument(() => {
+    Object.defineProperty(navigator, 'maxTouchPoints', { get: () => 5 });
+    navigator.share = (payload) => { window.__sharePayload = payload; return Promise.resolve(); };
+    const realFetch = window.fetch;
+    window.fetch = (url, ...args) => String(url).includes('finnhub.io')
+      ? Promise.resolve(new Response(JSON.stringify({ c: 185.42, d: 3.87, dp: 2.14 })))
+      : realFetch(url, ...args);
+  });
+  await mobShare.goto(`${BASE}/?focus=voyager1`, { waitUntil: 'networkidle0', timeout: 30000 });
+  await mobShare.waitForFunction('window.__sx !== undefined', { timeout: 15000 });
+  await mobShare.evaluate(() => window.__sx.frame());
+  await mobShare.click('#info-share');
+  await new Promise((r) => setTimeout(r, 200));
+  const sharePayload = await mobShare.evaluate(() => window.__sharePayload ?? null);
+  check('touch share uses native sheet with per-object text',
+    !!sharePayload && /Voyager 1/.test(sharePayload.text ?? '')
+    && (sharePayload.url ?? '').includes('focus=voyager1'),
+    JSON.stringify(sharePayload));
+  await mobShare.close();
 
   console.log('\n— Visual regression (deterministic scene)');
   const SNAP_DIR = path.join(ROOT, 'tests', 'snapshots');
