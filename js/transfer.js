@@ -7,6 +7,9 @@ const DEG = Math.PI / 180;
 const earthEl = PLANETS.find((p) => p.id === 'earth').elements;
 const marsEl = PLANETS.find((p) => p.id === 'mars').elements;
 const STAGGER = 14; // days between fleet departures
+const ASCENT = 1.5; // days of climb from the Starbase pad to the transfer arc
+                    // (stretched far past reality so the launch reads at the
+                    // day-per-second speeds people watch transfers at)
 
 // ─── Window finder ────────────────────────────────────────────────────────
 // Real heliocentric longitude (rad) and distance (AU): the same Kepler solve
@@ -92,7 +95,7 @@ function buildArcPoints(dep, arr) {
 
 // ─── Visualizer ───────────────────────────────────────────────────────────
 
-export function createTransfer(scene, bodies, sim) {
+export function createTransfer(scene, bodies, sim, craft) {
   const caption = document.getElementById('transfer-caption');
   const group = new THREE.Group();
   group.name = 'transfer';
@@ -136,14 +139,25 @@ export function createTransfer(scene, bodies, sim) {
         return s;
       });
     }
-    win = { ...w, pts };
+    // arc handoff: first sample clear of Earth, so launches never thread the core
+    const clearR = bodies.get('earth').displayRadius * 3;
+    let h = 1;
+    while (h < pts.length - 2 && pts[h].distanceTo(pts[0]) < clearR) h++;
+    win = { ...w, pts, h };
     caption.textContent = `EARTH → MARS · DEPART ${fmtDate(w.dep)} · ARRIVE ${fmtDate(w.arr)}`;
   }
 
   const radial = new THREE.Vector3();
   const aim = new THREE.Vector3();
+  const padPos = new THREE.Vector3();
+  const padUp = new THREE.Vector3();
+  const east = new THREE.Vector3();
+  const b0 = new THREE.Vector3();
+  const b1 = new THREE.Vector3();
+  const Y = new THREE.Vector3(0, 1, 0);
+  const Z = new THREE.Vector3(0, 0, 1);
 
-  // queue a ship just off a planet, nose along the orbital direction
+  // ship arrived: parked just off Mars, nose along the orbital direction
   function park(s, i, body) {
     radial.copy(body.anchor.position).normalize();
     s.position.copy(body.anchor.position)
@@ -152,21 +166,53 @@ export function createTransfer(scene, bodies, sim) {
     s.lookAt(aim);
   }
 
+  // Starbase pad in scene space (the pad rides Earth's spin — so does the queue)
+  function padWorld() {
+    craft.get('starbase').mesh.getWorldPosition(padPos);
+    padUp.copy(padPos).sub(bodies.get('earth').anchor.position).normalize();
+  }
+
+  const smooth = (u) => u * u * (3 - 2 * u);
+
   function placeShips(days) {
     const span = win.arr - win.dep;
+    const earth = bodies.get('earth');
+    padWorld();
+    east.crossVectors(Y, padUp).normalize(); // tangent along the ground
     for (let i = 0; i < ships.length; i++) {
       const s = ships[i];
-      const u = (days - win.dep - i * STAGGER) / span;
-      if (u <= 0) {
-        park(s, i, bodies.get('earth')); // staging at Earth until departure
-      } else if (u >= 1) {
-        park(s, i, bodies.get('mars')); // arrived, parked off Mars
+      const D = win.dep + i * STAGGER;
+      if (days < D - ASCENT) {
+        // queued upright in the rocket garden beside the pad
+        s.position.copy(padPos).addScaledVector(east, 0.9 * i).addScaledVector(padUp, 0.45);
+        s.quaternion.setFromUnitVectors(Z, padUp);
+      } else if (days < D) {
+        // gravity-turn silhouette: straight up off the pad, bending prograde
+        // into the arc's first clear-of-Earth sample
+        const u = smooth((days - (D - ASCENT)) / ASCENT);
+        b0.copy(padPos).addScaledVector(padUp, 0.45);
+        b1.copy(padPos).addScaledVector(padUp, earth.displayRadius * 2.5);
+        const v = 1 - u;
+        const p2 = win.pts[win.h];
+        s.position.set(
+          v * v * b0.x + 2 * v * u * b1.x + u * u * p2.x,
+          v * v * b0.y + 2 * v * u * b1.y + u * u * p2.y,
+          v * v * b0.z + 2 * v * u * b1.z + u * u * p2.z,
+        );
+        // nose along the climb: toward the bend point early, the arc late
+        aim.lerpVectors(b1, p2, u);
+        s.lookAt(aim);
       } else {
-        const k = u * u * (3 - 2 * u); // smoothstep ≈ Kepler pacing
-        const x = k * (win.pts.length - 1);
-        const i0 = Math.min(Math.floor(x), win.pts.length - 2);
-        s.position.lerpVectors(win.pts[i0], win.pts[i0 + 1], x - i0);
-        s.lookAt(win.pts[Math.min(i0 + 2, win.pts.length - 1)]);
+        const u = (days - D) / span;
+        if (u >= 1) {
+          park(s, i, bodies.get('mars')); // arrived, parked off Mars
+        } else {
+          const k = smooth(u); // smoothstep ≈ Kepler pacing
+          const x = win.h + k * (win.pts.length - 1 - win.h);
+          const i0 = Math.min(Math.floor(x), win.pts.length - 2);
+          s.position.lerpVectors(win.pts[i0], win.pts[i0 + 1], x - i0);
+          s.lookAt(win.pts[Math.min(i0 + 2, win.pts.length - 1)]);
+        }
       }
     }
   }

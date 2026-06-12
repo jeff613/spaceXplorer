@@ -276,7 +276,7 @@ try {
   const spacex = await page.evaluate(() => {
     const sx = window.__sx;
     const out = {};
-    for (const id of ['dragon', 'starship']) {
+    for (const id of ['starship']) {
       if (!sx.craft.has(id)) { out[id] = -1; continue; }
       const v = sx.craft.get(id).mesh.position.constructor;
       const w = new v(); sx.craft.get(id).mesh.getWorldPosition(w);
@@ -285,8 +285,33 @@ try {
     }
     return out;
   });
-  check(`Crew Dragon orbits Earth (${spacex.dragon.toFixed(2)} Earth radii, 1.2–2.0)`,
-    spacex.dragon > 1.2 && spacex.dragon < 2.0);
+  // Crew Dragon flies LC-39A → ISS cycles — every phase a function of sim days
+  const mission = await page.evaluate(async () => {
+    const sx = window.__sx;
+    const THREE = await import('three');
+    const wasPlaying = sx.sim.playing;
+    sx.sim.playing = false;
+    const dragon = sx.craft.get('dragon');
+    const d = (a, b) => {
+      const va = new THREE.Vector3(), vb = new THREE.Vector3();
+      a.getWorldPosition(va); b.getWorldPosition(vb);
+      return +va.distanceTo(vb).toFixed(3);
+    };
+    const base = Math.floor(sx.sim.days);
+    const at = async (frac) => { sx.sim.days = base + frac; await sx.frame(); };
+    await at(0.1);
+    const pad = { phase: dragon.missionPhase(sx.sim.days), dPad: d(dragon.mesh, sx.craft.get('lc39a').mesh) };
+    await at(0.6);
+    const docked = { phase: dragon.missionPhase(sx.sim.days), dISS: d(dragon.mesh, sx.craft.get('iss').mesh) };
+    document.getElementById('btn-now').click();
+    sx.sim.playing = wasPlaying;
+    await sx.frame();
+    return { pad, docked };
+  });
+  check(`Crew Dragon waits on LC-39A (phase ${mission.pad.phase}, ${mission.pad.dPad} from pad)`,
+    mission.pad.phase === 'pad' && mission.pad.dPad < 0.2);
+  check(`Crew Dragon docks with the ISS (phase ${mission.docked.phase}, ${mission.docked.dISS} off station)`,
+    mission.docked.phase === 'docked' && mission.docked.dISS < 0.2);
   check(`Starship orbits Earth (${spacex.starship.toFixed(2)} Earth radii, 1.2–2.0)`,
     spacex.starship > 1.2 && spacex.starship < 2.0);
   // P0 (user): craft must read as models, not glowing orbs — when focused,
@@ -1146,6 +1171,36 @@ try {
   });
   check(`fleet of 3 rides the arc mid-transfer (off-arc ${fleet.map((f) => f.offArc).join(', ')})`,
     fleet.length === 3 && fleet.every((f) => f.finite && f.offArc < 1.5));
+  // ships launch from Starbase: queued on the ground pre-window, climbing mid-ascent
+  const launch = await page.evaluate(async () => {
+    const sx = window.__sx;
+    const THREE = await import('three');
+    const st = sx.transfer.state();
+    const wasPlaying = sx.sim.playing;
+    sx.sim.playing = false;
+    const pad = new THREE.Vector3();
+    const read = () => {
+      sx.craft.get('starbase').mesh.getWorldPosition(pad);
+      return sx.transfer.ships().map((s) => +s.position.distanceTo(pad).toFixed(2));
+    };
+    sx.sim.days = st.dep - 5; // before the window: the rocket garden
+    await sx.frame();
+    const queued = read();
+    sx.sim.days = st.dep - 0.75; // ship 0 halfway up its 1.5-day climb
+    await sx.frame();
+    const climbing = read();
+    const earthDist = +sx.transfer.ships()[0].position
+      .distanceTo(sx.bodies.get('earth').anchor.position).toFixed(2);
+    document.getElementById('btn-now').click();
+    sx.sim.playing = wasPlaying;
+    await sx.frame();
+    return { queued, climbing, earthDist };
+  });
+  check(`fleet queues at Starbase pre-window (pad dists ${launch.queued.join(', ')})`,
+    launch.queued.length === 3 && launch.queued.every((d) => d < 3));
+  check(`ship 0 climbs off the pad mid-ascent (${launch.climbing[0]} from pad, ${launch.earthDist} from Earth center)`,
+    launch.climbing[0] > 0.8 && launch.earthDist > 2 && launch.earthDist < 12
+    && launch.climbing[1] < 3 && launch.climbing[2] < 3);
   await page.click('#toggle-transfer');
   await frames(page, 1);
   check('transfer toggle OFF removes arc and caption', await page.evaluate(

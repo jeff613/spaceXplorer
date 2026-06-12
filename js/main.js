@@ -9,6 +9,7 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { daysSinceJ2000, TRUE_SCALE } from './data.js';
 import { buildSolarSystem } from './bodies.js';
 import { buildSpacecraft } from './spacecraft.js';
+import { attachDragonMission } from './missions.js';
 import { createTransfer } from './transfer.js';
 import { createTour } from './tour.js';
 import { createSound } from './sound.js';
@@ -84,6 +85,7 @@ controls.maxDistance = 3500;
 
 const { bodies, belt } = buildSolarSystem(scene);
 const craft = buildSpacecraft(scene, bodies);
+attachDragonMission(craft, bodies); // Crew Dragon flies LC-39A → ISS cycles
 
 // ─── Simulation clock ─────────────────────────────────────────────────────
 
@@ -109,7 +111,7 @@ document.getElementById('btn-random').addEventListener('click', () => {
 });
 const labels = createLabels(bodies, craft, userSelect);
 const tour = createTour(bodies, craft, select, sim);
-const transfer = createTransfer(scene, bodies, sim);
+const transfer = createTransfer(scene, bodies, sim, craft);
 
 // fly-to viewing distance: surface rovers are tiny miniatures pinned to a
 // planet, so they get a much closer floor than free-flying bodies
