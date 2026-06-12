@@ -59,8 +59,8 @@ loop iterations (see PRD.md).
   stops (61)
 - SpaceX Story: every step shows its milestone date in the tour banner;
   the IPO finale flies home to Earth instead of the Roadster
-- Grand Tour slows the clock to 60 sec/s while touring (planets turn,
-  orbiters glide) and restores the visitor's speed on exit
+- Both tours slow the clock to 60 sec/s while touring (planets turn,
+  orbiters glide) and restore the visitor's speed on exit
 - Surprise me: fly to a random object (87); info-panel ‹ › cycling for touch users (88, mobile-gated 89); CSS boot splash for slow connections (90); Space bar play/pause (57); zoom floor prevents clipping inside bodies (59)
 - aria-labels on all controls (54); prefers-reduced-motion support (55)
 - Texture-failure fallback (51); asset-integrity deploy gate (73);

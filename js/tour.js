@@ -25,9 +25,11 @@ const SPACEX_STOPS = [
 
 const DWELL_MS = 9000;
 
-// Grand Tour clock: 60 sim-seconds per real second — planets turn and
-// orbiters glide during dwells instead of blurring past. Slider value 18
-// maps to ~60 s/s on the time slider's log scale.
+// Tour clock: 60 sim-seconds per real second — planets turn and orbiters
+// glide during dwells instead of blurring past. Slider value 18 maps to
+// ~60 s/s on the time slider's log scale. Applies to both tours; the
+// SpaceX Story still time-travels between stops, then plays each era at
+// this calm rate.
 const TOUR_SLIDER_VALUE = 18;
 
 export function createTour(bodies, craft, select, sim) {
@@ -71,10 +73,8 @@ export function createTour(bodies, craft, select, sim) {
     tour.stop();
     stops = list;
     active = true;
-    if (list === STOPS) {
-      prevSliderValue = speedSlider.value;
-      setSlider(TOUR_SLIDER_VALUE);
-    }
+    prevSliderValue = speedSlider.value;
+    setSlider(TOUR_SLIDER_VALUE);
     banner.classList.add('open');
     document.getElementById(btnId).classList.add('on');
     show(0);

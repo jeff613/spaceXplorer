@@ -1340,6 +1340,7 @@ try {
   const story = await page.evaluate(async () => {
     const sx = window.__sx;
     const wasPlaying = sx.sim.playing;
+    const speedBefore = sx.sim.speed;
     sx.sim.playing = false;
     document.getElementById('btn-spacex-tour').click();
     await sx.frame();
@@ -1349,6 +1350,7 @@ try {
       name: document.getElementById('tour-name').textContent,
       step: document.getElementById('tour-step').textContent,
       sel: sx.selected()?.data.id,
+      secPerSec: sx.sim.speed * 86400,
     });
     const first = snap();
     document.getElementById('tour-next').click();
@@ -1365,6 +1367,7 @@ try {
     document.getElementById('tour-exit').click();
     const exited = !document.getElementById('tour-banner').classList.contains('open')
       && !document.getElementById('btn-spacex-tour').classList.contains('on');
+    const speedRestored = sx.sim.speed === speedBefore;
     // grand tour stops carry no milestone date — the badge must clear
     sx.tour.start();
     await sx.frame();
@@ -1374,7 +1377,7 @@ try {
     document.getElementById('btn-now').click();
     sx.deselect();
     await sx.frame();
-    return { first, third, last, badges, grandBadge, exited };
+    return { first, third, last, badges, grandBadge, exited, speedRestored };
   });
   check(`SpaceX Story opens on Falcon 1 in 2008 (${story.first.date})`,
     story.first.date.startsWith('2008-09-28') && story.first.name === 'Falcon 1 reaches orbit'
@@ -1389,7 +1392,10 @@ try {
     story.last.step === '7 / 7' && story.last.sel === 'earth'
     && story.last.name === 'SPCX rings the Nasdaq bell' && story.last.badge === 'Jun 12, 2026');
   check(`Grand Tour shows no date badge ("${story.grandBadge}")`, story.grandBadge === '');
-  check('SpaceX Story exits cleanly', story.exited);
+  check(`SpaceX Story dwells at 60 sec/s (${story.first.secPerSec.toFixed(1)} s/s)`,
+    story.first.secPerSec > 55 && story.first.secPerSec < 65
+    && story.last.secPerSec > 55 && story.last.secPerSec < 65);
+  check('SpaceX Story exits cleanly, restoring the clock', story.exited && story.speedRestored);
 
   // Grand Tour dwells at a calm 60 sec/s and hands the clock back on exit
   const tourSpeed = await page.evaluate(async () => {
