@@ -151,11 +151,8 @@ export function createTransfer(scene, bodies, sim, craft) {
   const aim = new THREE.Vector3();
   const padPos = new THREE.Vector3();
   const padUp = new THREE.Vector3();
-  const east = new THREE.Vector3();
   const b0 = new THREE.Vector3();
   const b1 = new THREE.Vector3();
-  const Y = new THREE.Vector3(0, 1, 0);
-  const Z = new THREE.Vector3(0, 0, 1);
 
   // ship arrived: parked just off Mars, nose along the orbital direction
   function park(s, i, body) {
@@ -178,15 +175,14 @@ export function createTransfer(scene, bodies, sim, craft) {
     const span = win.arr - win.dep;
     const earth = bodies.get('earth');
     padWorld();
-    east.crossVectors(Y, padUp).normalize(); // tangent along the ground
     for (let i = 0; i < ships.length; i++) {
       const s = ships[i];
       const D = win.dep + i * STAGGER;
-      if (days < D - ASCENT) {
-        // queued upright in the rocket garden beside the pad
-        s.position.copy(padPos).addScaledVector(east, 0.9 * i).addScaledVector(padUp, 0.45);
-        s.quaternion.setFromUnitVectors(Z, padUp);
-      } else if (days < D) {
+      // no ship exists before its launch — each appears on the pad at L_i,
+      // climbs, and the next follows a stagger later
+      s.visible = days >= D - ASCENT;
+      if (!s.visible) continue;
+      if (days < D) {
         // gravity-turn silhouette: straight up off the pad, bending prograde
         // into the arc's first clear-of-Earth sample
         const u = smooth((days - (D - ASCENT)) / ASCENT);

@@ -1183,24 +1183,25 @@ try {
       sx.craft.get('starbase').mesh.getWorldPosition(pad);
       return sx.transfer.ships().map((s) => +s.position.distanceTo(pad).toFixed(2));
     };
-    sx.sim.days = st.dep - 5; // before the window: the rocket garden
+    sx.sim.days = st.dep - 5; // before any launch: no ships exist yet
     await sx.frame();
-    const queued = read();
+    const preWindow = sx.transfer.ships().map((s) => s.visible);
     sx.sim.days = st.dep - 0.75; // ship 0 halfway up its 1.5-day climb
     await sx.frame();
     const climbing = read();
+    const visible = sx.transfer.ships().map((s) => s.visible);
     const earthDist = +sx.transfer.ships()[0].position
       .distanceTo(sx.bodies.get('earth').anchor.position).toFixed(2);
     document.getElementById('btn-now').click();
     sx.sim.playing = wasPlaying;
     await sx.frame();
-    return { queued, climbing, earthDist };
+    return { preWindow, climbing, visible, earthDist };
   });
-  check(`fleet queues at Starbase pre-window (pad dists ${launch.queued.join(', ')})`,
-    launch.queued.length === 3 && launch.queued.every((d) => d < 3));
-  check(`ship 0 climbs off the pad mid-ascent (${launch.climbing[0]} from pad, ${launch.earthDist} from Earth center)`,
-    launch.climbing[0] > 0.8 && launch.earthDist > 2 && launch.earthDist < 12
-    && launch.climbing[1] < 3 && launch.climbing[2] < 3);
+  check('no ships before the window opens',
+    launch.preWindow.length === 3 && launch.preWindow.every((v) => !v));
+  check(`ship 0 climbs alone mid-ascent (${launch.climbing[0]} from pad, ${launch.earthDist} from Earth center)`,
+    launch.visible[0] && !launch.visible[1] && !launch.visible[2]
+    && launch.climbing[0] > 0.8 && launch.earthDist > 2 && launch.earthDist < 12);
   await page.click('#toggle-transfer');
   await frames(page, 1);
   check('transfer toggle OFF removes arc and caption', await page.evaluate(
