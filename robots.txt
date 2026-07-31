@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://spacexplorer-prod.up.railway.app/sitemap.xml
+Sitemap: https://spacexplorer.mv37labs.com/sitemap.xml

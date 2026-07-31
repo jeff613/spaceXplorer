@@ -2,7 +2,7 @@
   "name": "SPACEXPLORER — Interactive Solar System",
   "short_name": "SPACEXPLORER",
   "description": "Fly through the real solar system as it is right now — every planet, famous moons, comets, asteroids, and 20+ spacecraft on real orbits with a time machine.",
-  "start_url": "/",
+  "start_url": ".",
   "display": "standalone",
   "background_color": "#02050a",
   "theme_color": "#02050a",
